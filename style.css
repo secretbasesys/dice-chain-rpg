@@ -905,3 +905,68 @@ body[data-screen="combat"] #toast { top: 56px; bottom: auto; }
   .forecast { padding: 4px 8px; }
   .fc-chip { padding: 1px 6px; }
 }
+
+/* ---------------- loop 3: content (boss, events, skills) ---------------- */
+.enemy-title { font-size: 9px; color: #fca5a5; letter-spacing: .04em; margin-top: -2px; font-weight: 800; }
+.upmark {
+  font-style: normal; font-size: 8.5px; font-weight: 900; color: #1a1206;
+  background: linear-gradient(180deg, #ffe066, #f59e0b); border-radius: 4px;
+  padding: 0 4px; margin-left: 4px; vertical-align: 1px;
+}
+.fx-banner.boss {
+  font-size: 15px; font-weight: 800; color: #ffe6a3; letter-spacing: 0;
+  white-space: normal; width: min(88vw, 520px); text-align: center; line-height: 1.45;
+  background: rgba(10, 6, 4, .82); border: 1px solid rgba(251, 191, 36, .45);
+  border-radius: 12px; padding: 10px 14px;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .6);
+}
+.fx-banner.boss.soft { color: #d8caff; border-color: rgba(167, 139, 250, .45); font-size: 13px; }
+.ev-result {
+  display: flex; gap: 9px; align-items: flex-start; width: 100%; max-width: 420px;
+  background: linear-gradient(120deg, rgba(251, 191, 36, .12), rgba(20, 28, 46, .6));
+  border: 1px solid rgba(251, 191, 36, .32); border-radius: 13px; padding: 11px 13px;
+  margin-bottom: 12px; animation: rise .2s ease-out;
+}
+.ev-result span { color: var(--gold); flex: none; margin-top: 1px; }
+.ev-result p { font-size: 12.5px; line-height: 1.5; color: #f0e6cf; text-align: left; }
+.ev-cont { max-width: 420px; }
+.ev-choice.risky { border-color: rgba(255, 123, 114, .32); background: linear-gradient(120deg, rgba(255, 93, 93, .07), #141d2e); }
+.ev-choice.risky b::before { content: '⚠ '; color: #ff9d6b; }
+
+/* skill awakening modal */
+.skill-panel .sub { text-align: left; margin: 0 0 10px; }
+.sk-list { display: flex; flex-direction: column; gap: 7px; }
+.sk-row {
+  display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 12px;
+  background: #131c2d; border: 1px solid var(--line);
+}
+.sk-row.done { border-color: rgba(251, 191, 36, .4); background: rgba(251, 191, 36, .06); }
+.sk-ic { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 9px; background: #1b2438; color: var(--gold); }
+.sk-ic .ic { width: 18px; height: 18px; }
+.sk-main { flex: 1; min-width: 0; }
+.sk-name { font-size: 13px; font-weight: 800; }
+.sk-now { font-size: 11px; color: var(--dim); }
+.sk-up { font-size: 11px; color: #7dffb0; display: flex; align-items: center; gap: 3px; margin-top: 2px; }
+.sk-up .ic { width: 11px; height: 11px; }
+.sk-btn {
+  flex: none; height: 38px; min-width: 62px; border-radius: 10px; border: 0; cursor: pointer;
+  background: linear-gradient(180deg, #ffd166, #eab308); color: #241a02; font-weight: 900; font-size: 12px;
+}
+.sk-btn:disabled { background: #232c42; color: #66748f; }
+
+/* deck: skills */
+.deck-skills { display: flex; flex-direction: column; gap: 5px; }
+.deck-skill { display: flex; gap: 8px; align-items: flex-start; background: #131c2d; border: 1px solid var(--line); border-radius: 10px; padding: 6px 9px; }
+.deck-skill.done { border-color: rgba(251, 191, 36, .35); }
+.deck-skill .ds-ic { color: var(--gold); }
+.deck-skill .ds-ic .ic { width: 15px; height: 15px; }
+.deck-skill b { font-size: 11.5px; display: block; }
+.deck-skill span { font-size: 10px; color: var(--dim); }
+.ev-result > div { flex: 1; }
+.ev-gains { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.ev-gains i {
+  font-style: normal; font-size: 10.5px; font-weight: 800; color: #ffe6a3;
+  background: rgba(251, 191, 36, .12); border: 1px solid rgba(251, 191, 36, .3);
+  border-radius: 999px; padding: 1px 8px;
+}
+.ev-cont { width: 100%; }

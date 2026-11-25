@@ -42,9 +42,15 @@
       intents: spawn.intents,
       actMul: 1 + 0.15 * ((act || 1) - 1),
       intentIdx: Math.floor(Math.random() * spawn.intents.length),
+      gimmick: spawn.gimmick || null,
+      lines: spawn.lines || null,
+      title: spawn.title || null,
+      add: !!spawn.add,
       dead: false,
     };
   }
+
+  function skillOf(c, idx) { return DC.getSkill(c.cls, idx, (c.skillLv || [])[idx] || 0); }
 
   function intentOf(e) {
     if (!e || e.hp <= 0) return null;
@@ -92,10 +98,39 @@
       const heal = Math.round(real * 0.08);
       if (heal > 0) { c.hp = Math.min(c.maxHp, c.hp + heal); ev.push({ t: 'heal', amount: heal }); }
     }
+    /* boss: revive once */
+    const g = e.gimmick;
+    if (e.hp <= 0 && g && g.kind === 'revive' && !e.gRevived) {
+      e.gRevived = true;
+      e.hp = Math.max(1, Math.round(e.maxHp * g.hpPct));
+      e.block += g.block || 0;
+      e.st.burn = 0; e.st.poison = 0; e.st.weak = 0; e.st.vuln = 0;
+      if (e.lines) ev.push({ t: 'bossline', text: e.lines.half });
+      ev.push({ t: 'eheal', eid: e.id, amount: e.hp });
+      ev.push({ t: 'gimmick', eid: e.id, kind: 'revive' });
+      return dmg;
+    }
     if (e.hp <= 0 && !e.dead) {
       e.dead = true;
       ev.push({ t: 'kill', eid: e.id });
+      if (e.lines) ev.push({ t: 'bossline', text: e.lines.die, soft: true });
       if (has(c, 'grail')) { c.hp = Math.min(c.maxHp, c.hp + 6); ev.push({ t: 'heal', amount: 6 }); }
+    }
+    /* boss: split at threshold */
+    if (g && g.kind === 'split' && !e.gSplit && e.hp > 0 && e.hp <= e.maxHp * g.at) {
+      e.gSplit = true;
+      if (e.lines) ev.push({ t: 'bossline', text: e.lines.half });
+      (g.adds || []).forEach(function (key) {
+        const pool = DC.ENEMIES[c.act] || [];
+        const sp = pool.filter(function (x) { return x.id === key; })[0];
+        if (!sp) return;
+        const add = mkEnemy(sp, 0.45, c.act);
+        add.name = '여왕의 아이';
+        add.add = true;
+        c.enemies.push(add);
+        ev.push({ t: 'spawn', eid: add.id });
+      });
+      ev.push({ t: 'gimmick', eid: e.id, kind: 'split' });
     }
     return dmg;
   }
@@ -296,6 +331,7 @@
         luckyCoinUsed: 0,
         totalDamage: 0,
         chainLog: [],
+        skillLv: (run.skills || []).slice(),
         seedNote: null,
       };
       const cls = DC.CLASSES[run.cls];
@@ -351,7 +387,7 @@
       if (h.used) return { ok: false, why: '이미 사용한 주사위' };
       if (h.locked) return { ok: false, why: '봉인된 주사위' };
       if (s.handIdx !== null) return { ok: false, why: '슬롯이 가득 참' };
-      const sk = DC.CLASSES[c.cls].skills[slotIdx];
+      const sk = skillOf(c, slotIdx);
       if (!DC.REQ[sk.req].test(h.v)) return { ok: false, why: DC.REQ[sk.req].n + ' 필요' };
       return { ok: true };
     },
@@ -360,7 +396,7 @@
       const chk = Combat.canPlay(c, handIdx, slotIdx);
       if (!chk.ok) return { ok: false, why: chk.why, events: [] };
       const h = c.hand[handIdx], s = c.slots[slotIdx];
-      const skill = DC.CLASSES[c.cls].skills[slotIdx];
+      const skill = skillOf(c, slotIdx);
       const ev = [];
       c.combo += 1;
       h.used = true;
@@ -453,6 +489,20 @@
         if (e.hp <= 0) return;
         const it = intentOf(e);
         if (!it) return;
+        /* boss: dicelord seals dice every N turns */
+        const gm = e.gimmick;
+        if (gm && gm.kind === 'seal' && c.turn % (gm.every || 2) === 0) {
+          const pool = c.hand.filter(function (h) { return !h.used && !h.locked; });
+          let locked = 0;
+          for (let i = 0; i < (gm.n || 1) && pool.length; i++) {
+            const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+            pick.locked = true; locked++;
+          }
+          if (locked) {
+            ev.push({ t: 'bossline', text: e.lines && e.lines.half ? e.lines.half : '주사위 군주가 운명을 흔든다!' });
+            ev.push({ t: 'curse', n: locked });
+          }
+        }
         if (it.k === 'attack') {
           const hits = it.hits || 1;
           for (let i = 0; i < hits; i++) { if (c.hp > 0) hitPlayer(c, it.v, ev, { kind: 'enemy' }); }
@@ -524,7 +574,7 @@
     previewInfo: function (c, handIdx, slotIdx) {
       const h = c.hand[handIdx], s = c.slots[slotIdx];
       if (!h || !s) return null;
-      const skill = DC.CLASSES[c.cls].skills[slotIdx];
+      const skill = skillOf(c, slotIdx);
       const fx = skill.fx;
       const step = DC.BAL.comboStep + (has(c, 'mask') ? 0.1 : 0);
       const cur = 1 + step * Math.max(0, c.combo - 1) + c.multBonus;
@@ -576,7 +626,7 @@
     preview: function (c, handIdx, slotIdx) {
       const h = c.hand[handIdx], s = c.slots[slotIdx];
       if (!h || !s) return '';
-      const skill = DC.CLASSES[c.cls].skills[slotIdx];
+      const skill = skillOf(c, slotIdx);
       const m = mult(c) + 0; // combo hasn't incremented yet -> preview next
       const nextMult = (function () {
         const step = DC.BAL.comboStep + (has(c, 'mask') ? 0.1 : 0);
@@ -601,6 +651,7 @@
     },
 
     intentOf: intentOf,
+    skill: skillOf,
     intentText: intentText,
     intentIcon: intentIcon,
     mult: mult,

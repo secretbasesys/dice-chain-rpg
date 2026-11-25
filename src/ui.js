@@ -103,13 +103,14 @@
         '</div>' +
         '<div class="enemy-shadow"></div>' +
         '<div class="enemy-name">' + esc(e.name) + '</div>' +
+        (e.title ? '<div class="enemy-title">' + esc(e.title) + '</div>' : '') +
         '<div class="hpbar enemy-hp"><i style="width:' + pct(e.hp, e.maxHp) + '%"></i></div>' +
         '<div class="enemy-foot"><span class="ehp">' + Math.max(0, e.hp) + '/' + e.maxHp + '</span>' + (e.block > 0 ? '<span class="echip" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + e.block + '</span>' : '') + statusChips(e.st) + '</div>' +
       '</div>';
   }
 
   function slotCard(c, idx, selHand) {
-    const sk = DC.CLASSES[c.cls].skills[idx];
+    const sk = DC.Combat.skill(c, idx);
     const slot = c.slots[idx];
     const req = DC.REQ[sk.req];
     const filled = slot.handIdx !== null ? c.hand[slot.handIdx] : null;
@@ -121,7 +122,7 @@
       '<div class="slot ' + (filled ? 'filled' : '') + ' ' + (canAny ? 'can' : '') + ' ' + (canAny === false ? 'cannot' : '') + (justPlaced ? ' landed' : '') + '" data-act="slot" data-idx="' + idx + '" role="button" tabindex="0">' +
         '<div class="slot-top">' +
           '<span class="slot-ic">' + icon(sk.ic) + '</span>' +
-          '<span class="slot-name">' + esc(sk.name) + '</span>' +
+          '<span class="slot-name">' + esc(sk.name) + (sk.up ? '<i class="upmark">각성</i>' : '') + '</span>' +
           '<span class="req req-' + sk.req + '" data-tip="' + esc(DC.KEYWORDS.req.t) + '" data-tip-title="' + esc(req.n) + '">' + icon(req.ic) + esc(req.n) + '</span>' +
         '</div>' +
         '<div class="slot-bottom">' +
@@ -444,18 +445,51 @@
 
   function renderEvent(state) {
     const ev = state.ui.event;
-    const choices = ev.def.choices.map(function (ch, i) {
+    const def = ev.def;
+    const head = '<div class="ev-art">' + icon(def.ic) + '</div>' +
+      '<h2>' + esc(def.name) + '</h2>' +
+      '<p class="ev-text">' + esc(ev.result ? ev.text : (def.text || ev.text)) + '</p>';
+    if (ev.result) {
+      return hud(state) + '' +
+        '<main class="event-screen">' + head +
+          '<div class="ev-result"><span>' + icon('spark') + '</span><div><p>' + esc(ev.result) + '</p>' +
+            ((ev.gains && ev.gains.length) ? '<div class="ev-gains">' + ev.gains.map(function (g) { return '<i>' + esc(g) + '</i>'; }).join('') + '</div>' : '') +
+          '</div></div>' +
+          '<button class="bigbtn primary ev-cont" data-act="leave">계속</button>' +
+        '</main>';
+    }
+    const choices = def.choices.map(function (ch, i) {
       const block = ch.need && ch.need.gold && state.run.gold < ch.need.gold;
-      return '<button class="ev-choice" data-act="choice" data-i="' + i + '" ' + (block ? 'disabled' : '') + '>' +
-        '<b>' + esc(ch.label) + '</b><span>' + esc(ch.desc || '') + '</span></button>';
+      const risk = /피해|상실|감소|잃/.test((ch.desc || '') + (ch.label || ''));
+      return '<button class="ev-choice' + (risk ? ' risky' : '') + '" data-act="choice" data-i="' + i + '" ' + (block ? 'disabled' : '') + '>' +
+        '<b>' + esc(ch.label) + '</b><span>' + esc(ch.desc || '') + (block ? ' — 골드 부족' : '') + '</span></button>';
     }).join('');
     return hud(state) + '' +
-      '<main class="event-screen">' +
-        '<div class="ev-art">' + icon(ev.def.ic) + '</div>' +
-        '<h2>' + esc(ev.def.name) + '</h2>' +
-        '<p class="ev-text">' + esc(ev.text || ev.def.text) + '</p>' +
+      '<main class="event-screen">' + head +
         '<div class="ev-choices">' + choices + '</div>' +
       '</main>';
+  }
+
+  function renderSkills(state) {
+    const r = state.run;
+    const rows = DC.CLASSES[r.cls].skills.map(function (sk, i) {
+      const up = DC.getSkill(r.cls, i, 1);
+      const lv = (r.skills || [])[i] || 0;
+      return '<div class="sk-row' + (lv ? ' done' : '') + '">' +
+        '<div class="sk-ic">' + icon(sk.ic) + '</div>' +
+        '<div class="sk-main">' +
+          '<div class="sk-name">' + esc(sk.name) + (lv ? ' <i class="upmark">각성</i>' : '') + '</div>' +
+          '<div class="sk-now">' + esc(lv ? up.desc : sk.desc) + '</div>' +
+          (lv ? '' : '<div class="sk-up">' + icon('up') + esc(up.desc) + '</div>') +
+        '</div>' +
+        '<button class="sk-btn" data-act="upskill" data-i="' + i + '" ' + (lv ? 'disabled' : '') + '>' + (lv ? '완료' : '각성') + '</button>' +
+      '</div>';
+    }).join('');
+    return '<div class="overlay" data-act="closeskills"><div class="panel skill-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('book') + ' 스킬 각성</h3><button class="iconbtn" data-act="closeskills">' + icon('close') + '</button></div>' +
+      '<p class="sub">스킬 하나를 영구히 강화합니다. 런이 끝나면 사라집니다.</p>' +
+      '<div class="sk-list">' + rows + '</div>' +
+      '</div></div>';
   }
 
   function renderEnd(state, kind) {
@@ -491,6 +525,13 @@
     return '<div class="overlay" data-act="closedeck"><div class="panel deck-panel" data-stop="1">' +
       '<div class="panel-head"><h3>덱 & 유물</h3><button class="iconbtn" data-act="closedeck">' + icon('close') + '</button></div>' +
       '<h4>' + icon('dice') + ' 주사위 ' + r.dice.length + '개</h4><div class="deck-dice">' + dice + '</div>' +
+      '<h4>' + icon('spark') + ' 스킬 ' + (r.skills || []).filter(function (v) { return v; }).length + '/5 각성</h4><div class="deck-skills">' +
+      DC.CLASSES[r.cls].skills.map(function (sk, i) {
+        const lv = (r.skills || [])[i] || 0;
+        const eff = DC.getSkill(r.cls, i, lv);
+        return '<div class="deck-skill' + (lv ? ' done' : '') + '"><span class="ds-ic">' + icon(sk.ic) + '</span><div><b>' + esc(sk.name) + (lv ? ' <i class="upmark">각성</i>' : '') + '</b><span>' + esc(eff.desc) + '</span></div></div>';
+      }).join('') +
+      '</div>' +
       '<h4>' + icon('star') + ' 유물 ' + r.relics.length + '개</h4><div class="deck-relics">' + relics + '</div>' +
       '</div></div>';
   }
@@ -608,6 +649,17 @@
             break;
           case 'msg':
             DC.FX.banner(ev.text, 'small');
+            break;
+          case 'bossline':
+            DC.FX.banner(ev.text, ev.soft ? 'boss soft' : 'boss');
+            delay = 260;
+            break;
+          case 'gimmick':
+            DC.FX.flash('rgba(255,80,80,.20)'); DC.FX.shake(12);
+            break;
+          case 'spawn':
+            DC.FX.banner('분열!', 'bad');
+            delay = 200;
             break;
           case 'won':
             DC.Audio.play('win');
@@ -765,6 +817,7 @@
       app.innerHTML = html;
       if (state.ui.modal === 'deck' && state.run) app.innerHTML += renderDeck(state);
       if (state.ui.modal === 'help') app.innerHTML += renderHelp();
+      if (state.ui.modal === 'skills' && state.run) app.innerHTML += renderSkills(state);
       document.body.setAttribute('data-screen', state.screen);
       if (state.run) document.body.setAttribute('data-act', state.run.act);
       if (state.screen === 'map') requestAnimationFrame(drawMapEdges);

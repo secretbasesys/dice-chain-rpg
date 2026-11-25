@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '1.0.0';
+  DC.VERSION = '1.2.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -267,59 +267,209 @@
     3: E('dicelord', '주사위 군주', 178, 'boss', '#fbbf24', [{ k: 'curse', n: 2 }, { k: 'attack', v: 30 }, { k: 'attack', v: 13, hits: 3 }, { k: 'buff', s: 'str', v: 5 }, { k: 'drain', v: 16 }]),
   };
 
+  /* boss personality: gimmicks + lines */
+  DC.BOSSES[1].title = '군체의 어머니';
+  DC.BOSSES[1].lines = {
+    appear: '슬라임 여왕 — "내 아이들이 너를 녹이리라."',
+    half: '여왕이 몸을 찢는다! "아이들아, 일어나!"',
+    die: '"…결국, 다시… 흩어지는구나."',
+  };
+  DC.BOSSES[1].gimmick = { kind: 'split', at: 0.5, adds: ['slime', 'slime'], once: true };
+
+  DC.BOSSES[2].title = '죽지 않는 자';
+  DC.BOSSES[2].lines = {
+    appear: '심연의 리치 — "한 번 죽는 것은 예의가 아니지."',
+    half: '리치가 웃는다. "죽음은 나의 하인이다."',
+    die: '"이번에도… 잠시일 뿐이다."',
+  };
+  DC.BOSSES[2].gimmick = { kind: 'revive', hpPct: 0.3, block: 16, once: true };
+
+  DC.BOSSES[3].title = '운명의 주인';
+  DC.BOSSES[3].lines = {
+    appear: '주사위 군주 — "네 운은 이미 굴려졌다."',
+    half: '군주가 손가락을 튕긴다. "주사위는 내 것이다."',
+    die: '"…주사위는, 다시 굴러간다."',
+  };
+  DC.BOSSES[3].gimmick = { kind: 'seal', every: 2, n: 2, once: false };
+
   /* ---------------- events ---------------- */
   DC.EVENTS = [
     {
-      id: 'altar', name: '도박의 제단', ic: 'coin',
-      text: '녹슨 제단 위에 금화가 쌓여 있다. "네 운을 걸어라."',
+      id: 'altar', name: '도박의 제단', ic: 'coin', tag: '도박',
+      text: '녹슨 제단 위에 금화가 쌓여 있다. 제단이 속삭인다. "네 운을 걸어라."',
       choices: [
-        { label: '30 골드를 건다', need: { gold: 30 }, fn: 'gamble', desc: '50% 확률로 90 골드' },
-        { label: '무시하고 지나간다', fn: 'leave' },
+        { label: '30 골드를 건다', desc: '운에 맡긴다 — 크게 얻거나 전부 잃는다', need: { gold: 30 },
+          chance: [ { p: 0.28, eff: { gold: 60 }, result: '제단이 웃었다. +60 골드.' },
+                    { p: 0.42, eff: { gold: 30 }, result: '작은 행운. +30 골드.' },
+                    { p: 0.30, eff: {}, result: '제단은 조용했다. 30 골드가 사라졌다.' } ] },
+        { label: '10 골드만 놓고 간다', desc: '안전하게 — 10 골드를 바친다', need: { gold: 10 },
+          eff: { gold: -10, healPct: 0.15 }, result: '제단이 따뜻해진다. 체력이 조금 회복됐다.' },
+        { label: '무시하고 지나간다', result: '제단을 뒤로했다.' },
       ],
     },
     {
-      id: 'cursedSword', name: '저주받은 검', ic: 'skull',
-      text: '검은 연기를 뿜는 검이 땅에 박혀 있다. 잡으면 힘이 솟지만 대가가 있을 것이다.',
+      id: 'cursedSword', name: '저주받은 검', ic: 'skull', tag: '저주',
+      text: '검은 연기를 뿜는 검이 땅에 박혀 있다. 잡으면 힘이 솟지만, 대가가 따를 것이다.',
       choices: [
-        { label: '검을 뽑는다', fn: 'cursedSword', desc: '유물 획득 · 최대 체력 8 감소' },
-        { label: '지나간다', fn: 'leave' },
+        { label: '검을 뽑는다', desc: '유물 획득 · 최대 체력 8 감소', eff: { relic: 'random', maxHp: -8, selfDmgFlat: 4 },
+          result: '손바닥이 타들어간다. 힘이 솟구치고, 무언가가 조금 죽었다.' },
+        { label: '뽑아서 부순다', desc: '+45 골드 (파편을 판다)', eff: { gold: 45 }, result: '검은 비명을 지르며 부서졌다. 파편이 팔렸다.' },
+        { label: '지나간다', result: '검을 그냥 두고 왔다.' },
       ],
     },
     {
-      id: 'dicePile', name: '버려진 주사위 더미', ic: 'dice',
+      id: 'dicePile', name: '버려진 주사위 더미', ic: 'dice', tag: '탐색',
       text: '누군가 버린 주사위가 수북하다. 쓸 만한 것을 골라보자.',
       choices: [
-        { label: '뒤적여 본다', fn: 'gainDie', desc: '무작위 주사위 획득 · 10 피해' },
-        { label: '지나간다', fn: 'leave' },
+        { label: '뒤적여 본다', desc: '무작위 주사위 획득 · 8 피해', eff: { dice: 1, selfDmgFlat: 8 },
+          result: '쓸 만한 주사위 하나를 챙겼다. 뭔가에 찔렸다.' },
+        { label: '조심히 고른다', desc: '25 골드로 정리해 판다', eff: { gold: 25 }, result: '멀쩡한 것만 골라 팔았다.' },
+        { label: '지나간다', result: '더미를 남겨두었다.' },
       ],
     },
     {
-      id: 'spring', name: '빛나는 샘', ic: 'star',
-      text: '따뜻한 빛이 흐르는 샘. 마시면 몸이 가벼워진다.',
+      id: 'spring', name: '빛나는 샘', ic: 'star', tag: '성소',
+      text: '따뜻한 빛이 흐르는 샘. 물 아래에서 무언가가 반짝인다.',
       choices: [
-        { label: '마신다', fn: 'heal35', desc: '체력 35% 회복' },
-        { label: '손을 담근다', fn: 'sparkMax', desc: '최대 기세 +1' },
+        { label: '마신다', desc: '체력 35% 회복', eff: { healPct: 0.35 }, result: '몸이 가벼워졌다. 상처가 아문다.' },
+        { label: '깊이 들여다본다', desc: '다음 선택으로',
+          next: {
+            name: '샘의 바닥', ic: 'eye',
+            text: '샘 바닥에 유물 하나가 가라앉아 있다. 손을 넣으면 잡을 수 있을 것 같다. 물이 몹시 차갑다.',
+            choices: [
+              { label: '손을 넣는다', desc: '유물 획득 · 최대 체력 6 감소', eff: { relic: 'random', maxHp: -6 }, result: '손이 얼어붙는 듯했다. 그러나 유물을 쥐었다.' },
+              { label: '그냥 마신다', desc: '체력 25% 회복', eff: { healPct: 0.25 }, result: '차가운 물이 속을 씻어냈다.' },
+            ],
+          } },
+        { label: '손을 담근다', desc: '최대 기세 +1', eff: { sparkMax: 1 }, result: '손끝에 기세가 맺힌다. 영원히.' },
       ],
     },
     {
-      id: 'merchant', name: '수상한 상인', ic: 'shop',
-      text: '"이 주사위, 아주 특별해. 45 골드면 넘겨주지."',
+      id: 'merchant', name: '수상한 상인', ic: 'shop', tag: '거래',
+      text: '"이 주사위, 아주 특별해. 50 골드면 넘겨주지." 상인의 눈이 웃고 있지 않다.',
       choices: [
-        { label: '45 골드에 산다', need: { gold: 45 }, fn: 'buyEpicDie', desc: '고급 주사위 획득' },
-        { label: '거절한다', fn: 'leave' },
+        { label: '50 골드에 산다', desc: '전설 주사위 획득', need: { gold: 50 }, eff: { dice: 'tier3' }, result: '상인이 사라졌다. 손에는 전설의 주사위가.' },
+        { label: '흥정한다', desc: '30% 확률로 실패 — 15 피해', need: { gold: 50 },
+          chance: [ { p: 0.7, eff: { gold: -60, dice: 'tier3' }, result: '상인이 웃으며 값을 올렸다. 60 골드에 샀다.' },
+                    { p: 0.3, eff: { selfDmgFlat: 15 }, result: '상인의 단검이 먼저 움직였다.' } ] },
+        { label: '거절한다', result: '상인은 어깨를 으쓱했다.' },
       ],
     },
     {
-      id: 'forgeSpirit', name: '단조의 정령', ic: 'anvil',
-      text: '불꽃으로 이루어진 정령이 주사위를 두드리고 있다. "한 면만 바꿔줄까?"',
+      id: 'forgeSpirit', name: '단조의 정령', ic: 'anvil', tag: '단조',
+      text: '불꽃으로 이루어진 정령이 주사위를 두드리고 있다. "한 면만 바꿔줄까? 두 번이면 조금 더 들지."',
       choices: [
-        { label: '부탁한다', fn: 'freeForge', desc: '주사위 면 1회 단조' },
-        { label: '지나간다', fn: 'leave' },
+        { label: '한 면을 부탁한다', desc: '무료 단조 1회', eff: { forge: 1 }, thenForge: true },
+        { label: '두 면을 부탁한다', desc: '30 골드 · 단조 2회', need: { gold: 30 }, eff: { gold: -30, forge: 2 }, thenForge: true },
+        { label: '지나간다', result: '정령이 망치를 다시 들었다.' },
+      ],
+    },
+    {
+      id: 'armory', name: '잊혀진 무기고', ic: 'lock', tag: '탐색',
+      text: '녹슨 자물쇠가 걸린 무기고. 안쪽에서 유물 냄새가 난다.',
+      choices: [
+        { label: '자물쇠를 딴다', desc: '40 골드 · 유물 획득', need: { gold: 40 }, eff: { gold: -40, relic: 'random' }, result: '자물쇠가 열렸다. 안쪽에는 유물이 놓여 있었다.' },
+        { label: '문을 부순다', desc: '18 피해 · 유물 + 40 골드', eff: { selfDmgFlat: 18, relic: 'random', gold: 40 }, result: '문이 무너지며 파편이 쏟아졌다. 그래도 얻을 건 얻었다.' },
+        { label: '지나간다', result: '무기고를 뒤로했다.' },
+      ],
+    },
+    {
+      id: 'thief', name: '주사위 도둑', ic: 'eye', tag: '위험',
+      text: '그림자가 내 가방을 스쳤다. 손에는 주사위 하나가 들려 있다. "이거, 내 거 아닌가?"',
+      choices: [
+        { label: '돈을 준다', desc: '40 골드 · 주사위를 지킨다', need: { gold: 40 }, eff: { gold: -40 }, result: '그림자가 만족하고 사라졌다.' },
+        { label: '주사위를 내준다', desc: '주사위 1개 상실 · 85 골드', eff: { removeDie: 1, gold: 85 }, result: '그림자가 주사위를 던지고 도망쳤다. 주머니는 무거워졌다.' },
+        { label: '덤벼든다', desc: '12 피해 · 주사위를 되찾는다', eff: { selfDmgFlat: 12 }, result: '한 대 맞고 주사위를 되찾았다.' },
+      ],
+    },
+    {
+      id: 'preacher', name: '타락한 사제', ic: 'blood', tag: '저주',
+      text: '붉은 옷의 사제가 웃는다. "고통을 바치면, 운명을 고쳐주지."',
+      choices: [
+        { label: '고통을 바친다', desc: '주사위 하나에 저주 면 · 완전 회복 + 유물', eff: { curseFace: 1, healPct: 1, relic: 'random' }, result: '비명과 함께 상처가 아물었다. 주사위 하나가 검게 물들었다.' },
+        { label: '골드를 바친다', desc: '35 골드 · 최대 체력 +6', need: { gold: 35 }, eff: { gold: -35, maxHp: 6 }, result: '사제가 기도했다. 몸이 조금 단단해졌다.' },
+        { label: '돌아선다', result: '사제의 웃음소리가 등 뒤로 따라왔다.' },
+      ],
+    },
+    {
+      id: 'ghost', name: '도박꾼의 유령', ic: 'skull', tag: '도박',
+      text: '유령이 주사위 세 개를 굴린다. "한 판, 어때? 네 목숨을 걸면 크게 돌려주지."',
+      choices: [
+        { label: '목숨을 건다', desc: '최대 체력 10 감소 · 유물 + 70 골드', eff: { maxHp: -10, relic: 'random', gold: 70 }, result: '유령이 박수를 쳤다. 몸이 조금 가벼워졌다.' },
+        { label: '몸을 건다', desc: '체력 30% 회복 · 40 골드 상실', need: { gold: 40 }, eff: { gold: -40, healPct: 0.3 }, result: '유령이 손을 흔들자 상처가 아물었다.' },
+        { label: '나가린다', result: '유령이 주사위를 집어 삼켰다.' },
+      ],
+    },
+    {
+      id: 'mirror', name: '거울의 방', ic: 'copy', tag: '성소',
+      text: '거울 속의 내가 주사위를 굴리고 있다. 거울이 조용히 속삭인다. "하나 더 가질래?"',
+      choices: [
+        { label: '주사위를 복제한다', desc: '주사위 1개 복제 · 12 피해', eff: { copyDie: 1, selfDmgFlat: 12 }, result: '거울이 갈라지고 주사위가 하나 더 떨어졌다.' },
+        { label: '거울을 깬다', desc: '45 골드', eff: { gold: 45 }, result: '유리가 쏟아졌다. 조각을 모아 팔았다.' },
+        { label: '돌아선다', result: '거울 속의 내가 손을 흔들었다.' },
+      ],
+    },
+    {
+      id: 'maze', name: '갈라진 길', ic: 'map', tag: '탐색',
+      text: '동굴이 둘로 갈라진다. 왼쪽에서 낮은 웅성거림, 오른쪽에서 금속 냄새가 난다.',
+      choices: [
+        { label: '왼쪽으로 간다', desc: '위험 — 유물 또는 부상', chance: [
+            { p: 0.55, eff: { relic: 'random' }, result: '어둠 속에서 유물을 찾았다.' },
+            { p: 0.45, eff: { selfDmgFlat: 16, gold: 30 }, result: '무언가에게 물렸다. 도망쳐 금화만 챙겼다.' } ] },
+        { label: '오른쪽으로 간다', desc: '안전 — 35 골드 + 주사위', eff: { gold: 35, dice: 1 }, result: '버려진 상자를 열었다. 돈과 주사위가 들어 있었다.' },
+      ],
+    },
+    {
+      id: 'forgeGamble', name: '대장간의 잔불', ic: 'anvil', tag: '단조',
+      text: '꺼지지 않는 잔불이 남아 있다. 이 불에 주사위를 던지면 면이 바뀔지도 모른다.',
+      choices: [
+        { label: '던져 본다', desc: '무작위 면 1개 +1 강화 · 10 피해', eff: { upgradeFace: 2, selfDmgFlat: 10 }, result: '주사위가 달궈져 나왔다. 면 하나가 더 날카로워졌다.' },
+        { label: '숯을 챙긴다', desc: '25 골드', eff: { gold: 25 }, result: '숯을 팔았다.' },
+      ],
+    },
+    {
+      id: 'bonePile', name: '뼈 무덤', ic: 'skull', tag: '성소',
+      text: '수많은 뼈가 쌓여 있다. 그 사이로 아직 따뜻한 유물 하나가 보인다.',
+      choices: [
+        { label: '파헤친다', desc: '유물 + 최대 체력 5 감소', eff: { relic: 'random', maxHp: -5 }, result: '뼈가 부서지는 소리와 함께 유물을 꺼냈다.' },
+        { label: '기도한다', desc: '체력 20% 회복 · 최대 기세 +1', eff: { healPct: 0.2, sparkMax: 1 }, result: '잠시 마음이 가벼워졌다.' },
       ],
     },
   ];
 
-  /* map node meta */
+  /* ---------------- skill upgrades (shop / forge) ---------------- */
+  DC.SKILL_UP = {
+    warrior: [
+      { fx: { ratio: 2.0 }, desc: '눈 × 2.0 피해' },
+      { fx: { ratio: 3.2 }, desc: '눈 × 3.2 방어도' },
+      { fx: { ratio: 2.4, status: { vuln: 2 } }, desc: '눈 × 2.4 피해 · 취약 2' },
+      { fx: { ratio: 2.2 }, desc: '모든 적에게 눈 × 2.2' },
+      { fx: { str: 3, block: 9 }, desc: '힘 +3 · 방어도 9' },
+    ],
+    mage: [
+      { fx: { ratio: 2.4, burn: true }, desc: '눈 × 2.4 피해 · 화상' },
+      { fx: { ratio: 3.4, heal: 2 }, desc: '눈 × 3.4 방어도 · 2 회복' },
+      { fx: { ratio: 2.0 }, desc: '눈 × 2.0 + 다른 적에게 연쇄' },
+      { fx: { add: 0.7, dmgRatio: 0.7 }, desc: '연쇄 배율 +0.7 · 눈 × 0.7 피해' },
+      { fx: { ratio: 2.1, burn: 3 }, desc: '모든 적에게 눈 × 2.1 · 화상 3' },
+    ],
+    gambler: [
+      { fx: { ratio: 1.7, comboBonus: 1.5 }, desc: '눈 × 1.7 + 콤보 보너스' },
+      { fx: { ratio: 3.5 }, desc: '눈 × 3.5 피해' },
+      { fx: { amount: 3, block: 6 }, desc: '기세 +3 · 방어도 6' },
+      { fx: { ratio: 6.5, selfDmg: 3 }, desc: '눈 × 6.5 피해 · 자신 3 피해' },
+      { fx: { ratio: 1.5 }, desc: '눈 × 1.5 피해를 콤보 수만큼' },
+    ],
+  };
+  DC.getSkill = function (cls, idx, lv) {
+    const base = DC.CLASSES[cls].skills[idx];
+    if (!lv) return base;
+    const up = DC.SKILL_UP[cls] && DC.SKILL_UP[cls][idx];
+    if (!up) return base;
+    return Object.assign({}, base, { fx: Object.assign({}, base.fx, up.fx), desc: up.desc, up: true });
+  };
+
+  /* map node meta */  /* map node meta */
   DC.NODES = {
     combat: { n: '전투', ic: 'sword', c: '#ff7b72' },
     elite: { n: '정예', ic: 'skull', c: '#a78bfa' },

@@ -85,6 +85,8 @@
         case 'buy': this.buy(parseInt(d.i, 10)); break;
         case 'rest': this.rest(parseInt(d.i, 10)); break;
         case 'choice': this.choice(parseInt(d.i, 10)); break;
+        case 'upskill': this.upSkill(parseInt(d.i, 10)); break;
+        case 'closeskills': this.finishSkill(); break;
         case 'leave': this.leaveNode(); break;
         case 'deck': s.ui.modal = s.ui.modal === 'deck' ? null : 'deck'; DC.Audio.play('click'); DC.UI.render(); break;
         case 'closedeck': s.ui.modal = null; DC.UI.render(); break;
@@ -115,7 +117,9 @@
         gold: 60,
         act: 1,
         dice: C.startDice.map(function (d) { return DC.Dice.make(d); }),
+        skills: C.skills.map(function () { return 0; }),
         relics: [],
+        seenEvents: [],
         map: null,
         current: null,
         cleared: [],
@@ -199,8 +203,11 @@
       this.state.ui.hist = [];
       DC.UI.render();
       DC.Audio.play('turn');
-      if (kind === 'boss') DC.UI.toast('보스 등장!');
-      else if (kind === 'elite') DC.UI.toast('정예 조우!');
+      if (kind === 'boss') {
+        const lines = DC.BOSSES[r.act].lines;
+        setTimeout(function () { DC.FX.banner(lines.appear, 'boss'); }, 350);
+        DC.UI.toast('보스 등장!');
+      } else if (kind === 'elite') DC.UI.toast('정예 조우!');
     },
 
     pushHist: function () {
@@ -392,6 +399,7 @@
       if (relicPool.length) kinds.push('relic');
       if (diePool.length) kinds.push('die');
       kinds.push('forge');
+      if ((r.skills || []).some(function (v) { return v < 1; })) kinds.push('skill');
       for (let i = 0; i < n; i++) {
         let kind = kinds[i % kinds.length];
         if (kind === 'relic' && relicPool.length) {
@@ -402,6 +410,8 @@
           const id = diePool.pop();
           const D = DC.DICE[id];
           out.push({ kind: 'die', id: id, name: D.name, desc: D.tag + ' 주사위', faces: D.faces, ic: 'dice', c: D.c, kindLabel: '주사위' });
+        } else if (kind === 'skill' && (r.skills || []).some(function (v) { return v < 1; })) {
+          out.push({ kind: 'skill', name: '각성의 서', desc: '스킬 하나를 각성시킵니다', ic: 'book', c: '#fbbf24', kindLabel: '각성' });
         } else {
           out.push({ kind: 'forge', name: '단조 도구', desc: '주사위 면을 1회 바꿉니다 (무료)', ic: 'anvil', c: '#fb923c', kindLabel: '단조' });
         }
@@ -418,6 +428,7 @@
       if (o.kind === 'relic') this.addRelic(o.id);
       else if (o.kind === 'die') r.dice.push(DC.Dice.make(o.id));
       else if (o.kind === 'forge') { s.ui.reward = null; this.openForge(1, null); return; }
+      else if (o.kind === 'skill') { this.openSkills(false); return; }
       DC.Audio.play('coin');
       s.ui.reward = null;
       if (rw.boss) this.advanceAct();
@@ -538,6 +549,8 @@
       }
       items.push({ kind: 'forge', name: '단조 도구', desc: '주사위 면을 1회 바꿉니다 (무료)', price: Math.round(40 * disc), ic: 'anvil', c: '#fb923c' });
       items.push({ kind: 'heal', name: '회복 물약', desc: '체력 25 회복', price: Math.round(32 * disc), ic: 'heart', c: '#f472b6' });
+      const canSkill = (r.skills || []).some(function (v) { return v < 1; });
+      if (canSkill) items.push({ kind: 'skill', name: '각성의 서', desc: '스킬 하나를 영구히 각성시킵니다', price: Math.round(78 * disc), ic: 'book', c: '#fbbf24' });
       this.state.ui.shop = { items: items, node: node };
       this.state.screen = 'shop';
       DC.UI.render();
@@ -555,6 +568,7 @@
       else if (it.kind === 'relic') this.addRelic(it.id);
       else if (it.kind === 'heal') { s.run.hp = Math.min(s.run.maxHp, s.run.hp + 25); }
       else if (it.kind === 'forge') { DC.Audio.play('coin'); this.openForge(1, sh.node); return; }
+      else if (it.kind === 'skill') { DC.Audio.play('coin'); this.openSkills(true); return; }
       DC.Audio.play('coin');
       DC.UI.render();
     },
@@ -570,70 +584,181 @@
 
     openEvent: function (node) {
       const r = this.state.run;
-      const ev = pick(DC.EVENTS);
-      let text = ev.text;
-      if (ev.id === 'merchant' && r.gold < 45) text += ' (골드가 부족해 보인다…)';
-      this.state.ui.event = { def: ev, text: text, node: node };
+      const unseen = DC.EVENTS.filter(function (e) { return (r.seenEvents || []).indexOf(e.id) < 0; });
+      const pool = unseen.length ? unseen : DC.EVENTS.filter(function (e) { return e.id !== 'merchant'; });
+      const ev = pick(pool);
+      this.state.ui.event = { def: ev, text: ev.text, node: node, result: null, after: null };
       this.state.screen = 'event';
       DC.UI.render();
+    },
+
+    /* effect model for events */
+    applyEff: function (eff) {
+      const r = this.state.run;
+      if (!eff) return '';
+      const parts = [];
+      const sign = function (n) { return (n > 0 ? '+' : '') + n; };
+      if (eff.gold) {
+        r.gold = Math.max(0, r.gold + eff.gold);
+        parts.push(sign(eff.gold) + ' 골드');
+      }
+      if (eff.maxHp) {
+        r.maxHp = Math.max(20, r.maxHp + eff.maxHp);
+        r.hp = Math.min(r.hp, r.maxHp);
+        parts.push(sign(eff.maxHp) + ' 최대 체력');
+      }
+      if (eff.healPct) {
+        const before = r.hp;
+        r.hp = Math.min(r.maxHp, r.hp + Math.ceil(r.maxHp * eff.healPct));
+        if (r.hp > before) parts.push('+' + (r.hp - before) + ' 체력');
+      }
+      if (eff.selfDmgFlat) {
+        const before = r.hp;
+        r.hp = Math.max(1, r.hp - eff.selfDmgFlat);
+        parts.push('-' + (before - r.hp) + ' 체력');
+      }
+      if (eff.sparkMax) { r.extraSpark += eff.sparkMax; parts.push(sign(eff.sparkMax) + ' 최대 기세'); }
+      if (eff.forge) parts.push('무료 단조 ' + eff.forge + '회');
+      if (eff.relic) {
+        const owned = r.relics || [];
+        const pool = DC.RELIC_IDS.filter(function (id) { return owned.indexOf(id) < 0; });
+        if (pool.length) {
+          const id = pick(pool);
+          this.addRelic(id);
+          parts.push('유물 「' + DC.RELICS[id].name + '」');
+        } else { r.gold += 60; parts.push('+60 골드'); }
+      }
+      if (eff.dice) {
+        const tierMax = eff.dice === 'tier3' ? 3 : (r.act >= 3 ? 3 : r.act >= 2 ? 2 : 1);
+        const pool = DC.DICE_IDS.filter(function (id) { return DC.DICE[id].price > 0 && DC.DICE[id].tier <= tierMax; });
+        const n = typeof eff.dice === 'number' ? eff.dice : 1;
+        for (let i = 0; i < n; i++) {
+          const id = pick(pool);
+          r.dice.push(DC.Dice.make(id));
+          parts.push('주사위 「' + DC.DICE[id].name + '」');
+        }
+      }
+      if (eff.copyDie) {
+        const src = pick(r.dice);
+        r.dice.push(DC.Dice.clone(src));
+        parts.push('주사위 「' + src.name + '」 복제');
+      }
+      if (eff.removeDie) {
+        if (r.dice.length > 3) {
+          const idx = ri(r.dice.length);
+          const name = r.dice[idx].name;
+          r.dice.splice(idx, 1);
+          parts.push('주사위 「' + name + '」 분실');
+        }
+      }
+      if (eff.curseFace) {
+        for (let i = 0; i < eff.curseFace; i++) {
+          const d = pick(r.dice);
+          const fi = ri(d.faces.length);
+          DC.Dice.setFace(d, fi, { k: 'curse', v: 1 + ri(2) });
+          parts.push('「' + d.name + '」에 저주 면');
+        }
+      }
+      if (eff.upgradeFace) {
+        for (let i = 0; i < eff.upgradeFace; i++) {
+          const d = pick(r.dice);
+          const fi = ri(d.faces.length);
+          if (DC.Dice.upgradeFace(d, fi)) parts.push('「' + d.name + '」 면 강화');
+        }
+      }
+      return parts;
     },
 
     choice: function (i) {
       const s = this.state;
       const r = s.run;
-      const ev = s.ui.event;
-      if (!ev) return;
-      const ch = ev.def.choices[i];
+      const holder = s.ui.event;
+      if (!holder) return;
+      const ch = holder.def.choices[i];
       if (!ch) return;
       if (ch.need && ch.need.gold && r.gold < ch.need.gold) { DC.UI.toast('골드 부족'); return; }
-      let msg = '';
-      switch (ch.fn) {
-        case 'leave': this.goMap(); return;
-        case 'gamble':
-          r.gold -= 30;
-          if (Math.random() < 0.5) { r.gold += 90; msg = '대박! +90 골드'; DC.Audio.play('coin'); }
-          else { msg = '제단은 조용했다… -30 골드'; DC.Audio.play('error'); }
-          break;
-        case 'cursedSword':
-          this.addRelic('mask');
-          r.maxHp = Math.max(20, r.maxHp - 8); r.hp = Math.min(r.hp, r.maxHp);
-          msg = '광기의 가면 획득 · 최대 체력 -8';
-          break;
-        case 'gainDie': {
-          const pool = DC.DICE_IDS.filter(function (id) { return DC.DICE[id].price > 0 && DC.DICE[id].tier <= 2; });
-          const id = pick(pool);
-          r.dice.push(DC.Dice.make(id));
-          r.hp = Math.max(1, r.hp - 10);
-          msg = DC.DICE[id].name + ' 획득 · 10 피해';
-          break;
-        }
-        case 'heal35':
-          r.hp = Math.min(r.maxHp, r.hp + Math.ceil(r.maxHp * 0.35));
-          msg = '체력 회복'; DC.Audio.play('heal');
-          break;
-        case 'sparkMax':
-          r.extraSpark += 1;
-          msg = '최대 기세 +1';
-          break;
-        case 'buyEpicDie': {
-          r.gold -= 45;
-          const pool = DC.DICE_IDS.filter(function (id) { return DC.DICE[id].tier === 3; });
-          const id = pick(pool);
-          r.dice.push(DC.Dice.make(id));
-          msg = DC.DICE[id].name + ' 획득!'; DC.Audio.play('coin');
-          break;
-        }
-        case 'freeForge':
-          s.ui.event = null;
-          this.openForge(1, null);
-          return;
+
+      if (ch.next) {
+        DC.Audio.play('click');
+        s.ui.event = { def: ch.next, text: ch.next.text, node: holder.node, result: null, after: null };
+        DC.UI.render();
+        return;
       }
-      DC.UI.toast(msg);
+
+      let eff = ch.eff || {};
+      let result = ch.result || '';
+      if (ch.chance) {
+        const roll = Math.random();
+        let acc = 0, hit = ch.chance[ch.chance.length - 1];
+        for (let k = 0; k < ch.chance.length; k++) {
+          acc += ch.chance[k].p;
+          if (roll <= acc) { hit = ch.chance[k]; break; }
+        }
+        eff = hit.eff || {};
+        result = hit.result || '';
+      }
+      const gains = this.applyEff(eff);
+      r.seenEvents = (r.seenEvents || []).concat([holder.def.id || holder.def.name]);
+      s.ui.event = {
+        def: holder.def, text: holder.text, node: holder.node,
+        result: result, gains: gains,
+        after: ch.thenForge || (eff.forge ? { forge: eff.forge } : null),
+      };
+      DC.Audio.play(eff.selfDmgFlat ? 'error' : 'coin');
+      this.save();
+      DC.UI.render();
+    },
+
+    /* ---------------- skill upgrades ---------------- */
+    openSkills: function (paid) {
+      const s = this.state;
+      s.ui.modal = 'skills';
+      s.ui.skillPaid = !!paid;
+      s.ui.skillBack = s.screen;
+      DC.Audio.play('click');
+      DC.UI.render();
+    },
+
+    finishSkill: function () {
+      const s = this.state;
+      s.ui.modal = null;
+      s.ui.skillPaid = false;
+      const back = s.ui.skillBack;
+      s.ui.skillBack = null;
+      if (back === 'reward' || s.screen === 'reward') {
+        const rw = s.ui.reward;
+        s.ui.reward = null;
+        if (rw && rw.boss) this.advanceAct();
+        else this.goMap();
+        return;
+      }
+      DC.UI.render();
+    },
+
+    upSkill: function (i) {
+      const s = this.state;
+      const r = s.run;
+      if (!r || !r.skills) return;
+      if (r.skills[i] >= 1) { DC.UI.toast('이미 각성한 스킬입니다'); return; }
+      r.skills[i] = 1;
+      const sk = DC.getSkill(r.cls, i, 1);
+      DC.Audio.play('big');
+      DC.FX.flash('rgba(251,191,36,.22)');
+      DC.UI.toast('스킬 각성: ' + sk.name);
+      this.save();
+      this.finishSkill();
+    },
+    leaveNode: function () {
+      const s = this.state;
+      const ev = s.ui.event;
+      if (ev && ev.after && ev.after.forge) {
+        s.ui.event = null;
+        this.openForge(ev.after.forge, null);
+        return;
+      }
       s.ui.event = null;
       this.goMap();
     },
-
-    leaveNode: function () { this.goMap(); },
 
     /* ---------------- save ---------------- */
     save: function () {
@@ -646,6 +771,7 @@
             cls: s.run.cls, hp: s.run.hp, maxHp: s.run.maxHp, gold: s.run.gold, act: s.run.act,
             dice: s.run.dice, relics: s.run.relics, map: s.run.map, current: s.run.current,
             cleared: s.run.cleared, extraSpark: s.run.extraSpark, stats: s.run.stats, startedAt: s.run.startedAt,
+            skills: s.run.skills, seenEvents: s.run.seenEvents,
           },
           savedAt: Date.now(),
         };
@@ -682,7 +808,7 @@
     /* greedy evaluator: score a (die, slot) pair like a decent human would */
     scorePair: function (c, hi, si) {
       const h = c.hand[hi];
-      const sk = DC.CLASSES[c.cls].skills[si];
+      const sk = DC.Combat.skill(c, si);
       const fx = sk.fx;
       const nm = DC.Combat.nextMult(c);
       const nAlive = DC.Combat.alive(c).length;
@@ -802,7 +928,11 @@
         if (s.screen === 'forge') { Game.forgeExit(); continue; }
         if (s.screen === 'shop') { Game.leaveNode(); continue; }
         if (s.screen === 'rest') { Game.rest(0); continue; }
-        if (s.screen === 'event') { Game.choice(0); continue; }
+        if (s.screen === 'event') {
+          if (s.ui.event && s.ui.event.result) Game.leaveNode();
+          else Game.choice(0);
+          continue;
+        }
         break;
       }
       return { screen: s.screen, act: s.run ? s.run.act : 0, hp: s.run ? s.run.hp : 0, steps: steps, kills: s.run ? s.run.stats.kills : 0 };
