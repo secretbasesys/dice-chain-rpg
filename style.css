@@ -207,7 +207,7 @@ p { margin: 0; }
 
 .slots {
   flex: 0 0 auto; min-height: 0;
-  display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(62px, 104px);
+  display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(56px, 74px);
   gap: 6px; align-content: center;
 }
 .slot {
@@ -215,7 +215,7 @@ p { margin: 0; }
   background: linear-gradient(#161e30, #131a2a);
   border: 1px solid var(--line); border-radius: 12px;
   padding: 6px 8px; cursor: pointer;
-  display: flex; flex-direction: column; justify-content: space-between;
+  display: flex; flex-direction: column; justify-content: center; gap: 3px;
   min-height: 54px; transition: border-color .15s, transform .1s, background .15s;
   overflow: hidden;
 }
@@ -687,7 +687,7 @@ body[data-screen="title"] #toast, body[data-screen="class"] #toast { bottom: aut
   .intent { font-size: 12px; }
   .strip { font-size: 13px; padding: 5px 10px; min-height: 34px; }
   .combo-badge { font-size: 17px; }
-  .slots { grid-template-columns: repeat(5, 1fr); grid-auto-rows: minmax(78px, 94px); }
+  .slots { grid-template-columns: repeat(5, 1fr); grid-auto-rows: minmax(72px, 86px); }
   .slot:nth-child(5) { grid-column: auto; }
   .slot-name { font-size: 15px; }
   .slot-eff { font-size: 11.5px; }
