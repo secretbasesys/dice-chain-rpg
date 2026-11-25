@@ -3,3 +3,7 @@ __pycache__/
 .DS_Store
 node_modules/
 tests/_shots
+screenshots/p1_*.png
+screenshots/p2_*.png
+screenshots/p3_*.png
+screenshots/final_*.png
