@@ -18,6 +18,7 @@
     opts = opts || {};
     const k = DC.KINDS[h.k] || DC.KINDS.blank;
     const cls = ['die', h.used ? 'used' : '', h.locked ? 'locked' : '', opts.sel ? 'sel' : '', h.phantom ? 'phantom' : ''].join(' ');
+    const tip = k.n + ' ' + h.v + ' — ' + (DC.KINDS[h.k].n === '공허' ? '효과 없음' : '슬롯 조건에 맞으면 스킬이 발동합니다');
     return '' +
       '<div class="' + cls + '" data-act="hand" data-idx="' + i + '" style="--c:' + k.c + '" role="button" tabindex="0" aria-label="주사위 ' + h.v + ' ' + k.n + '">' +
         '<span class="die-ic">' + icon(k.ic) + '</span>' +
@@ -39,7 +40,7 @@
       const v = st[s];
       if (v > 0) {
         const d = DC.STATUS[s];
-        out += '<span class="schip" style="--c:' + d.c + '" title="' + d.tip + '">' + icon(d.ic) + '<b>' + v + '</b></span>';
+        out += '<span class="schip" style="--c:' + d.c + '" data-tip="' + esc(d.tip) + '" data-tip-title="' + esc(d.n) + '">' + icon(d.ic) + '<b>' + v + '</b></span>';
       }
     });
     return out;
@@ -53,14 +54,14 @@
     const gold = r.gold;
     const relics = r.relics.map(function (id) {
       const R = DC.RELICS[id];
-      return '<span class="relic" style="--c:' + R.c + '" title="' + esc(R.name) + ' — ' + esc(R.desc) + '">' + icon(R.ic) + '</span>';
+      return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc) + '" data-tip-title="' + esc(R.name) + '">' + icon(R.ic) + '</span>';
     }).join('');
     return '' +
       '<div class="hud">' +
         '<div class="hud-left">' +
-          '<div class="hp">' +
+          '<div class="hp" data-tip="피해는 방어도가 먼저 흡수합니다. 0이 되면 패배." data-tip-title="체력">' +
             '<div class="hp-top"><span class="hp-num">' + Math.max(0, hp) + '<i>/' + maxHpv + '</i></span>' +
-              (c && c.block > 0 ? '<span class="blockchip">' + icon('shield') + c.block + '</span>' : '') +
+              (c && c.block > 0 ? '<span class="blockchip" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + c.block + '</span>' : '') +
             '</div>' +
             '<div class="hpbar"><i style="width:' + pct(hp, maxHpv) + '%"></i></div>' +
           '</div>' +
@@ -76,6 +77,19 @@
   }
 
   /* ---------------- combat ---------------- */
+  function intentTip(it, e) {
+    if (!it) return '의도 없음';
+    switch (it.k) {
+      case 'attack': return '다음 내 턴에 ' + (it.hits > 1 ? it.v + ' 피해 × ' + it.hits + '회' : it.v + ' 피해') + '를 줍니다. 방어도로 막으세요.';
+      case 'defend': return '방어도를 ' + it.v + ' 얻습니다. 이번 턴 공격이 흡수됩니다.';
+      case 'buff': return '힘이 ' + it.v + ' 증가해 이후 공격이 강해집니다.';
+      case 'debuff': return (DC.STATUS[it.s] ? DC.STATUS[it.s].n : '약화') + ' ' + it.v + '을 나에게 겁니다.';
+      case 'curse': return '내 주사위 ' + it.n + '개를 봉인합니다. 이번 턴 사용할 수 없습니다.';
+      case 'drain': return it.v + ' 피해를 주고 그 절반을 회복합니다.';
+      default: return '알 수 없는 의도';
+    }
+  }
+
   function enemyCard(c, e, idx) {
     const it = DC.Combat.intentOf(e);
     const dead = e.hp <= 0;
@@ -83,13 +97,14 @@
     const lethal = incoming > 0 && incoming >= (c.hp + c.block) && !dead;
     return '' +
       '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '">' +
-        (dead ? '' : '<div class="intent it-' + (it ? it.k : 'none') + (lethal ? ' lethal' : '') + '" title="의도: ' + esc(DC.Combat.intentText(it)) + '">' + icon(DC.Combat.intentIcon(it)) + '<b>' + esc(DC.Combat.intentText(it)) + '</b></div>') +
+        (dead ? '' : '<div class="intent it-' + (it ? it.k : 'none') + (lethal ? ' lethal' : '') + '" data-tip="' + esc(intentTip(it, e)) + '" data-tip-title="적의 의도">' + icon(DC.Combat.intentIcon(it)) + '<b>' + esc(DC.Combat.intentText(it)) + '</b></div>') +
         '<div class="enemy-art">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(e.art) + '</svg>' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(e.art, e) + '</svg>' +
         '</div>' +
+        '<div class="enemy-shadow"></div>' +
         '<div class="enemy-name">' + esc(e.name) + '</div>' +
         '<div class="hpbar enemy-hp"><i style="width:' + pct(e.hp, e.maxHp) + '%"></i></div>' +
-        '<div class="enemy-foot"><span class="ehp">' + Math.max(0, e.hp) + '/' + e.maxHp + '</span>' + (e.block > 0 ? '<span class="echip">' + icon('shield') + e.block + '</span>' : '') + statusChips(e.st) + '</div>' +
+        '<div class="enemy-foot"><span class="ehp">' + Math.max(0, e.hp) + '/' + e.maxHp + '</span>' + (e.block > 0 ? '<span class="echip" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + e.block + '</span>' : '') + statusChips(e.st) + '</div>' +
       '</div>';
   }
 
@@ -99,20 +114,46 @@
     const req = DC.REQ[sk.req];
     const filled = slot.handIdx !== null ? c.hand[slot.handIdx] : null;
     const canAny = selHand != null ? DC.Combat.canPlay(c, selHand, idx).ok : null;
-    const preview = selHand != null ? DC.Combat.preview(c, selHand, idx) : '';
+    const info = selHand != null ? DC.Combat.previewInfo(c, selHand, idx) : null;
+    const prev = info ? (info.lethal ? info.text + ' · 처치' : info.text) : '';
+    const justPlaced = slot.anim && Date.now() - slot.anim < 500;
     return '' +
-      '<div class="slot ' + (filled ? 'filled' : '') + ' ' + (canAny ? 'can' : '') + ' ' + (canAny === false ? 'cannot' : '') + '" data-act="slot" data-idx="' + idx + '" role="button" tabindex="0">' +
+      '<div class="slot ' + (filled ? 'filled' : '') + ' ' + (canAny ? 'can' : '') + ' ' + (canAny === false ? 'cannot' : '') + (justPlaced ? ' landed' : '') + '" data-act="slot" data-idx="' + idx + '" role="button" tabindex="0">' +
         '<div class="slot-top">' +
           '<span class="slot-ic">' + icon(sk.ic) + '</span>' +
           '<span class="slot-name">' + esc(sk.name) + '</span>' +
-          '<span class="req req-' + sk.req + '">' + icon(req.ic) + esc(req.n) + '</span>' +
+          '<span class="req req-' + sk.req + '" data-tip="' + esc(DC.KEYWORDS.req.t) + '" data-tip-title="' + esc(req.n) + '">' + icon(req.ic) + esc(req.n) + '</span>' +
         '</div>' +
         '<div class="slot-bottom">' +
           (filled
             ? '<span class="slot-die" style="--c:' + (DC.KINDS[filled.k] || DC.KINDS.blank).c + '">' + icon((DC.KINDS[filled.k] || DC.KINDS.blank).ic) + '<b>' + filled.v + '</b></span><span class="slot-eff">' + esc(sk.desc) + '</span>'
-            : '<span class="slot-eff">' + esc(sk.desc) + '</span>' + (preview ? '<span class="slot-prev">' + esc(preview) + '</span>' : '')) +
+            : '<span class="slot-eff">' + esc(sk.desc) + '</span>' + (prev ? '<span class="slot-prev' + (info.lethal ? ' lethal' : '') + '">' + esc(prev) + '</span>' : '')) +
         '</div>' +
       '</div>';
+  }
+
+  function forecast(c) {
+    const list = DC.Combat.alive(c);
+    if (!list.length) return '';
+    let total = 0, chips = '';
+    list.forEach(function (e) {
+      const it = DC.Combat.intentOf(e);
+      if (!it) return;
+      let danger = false;
+      if (it.k === 'attack') { total += it.v * (it.hits || 1); danger = true; }
+      chips += '<span class="fc-chip' + (danger ? ' dmg' : '') + '" data-tip="' + esc(intentTip(it, e)) + '" data-tip-title="' + esc(e.name) + ' 의도">' +
+        icon(DC.Combat.intentIcon(it)) + '<b>' + esc(e.name) + '</b> ' + esc(DC.Combat.intentText(it)) + '</span>';
+    });
+    const lethal = total > 0 && total >= c.hp + c.block;
+    const hpAfter = Math.max(0, c.hp + c.block - total);
+    return '<div class="forecast' + (lethal ? ' lethal' : '') + '">' +
+      '<div class="fc-head">' + icon('eye') + '다음 적 턴' +
+        (total > 0
+          ? '<span class="fc-total' + (lethal ? ' lethal' : '') + '">' + total + ' 피해' + (lethal ? ' · 치명적' : ' → HP ' + hpAfter) + '</span>'
+          : '<span class="fc-total calm">직접 공격 없음</span>') +
+      '</div>' +
+      '<div class="fc-list">' + chips + '</div>' +
+    '</div>';
   }
 
   function renderCombat(state) {
@@ -121,6 +162,8 @@
     const canAct = c.phase === 'player' && !state.ui.busy;
     const unused = c.hand.filter(function (h) { return !h.used && !h.locked; }).length;
     const m = DC.Combat.mult(c);
+    const speed = state.ui.speed === 2 ? 2 : 1;
+    const canUndo = canAct && (state.ui.hist || []).length > 0;
 
     let slots = '';
     for (let i = 0; i < c.slots.length; i++) slots += slotCard(c, i, canAct ? sel : null);
@@ -128,27 +171,47 @@
     let tray = '';
     c.hand.forEach(function (h, i) { tray += dieChip(h, i, { sel: sel === i && canAct }); });
 
+    let chain = '';
+    (c.chainLog || []).slice(-6).forEach(function (l) {
+      const k = DC.KINDS[l.k] || DC.KINDS.blank;
+      chain += '<i class="chain-dot" style="--c:' + k.c + '" data-tip="' + esc(l.skill + ' · ' + k.n + ' ' + l.v + ' — 연쇄 ' + '콤보에 기여') + '">' + icon(k.ic) + '</i>';
+    });
+
+    const intent = c.phase === 'enemy' ? '<span class="phase-tag enemy">적의 턴…</span>' :
+      (c.phase === 'player' ? '<span class="phase-tag">내 턴</span>' : '');
+
     return '' +
       hud(state) +
-      '<main class="combat">' +
-        '<div class="enemy-row">' + c.enemies.map(function (e, i) { return enemyCard(c, e, i); }).join('') + '</div>' +
+      '<main class="combat' + (state.ui.busy ? ' busy' : '') + '">' +
+        '<div class="arena">' +
+          '<div class="enemy-row" data-n="' + c.enemies.length + '">' + c.enemies.map(function (e, i) { return enemyCard(c, e, i); }).join('') + '</div>' +
+          '<div class="arena-floor"></div>' +
+        '</div>' +
         '<div class="strip">' +
-          '<span class="combo-badge ' + (c.combo > 1 ? 'hot' : '') + '" id="combo-badge">' + icon('mult') + 'x' + m.toFixed(1) + '</span>' +
+          '<span class="combo-badge ' + (c.combo > 1 ? 'hot' : '') + '" id="combo-badge" data-tip="' + esc(DC.KEYWORDS.combo.t) + '" data-tip-title="콤보 x' + m.toFixed(1) + '배율 · 다음 +' + (DC.Combat.nextMult(c) - m).toFixed(1) + '">' + icon('mult') + 'x' + m.toFixed(1) + '</span>' +
+          (chain ? '<span class="chain">' + chain + '</span>' : '') +
           '<span class="strip-item">' + icon('dice') + '남은 <b id="left-dice">' + unused + '</b></span>' +
-          '<span class="strip-item spark">' + icon('spark') + '기세 <b id="spark-num">' + c.sparks + '</b></span>' +
+          '<span class="strip-item spark" data-tip="' + esc(DC.KEYWORDS.spark.t) + '" data-tip-title="기세">' + icon('spark') + '기세 <b id="spark-num">' + c.sparks + '</b></span>' +
           '<span class="strip-item">' + icon('clock') + '턴 <b>' + c.turn + '</b></span>' +
           statusChips(c.statuses) +
-          (c.turn === 1 && c.combo === 0 ? '<span class="strip-hint">주사위→슬롯</span>' : '') +
+          intent +
+          '<button class="speedbtn" data-act="speed" data-tip="애니메이션 속도를 바꿉니다 (현재 ' + speed + 'x)" data-tip-title="속도">' + speed + 'x</button>' +
+          (c.turn === 1 && c.combo === 0 ? '<span class="strip-hint">주사위를 슬롯으로 끌어다 놓으세요</span>' : '') +
         '</div>' +
+        forecast(c) +
         '<div class="slots">' + slots + '</div>' +
-        '<div class="tray-wrap"><div class="tray" id="tray">' + tray + '</div></div>' +
+        '<div class="tray-wrap">' +
+          '<div class="tray-label">' + icon('dice') + '주사위 <b>' + c.hand.length + '</b>' + (sel != null ? ' · <span class="pick">' + esc(DC.KINDS[c.hand[sel].k].n + ' ' + c.hand[sel].v) + ' 선택됨 — 슬롯을 탭하세요</span>' : '') + '</div>' +
+          '<div class="tray" id="tray">' + tray + '</div>' +
+        '</div>' +
         '<div class="actions">' +
           '<div class="manip">' +
-            '<button class="mbtn" data-act="manip" data-op="reroll" ' + (canAct ? '' : 'disabled') + ' title="재굴림 (기세 1)">' + icon('reroll') + '<span>재굴림</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="plus" ' + (canAct ? '' : 'disabled') + ' title="눈 +1 (기세 1)">' + icon('plus') + '<span>+1</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="minus" ' + (canAct ? '' : 'disabled') + ' title="눈 -1 (기세 1)">' + icon('minus') + '<span>-1</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="flip" ' + (canAct ? '' : 'disabled') + ' title="뒤집기 7-x (기세 1)">' + icon('flip') + '<span>뒤집기</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="copy" ' + (canAct ? '' : 'disabled') + ' title="복제 (기세 2)">' + icon('copy') + '<span>복제</span></button>' +
+            '<button class="mbtn undo" data-act="undo" ' + (canUndo ? '' : 'disabled') + ' data-tip="방금 배치나 주사위 조작을 되돌립니다 (Z)" data-tip-title="되돌리기">' + icon('reroll') + '<span>되돌</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="reroll" ' + (canAct ? '' : 'disabled') + ' data-tip="' + esc(DC.KEYWORDS.reroll.t) + '" data-tip-title="재굴림 (기세 1)">' + icon('reroll') + '<span>재굴림</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="plus" ' + (canAct ? '' : 'disabled') + ' data-tip="기세 1을 쓰고 눈을 +1 합니다." data-tip-title="+1">' + icon('plus') + '<span>+1</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="minus" ' + (canAct ? '' : 'disabled') + ' data-tip="기세 1을 쓰고 눈을 -1 합니다." data-tip-title="-1">' + icon('minus') + '<span>-1</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="flip" ' + (canAct ? '' : 'disabled') + ' data-tip="' + esc(DC.KEYWORDS.flip.t) + '" data-tip-title="뒤집기 7-x">' + icon('flip') + '<span>뒤집기</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="copy" ' + (canAct ? '' : 'disabled') + ' data-tip="' + esc(DC.KEYWORDS.copy.t) + '" data-tip-title="복제 (기세 2)">' + icon('copy') + '<span>복제</span></button>' +
           '</div>' +
           '<button class="endbtn" data-act="endturn" ' + (canAct ? '' : 'disabled') + '>' + icon('check') + '턴 종료</button>' +
         '</div>' +
@@ -459,6 +522,7 @@
     const token = ++animToken;
     let i = 0;
     const state = DC.Game.state;
+    const spr = state.ui.speed === 2 ? 0.45 : 1;
 
     function targetEl(eid) { return document.querySelector('[data-eid="' + eid + '"]'); }
 
@@ -561,13 +625,123 @@
             break;
         }
       } catch (e) { /* FX must never break the game */ }
-      setTimeout(step, delay);
+      setTimeout(step, Math.max(16, delay * spr));
     }
     step();
   }
 
-  /* ---------------- public ---------------- */
+  /* ---------------- tooltip layer ---------------- */
   const UI = {
+    showTip: function (el) {
+      const text = el.getAttribute('data-tip');
+      if (!text) return;
+      const title = el.getAttribute('data-tip-title') || '';
+      let layer = document.getElementById('tip');
+      if (UI._tipEl === el && layer && layer.classList.contains('show')) { UI.hideTip(); return; }
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.id = 'tip';
+        document.body.appendChild(layer);
+      }
+      layer.innerHTML = (title ? '<b>' + esc(title) + '</b>' : '') + '<span>' + esc(text) + '</span>';
+      layer.classList.add('show');
+      const r = el.getBoundingClientRect();
+      const tw = layer.offsetWidth, th = layer.offsetHeight;
+      let x = r.left + r.width / 2 - tw / 2;
+      x = Math.max(8, Math.min(window.innerWidth - tw - 8, x));
+      let y = r.top - th - 10;
+      if (y < 58) y = Math.min(window.innerHeight - th - 10, r.bottom + 10);
+      layer.style.left = x + 'px';
+      layer.style.top = y + 'px';
+      UI._tipEl = el;
+      DC.Audio.play('click');
+    },
+
+    hideTip: function () {
+      const layer = document.getElementById('tip');
+      if (layer) layer.classList.remove('show');
+      UI._tipEl = null;
+    },
+
+    /* drag dice from the tray onto a slot (pointer events; tap still works) */
+    bindDrag: function () {
+      const app = document.getElementById('app');
+      if (!app || app._dragBound) return;
+      app._dragBound = true;
+      let st = null;
+
+      function clearHover() {
+        document.querySelectorAll('.slot.drag-over').forEach(function (s) { s.classList.remove('drag-over'); });
+      }
+
+      app.addEventListener('pointerdown', function (e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        const die = e.target.closest('[data-act="hand"]');
+        if (!die || !app.contains(die)) return;
+        const state = DC.Game.state;
+        const c = state.combat;
+        if (!c || c.phase !== 'player' || state.ui.busy) return;
+        const idx = parseInt(die.dataset.idx, 10);
+        const h = c.hand[idx];
+        if (!h || h.used || h.locked) return;
+        const r = die.getBoundingClientRect();
+        st = { idx: idx, x: e.clientX, y: e.clientY, rect: r, running: false, ghost: null, pid: e.pointerId };
+      });
+
+      app.addEventListener('pointermove', function (e) {
+        if (!st || st.pid !== e.pointerId) return;
+        const dx = e.clientX - st.x, dy = e.clientY - st.y;
+        if (!st.running && Math.sqrt(dx * dx + dy * dy) < 9) return;
+        if (!st.running) {
+          st.running = true;
+          DC.Game.state.ui.sel = st.idx;
+          DC.UI.render();
+          const g = document.createElement('div');
+          g.className = 'drag-ghost';
+          g.style.width = st.rect.width + 'px';
+          g.style.height = st.rect.height + 'px';
+          g.style.left = st.rect.left + 'px';
+          g.style.top = st.rect.top + 'px';
+          const h = DC.Game.state.combat.hand[st.idx];
+          const k = DC.KINDS[h.k] || DC.KINDS.blank;
+          g.style.setProperty('--c', k.c);
+          g.innerHTML = '<span class="die-ic">' + icon(k.ic) + '</span><span class="die-val">' + h.v + '</span><span class="die-kind">' + k.n + '</span>';
+          document.body.appendChild(g);
+          st.ghost = g;
+        }
+        st.ghost.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(1.07)';
+        clearHover();
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        const slot = under && under.closest('.slot');
+        if (slot) slot.classList.add('drag-over');
+      });
+
+      function endDrag(e) {
+        if (!st) return;
+        const stt = st;
+        st = null;
+        clearHover();
+        if (!stt.running) return;
+        if (stt.ghost && stt.ghost.parentNode) stt.ghost.parentNode.removeChild(stt.ghost);
+        UI._suppressClick = Date.now() + 350;
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        const slot = under && under.closest('.slot');
+        if (slot) {
+          const si = parseInt(slot.dataset.idx, 10);
+          DC.Game.play(stt.idx, si);
+        } else {
+          DC.Game.state.ui.sel = null;
+          DC.UI.render();
+        }
+      }
+      app.addEventListener('pointerup', endDrag);
+      app.addEventListener('pointercancel', function () {
+        if (st && st.ghost && st.ghost.parentNode) st.ghost.parentNode.removeChild(st.ghost);
+        st = null; clearHover();
+        DC.Game.state.ui.sel = null; DC.UI.render();
+      });
+    },
+
     render: function () {
       const state = DC.Game.state;
       const app = document.getElementById('app');
@@ -587,12 +761,15 @@
         case 'gameover': html = renderEnd(state, 'lose'); break;
         default: html = '<main class="title-screen"><h1>...</h1></main>';
       }
-      app.className = 'app screen-' + state.screen;
+      app.className = 'app screen-' + state.screen + (state.run ? ' act-' + state.run.act : '');
       app.innerHTML = html;
       if (state.ui.modal === 'deck' && state.run) app.innerHTML += renderDeck(state);
       if (state.ui.modal === 'help') app.innerHTML += renderHelp();
       document.body.setAttribute('data-screen', state.screen);
+      if (state.run) document.body.setAttribute('data-act', state.run.act);
       if (state.screen === 'map') requestAnimationFrame(drawMapEdges);
+      if (state.screen === 'combat') UI.bindDrag();
+      if (state.ui.sel != null) UI.hideTip();
     },
 
     toast: function (msg) {

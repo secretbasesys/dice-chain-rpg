@@ -16,7 +16,7 @@
       screen: 'title',
       run: null,
       combat: null,
-      ui: { sel: null, busy: false, modal: null, reward: null, forge: null, shop: null, event: null },
+      ui: { sel: null, busy: false, modal: null, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1 },
       lastCombat: null,
     },
 
@@ -25,6 +25,8 @@
       try {
         const s = JSON.parse(localStorage.getItem(SET_KEY) || '{}');
         if (s.muted) DC.Audio.setMuted(true);
+        if (s.speed === 2) this.state.ui.speed = 2;
+        DC.Speed = this.state.ui.speed;
       } catch (e) {}
       this.bind();
       DC.UI.render();
@@ -33,21 +35,26 @@
     bind: function () {
       const self = this;
       document.addEventListener('click', function (e) {
-        const el = e.target.closest('[data-act]');
-        if (!el) return;
-        const act = el.getAttribute('data-act');
-        const d = el.dataset;
-        if (el.hasAttribute('disabled')) return;
+        const tipEl = e.target.closest('[data-tip]');
+        const actEl = e.target.closest('[data-act]');
+        if (tipEl && tipEl !== actEl) { DC.UI.showTip(tipEl); return; }
+        if (!actEl) { DC.UI.hideTip(); return; }
+        const act = actEl.getAttribute('data-act');
+        const d = actEl.dataset;
+        if (actEl.hasAttribute('disabled')) return;
+        if (DC.UI._suppressClick && Date.now() < DC.UI._suppressClick) return;
         DC.Audio.init();
-        try { self.dispatch(act, d, el, e); } catch (err) {
+        DC.UI.hideTip();
+        try { self.dispatch(act, d, actEl, e); } catch (err) {
           console.error('[dispatch]', act, err);
           DC.UI.toast('오류: ' + (err && err.message));
         }
       });
       document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') { self.state.ui.modal = null; DC.UI.render(); }
+        if (e.key === 'Escape') { self.state.ui.modal = null; DC.UI.hideTip(); DC.UI.render(); }
         if (self.state.screen === 'combat' && !self.state.ui.busy) {
           if (e.key === 'Enter') self.endTurn();
+          if (e.key === 'z' || e.key === 'Z') self.undo();
           if (e.key >= '1' && e.key <= '9') self.tapDie(parseInt(e.key, 10) - 1);
         }
       });
@@ -65,6 +72,8 @@
         case 'hand': this.tapDie(parseInt(d.idx, 10)); break;
         case 'slot': this.tapSlot(parseInt(d.idx, 10)); break;
         case 'manip': this.manip(d.op); break;
+        case 'undo': this.undo(); break;
+        case 'speed': this.toggleSpeed(); break;
         case 'endturn': this.endTurn(); break;
         case 'target': this.setTarget(parseInt(d.i, 10)); break;
         case 'reward': this.takeReward(parseInt(d.i, 10)); break;
@@ -187,10 +196,48 @@
       this.state.screen = 'combat';
       this.state.ui.sel = null;
       this.state.ui.busy = false;
+      this.state.ui.hist = [];
       DC.UI.render();
       DC.Audio.play('turn');
       if (kind === 'boss') DC.UI.toast('보스 등장!');
       else if (kind === 'elite') DC.UI.toast('정예 조우!');
+    },
+
+    pushHist: function () {
+      const c = this.state.combat;
+      if (!c) return;
+      const ui = this.state.ui;
+      ui.hist = ui.hist || [];
+      ui.hist.push(DC.Combat.snapshot(c));
+      if (ui.hist.length > 24) ui.hist.shift();
+    },
+
+    undo: function () {
+      const s = this.state;
+      const c = s.combat;
+      if (!c || s.ui.busy) return;
+      const hist = s.ui.hist || [];
+      if (!hist.length) { DC.UI.toast('되돌릴 동작이 없습니다'); DC.Audio.play('error'); return; }
+      const snap = hist.pop();
+      DC.Combat.restore(c, snap);
+      s.ui.sel = null;
+      s.run.hp = c.hp;
+      DC.Audio.play('reroll');
+      DC.UI.render();
+      DC.FX.flash('rgba(107,199,255,.10)');
+    },
+
+    toggleSpeed: function () {
+      const s = this.state;
+      s.ui.speed = s.ui.speed === 2 ? 1 : 2;
+      DC.Speed = s.ui.speed;
+      try {
+        const cur = JSON.parse(localStorage.getItem(SET_KEY) || '{}');
+        cur.speed = s.ui.speed;
+        localStorage.setItem(SET_KEY, JSON.stringify(cur));
+      } catch (e) {}
+      DC.Audio.play('click');
+      DC.UI.render();
     },
 
     setTarget: function (i) {
@@ -240,6 +287,9 @@
       const s = this.state;
       const c = s.combat;
       if (!c || c.phase !== 'player') return false;
+      const chk = DC.Combat.canPlay(c, hIdx, sIdx);
+      if (!chk.ok) { DC.UI.toast(chk.why); DC.Audio.play('error'); return false; }
+      this.pushHist();
       const res = DC.Combat.play(c, hIdx, sIdx);
       if (!res.ok) { DC.UI.toast(res.why); DC.Audio.play('error'); return false; }
       s.ui.sel = null;
@@ -262,6 +312,7 @@
       if (!c || s.ui.busy || c.phase !== 'player') return;
       if (s.ui.sel == null) { DC.UI.toast('먼저 주사위를 탭하세요'); DC.Audio.play('error'); return; }
       const before = c.hand[s.ui.sel];
+      if (op === 'reroll' || op === 'plus' || op === 'minus' || op === 'flip' || op === 'copy') this.pushHist();
       const res = DC.Combat.manip(c, op, s.ui.sel);
       if (!res.ok) { DC.UI.toast(res.why); DC.Audio.play('error'); return; }
       DC.Audio.play('clack', 2);
@@ -280,6 +331,7 @@
       if (!c || s.ui.busy || c.phase !== 'player') return;
       s.ui.busy = true;
       s.ui.sel = null;
+      s.ui.hist = [];
       const res = DC.Combat.enemyPhase(c);
       r.hp = c.hp;
       DC.UI.render();
@@ -290,6 +342,7 @@
         setTimeout(function () {
           const r2 = DC.Combat.startTurn(c);
           r.stats.turns++;
+          s.ui.hist = [];
           if (c.phase === 'won') { s.ui.busy = false; return self.combatWon(); }
           s.ui.busy = false;
           DC.UI.render();

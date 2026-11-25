@@ -253,8 +253,24 @@
     return mainDone;
   }
 
+  /* ---------- state snapshots (undo) ---------- */
+  const SNAP_KEYS = ['enemies', 'hand', 'slots', 'combo', 'multBonus', 'sparks', 'block', 'hp',
+    'statuses', 'phase', 'totalDamage', 'rerollsThisTurn', 'luckyCoinUsed', 'turn', 'chainLog'];
+
   /* ---------- public API ---------- */
   const Combat = {
+    snapshot: function (c) {
+      const o = {};
+      SNAP_KEYS.forEach(function (k) { o[k] = c[k]; });
+      return JSON.stringify(o);
+    },
+
+    restore: function (c, snap) {
+      const o = JSON.parse(snap);
+      SNAP_KEYS.forEach(function (k) { if (k in o) c[k] = o[k]; });
+      return c;
+    },
+
     create: function (run, spawns, kind) {
       const c = {
         kind: kind || 'combat',
@@ -279,6 +295,7 @@
         rerollsThisTurn: 0,
         luckyCoinUsed: 0,
         totalDamage: 0,
+        chainLog: [],
         seedNote: null,
       };
       const cls = DC.CLASSES[run.cls];
@@ -301,6 +318,7 @@
       c.luckyCoinUsed = 0;
       c.sparks = c.maxSparks;
       c.slots.forEach(function (s) { s.handIdx = null; s.resolved = false; });
+      c.chainLog = [];
 
       const bag = c._bag || [];
       const hand = [];
@@ -348,7 +366,9 @@
       h.used = true;
       s.handIdx = handIdx;
       s.resolved = true;
-      ev.push({ t: 'combo', n: c.combo, mult: mult(c), face: h.k, value: h.v });
+      c.chainLog = (c.chainLog || []).concat([{ k: h.k, v: h.v, skill: skill.name }]);
+      s.anim = Date.now();
+      ev.push({ t: 'combo', n: c.combo, mult: mult(c), face: h.k, value: h.v, skill: skill.name });
       const before = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);
       resolve(c, h, skill, ev);
       const after = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);
@@ -499,6 +519,59 @@
     },
 
     attachBag: function (c, bag) { c._bag = bag; },
+
+    /* rich preview for the slot card while a die is selected */
+    previewInfo: function (c, handIdx, slotIdx) {
+      const h = c.hand[handIdx], s = c.slots[slotIdx];
+      if (!h || !s) return null;
+      const skill = DC.CLASSES[c.cls].skills[slotIdx];
+      const fx = skill.fx;
+      const step = DC.BAL.comboStep + (has(c, 'mask') ? 0.1 : 0);
+      const cur = 1 + step * Math.max(0, c.combo - 1) + c.multBonus;
+      const nextMult = Math.min(DC.BAL.comboCap + 0.5, 1 + step * c.combo + c.multBonus);
+      const weakP = c.statuses.weak > 0 ? DC.BAL.weakMult : 1;
+      function dmg(ratio, extra) {
+        let d = (h.v * ratio + (extra || 0) + (c.statuses.str || 0)) * nextMult * weakP;
+        if (has(c, 'scale') && h.v % 2 === 1) d *= 1.4;
+        if (has(c, 'pledge') && h.v % 2 === 0) d *= 1.4;
+        if (has(c, 'flameHeart') && (h.k === 'fire' || fx.burn)) d *= 1.6;
+        return Math.max(1, Math.round(d));
+      }
+      const tg = target(c);
+      const tghp = tg ? tg.hp + tg.block : 0;
+      const nAlive = alive(c).length;
+      const out = { mult: nextMult, curMult: cur, gain: nextMult - cur, dmg: 0, hits: 1, lethal: false, text: '' };
+      if (fx.type === 'attack') {
+        const bonus = skill.id === 'dagger' ? Math.max(0, c.combo - 1) * (fx.comboBonus || 0) : 0;
+        out.dmg = dmg(fx.ratio, bonus);
+        if (has(c, 'karma') && c.combo >= 4) out.hits = 2;
+        out.lethal = out.dmg * out.hits >= tghp && tghp > 0;
+        out.text = '≈' + out.dmg + (out.hits > 1 ? '×' + out.hits : '') + ' 피해';
+      } else if (fx.type === 'aoe') {
+        out.dmg = dmg(fx.ratio);
+        out.lethal = alive(c).every(function (e) { return e.hp + e.block <= out.dmg; });
+        out.text = '≈' + out.dmg + ' ×' + nAlive + ' 피해';
+      } else if (fx.type === 'chain') {
+        out.dmg = dmg(fx.ratio);
+        out.text = '≈' + out.dmg + ' + 연쇄';
+        out.lethal = out.dmg >= tghp;
+      } else if (fx.type === 'multi') {
+        out.hits = Math.max(1, c.combo + 1);
+        out.dmg = dmg(fx.ratio) * out.hits;
+        out.lethal = out.dmg >= tghp;
+        out.text = '≈' + dmg(fx.ratio) + ' ×' + out.hits;
+      } else if (fx.type === 'block') {
+        out.dmg = Math.round(h.v * fx.ratio * (has(c, 'wrist') ? 1.25 : 1));
+        out.text = '+' + out.dmg + ' 방어';
+      } else if (fx.type === 'mult') {
+        out.text = '배율 +' + fx.add.toFixed(1) + (fx.dmgRatio ? ' · ' + dmg(fx.dmgRatio) + ' 피해' : '');
+      } else if (fx.type === 'spark') {
+        out.text = '기세 +' + fx.amount;
+      } else if (fx.type === 'buff') {
+        out.text = '힘 +' + fx.str + ' · 방어 ' + Math.round((fx.block || 0) * (has(c, 'wrist') ? 1.25 : 1));
+      }
+      return out;
+    },
 
     preview: function (c, handIdx, slotIdx) {
       const h = c.hand[handIdx], s = c.slots[slotIdx];
