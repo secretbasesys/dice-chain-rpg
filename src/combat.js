@@ -58,7 +58,7 @@
     const out = Object.assign({}, it);
     if (out.k === 'attack') {
       let v = out.v + (e.st.str || 0);
-      if (e.actMul) v = Math.round(v * e.actMul);
+      if (e.actMul) v = Math.round(v * e.actMul * (e.ascAtk || 1));
       if (e.st.weak > 0) v = Math.round(v * DC.BAL.weakMult);
       out.v = Math.max(1, Math.round(v));
     }
@@ -176,7 +176,7 @@
       if (k === 'slash') d *= 1.0;
       if (has(c, 'scale') && v % 2 === 1) d *= 1.4;
       if (has(c, 'pledge') && v % 2 === 0) d *= 1.4;
-      if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 2;
+      if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 3;
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
       let dmg = Math.max(1, Math.round(d));
       const hits = (has(c, 'karma') && c.combo >= 4 && !(opts && opts.noDouble)) ? 2 : 1;
@@ -330,6 +330,7 @@
         rerollsThisTurn: 0,
         luckyCoinUsed: 0,
         totalDamage: 0,
+        maxCombo: 0,
         chainLog: [],
         skillLv: (run.skills || []).slice(),
         seedNote: null,
@@ -338,7 +339,15 @@
       c.maxSparks = cls.sparks + (has(c, 'gamblersHand') ? 1 : 0);
       if (run.extraSpark) c.maxSparks += run.extraSpark;
       const scale = spawns.length > 1 ? 0.78 : 1;
-      c.enemies = spawns.map(function (s) { return mkEnemy(s, scale, c.act); });
+      const mod = DC.ascMod(run.asc || 0);
+      c.asc = run.asc || 0;
+      c.enemies = spawns.map(function (s) {
+        const e = mkEnemy(s, scale, c.act);
+        const mult = 1 + (mod.hp || 0) + ((s.gimmick && mod.bossHp) ? mod.bossHp : 0);
+        if (mult !== 1) { e.maxHp = Math.max(1, Math.round(e.maxHp * mult)); e.hp = e.maxHp; }
+        e.ascAtk = 1 + (mod.atk || 0);
+        return e;
+      });
       c.slots = cls.skills.map(function (s) { return { id: s.id, handIdx: null }; });
       c._bag = (run.dice || []).slice();
       Combat.newTurn(c, true);
@@ -399,6 +408,7 @@
       const skill = skillOf(c, slotIdx);
       const ev = [];
       c.combo += 1;
+      c.maxCombo = Math.max(c.maxCombo || 0, c.combo);
       h.used = true;
       s.handIdx = handIdx;
       s.resolved = true;
@@ -549,8 +559,8 @@
       if (c.cls === 'warrior' && c.block > 0) {
         const t = target(c);
         if (t) {
-          hitEnemy(c, t, 3, { kind: 'slash' }, ev);
-          ev.push({ t: 'msg', text: '강철 의지 — 3 피해' });
+          hitEnemy(c, t, 2, { kind: 'slash' }, ev);
+          ev.push({ t: 'msg', text: '강철 의지 — 2 피해' });
           if (!alive(c).length) { c.phase = 'won'; ev.push({ t: 'won' }); return { ok: true, events: ev }; }
         }
       }

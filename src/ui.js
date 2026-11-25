@@ -14,13 +14,21 @@
   }
   function pct(a, b) { return Math.max(0, Math.min(100, (a / Math.max(1, b)) * 100)); }
 
+  function pips(v) {
+    const map = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+    const on = map[v] || [];
+    let out = '<span class="die-pips">';
+    for (let i = 0; i < 9; i++) out += '<i' + (on.indexOf(i) >= 0 ? '' : ' class="off"') + '></i>';
+    return out + '</span>';
+  }
+
   function dieChip(h, i, opts) {
     opts = opts || {};
     const k = DC.KINDS[h.k] || DC.KINDS.blank;
     const cls = ['die', h.used ? 'used' : '', h.locked ? 'locked' : '', opts.sel ? 'sel' : '', h.phantom ? 'phantom' : ''].join(' ');
-    const tip = k.n + ' ' + h.v + ' — ' + (DC.KINDS[h.k].n === '공허' ? '효과 없음' : '슬롯 조건에 맞으면 스킬이 발동합니다');
     return '' +
       '<div class="' + cls + '" data-act="hand" data-idx="' + i + '" style="--c:' + k.c + '" role="button" tabindex="0" aria-label="주사위 ' + h.v + ' ' + k.n + '">' +
+        pips(h.v) +
         '<span class="die-ic">' + icon(k.ic) + '</span>' +
         '<span class="die-val">' + h.v + '</span>' +
         '<span class="die-kind">' + k.n + '</span>' +
@@ -99,7 +107,7 @@
       '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '">' +
         (dead ? '' : '<div class="intent it-' + (it ? it.k : 'none') + (lethal ? ' lethal' : '') + '" data-tip="' + esc(intentTip(it, e)) + '" data-tip-title="적의 의도">' + icon(DC.Combat.intentIcon(it)) + '<b>' + esc(DC.Combat.intentText(it)) + '</b></div>') +
         '<div class="enemy-art">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(e.art, e) + '</svg>' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(e.art, e) + '</svg>' +
         '</div>' +
         '<div class="enemy-shadow"></div>' +
         '<div class="enemy-name">' + esc(e.name) + '</div>' +
@@ -185,19 +193,26 @@
       hud(state) +
       '<main class="combat' + (state.ui.busy ? ' busy' : '') + '">' +
         '<div class="arena">' +
+          '<div class="arena-scene act-' + c.act + '">' +
+            '<svg viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' + DC.actScene(c.act) + '</svg>' +
+          '</div>' +
           '<div class="enemy-row" data-n="' + c.enemies.length + '">' + c.enemies.map(function (e, i) { return enemyCard(c, e, i); }).join('') + '</div>' +
           '<div class="arena-floor"></div>' +
         '</div>' +
         '<div class="strip">' +
-          '<span class="combo-badge ' + (c.combo > 1 ? 'hot' : '') + '" id="combo-badge" data-tip="' + esc(DC.KEYWORDS.combo.t) + '" data-tip-title="콤보 x' + m.toFixed(1) + '배율 · 다음 +' + (DC.Combat.nextMult(c) - m).toFixed(1) + '">' + icon('mult') + 'x' + m.toFixed(1) + '</span>' +
-          (chain ? '<span class="chain">' + chain + '</span>' : '') +
-          '<span class="strip-item">' + icon('dice') + '남은 <b id="left-dice">' + unused + '</b></span>' +
-          '<span class="strip-item spark" data-tip="' + esc(DC.KEYWORDS.spark.t) + '" data-tip-title="기세">' + icon('spark') + '기세 <b id="spark-num">' + c.sparks + '</b></span>' +
-          '<span class="strip-item">' + icon('clock') + '턴 <b>' + c.turn + '</b></span>' +
-          statusChips(c.statuses) +
-          intent +
-          '<button class="speedbtn" data-act="speed" data-tip="애니메이션 속도를 바꿉니다 (현재 ' + speed + 'x)" data-tip-title="속도">' + speed + 'x</button>' +
-          (c.turn === 1 && c.combo === 0 ? '<span class="strip-hint">주사위를 슬롯으로 끌어다 놓으세요</span>' : '') +
+          '<div class="strip-main">' +
+            '<span class="combo-badge ' + (c.combo > 1 ? 'hot' : '') + '" id="combo-badge" data-tip="' + esc(DC.KEYWORDS.combo.t) + '" data-tip-title="콤보 x' + m.toFixed(1) + '배율 · 다음 +' + (DC.Combat.nextMult(c) - m).toFixed(1) + '">' + icon('mult') + 'x' + m.toFixed(1) + '</span>' +
+            (chain ? '<span class="chain">' + chain + '</span>' : '') +
+            '<span class="strip-item">' + icon('dice') + '남은 <b id="left-dice">' + unused + '</b></span>' +
+            '<span class="strip-item spark" data-tip="' + esc(DC.KEYWORDS.spark.t) + '" data-tip-title="기세">' + icon('spark') + '기세 <b id="spark-num">' + c.sparks + '</b></span>' +
+            '<span class="strip-item">' + icon('clock') + '턴 <b>' + c.turn + '</b></span>' +
+            statusChips(c.statuses) +
+          '</div>' +
+          '<div class="strip-sub">' +
+            (c.phase === 'enemy' ? '<span class="phase-tag enemy">적의 턴…</span>' : '<span class="phase-tag">내 턴</span>') +
+            (c.turn === 1 && c.combo === 0 ? '<span class="strip-hint">' + icon('eye') + '주사위를 슬롯으로 끌어다 놓으세요</span>' : '') +
+            '<button class="speedbtn" data-act="speed" data-tip="애니메이션 속도를 바꿉니다 (현재 ' + speed + 'x)" data-tip-title="속도">' + speed + 'x</button>' +
+          '</div>' +
         '</div>' +
         forecast(c) +
         '<div class="slots">' + slots + '</div>' +
@@ -287,6 +302,11 @@
   /* ---------------- title / class ---------------- */
   function renderTitle(state) {
     const hasSave = DC.Game.hasSave();
+    const meta = DC.Meta.get();
+    const asc = state.ui.asc || 0;
+    const maxAsc = Math.min(5, meta.unlockedAsc || 0);
+    const step = DC.ASC_STEPS[asc] || DC.ASC_STEPS[0];
+    const prog = DC.Meta.progress();
     return '' +
       '<main class="title-screen">' +
         '<div class="logo-dice">' +
@@ -297,12 +317,21 @@
         '<h1 class="logo">다이스 <em>체인</em></h1>' +
         '<p class="logo-sub">DICE CHAIN RPG</p>' +
         '<p class="tagline">주사위를 굴리고, 눈을 바꾸고, 연쇄를 터뜨려라.</p>' +
+        '<div class="asc-row">' +
+          '<button class="asc-btn" data-act="asc" data-dir="-1" ' + (asc <= 0 ? 'disabled' : '') + ' aria-label="승천 낮추기">' + icon('minus') + '</button>' +
+          '<div class="asc-label' + (asc ? ' on' : '') + ' ' + (maxAsc ? '' : 'locked') + '">' +
+            '<b>' + (maxAsc ? '승천 ' + asc : '승천 잠김') + '</b>' +
+            '<span>' + (maxAsc ? esc(step.desc) : '한 번 승리하면 열립니다') + '</span>' +
+          '</div>' +
+          '<button class="asc-btn" data-act="asc" data-dir="1" ' + (asc >= maxAsc ? 'disabled' : '') + ' aria-label="승천 높이기">' + icon('plus') + '</button>' +
+        '</div>' +
         '<div class="title-btns">' +
           (hasSave ? '<button class="bigbtn primary" data-act="resume">이어하기</button>' : '') +
           '<button class="bigbtn ' + (hasSave ? '' : 'primary') + '" data-act="newrun">새 게임</button>' +
+          '<button class="bigbtn ghost" data-act="codex">도감 · 업적 <i class="badge-num">' + (prog.dice + prog.relics + prog.enemies) + '</i></button>' +
           '<button class="bigbtn ghost" data-act="help">게임 방법</button>' +
         '</div>' +
-        '<p class="ver">v' + DC.VERSION + ' · 모바일/데스크톱 · GitHub Pages</p>' +
+        '<p class="ver">v' + DC.VERSION + ' · 승리 ' + meta.wins + '회 · GitHub Pages</p>' +
       '</main>';
   }
 
@@ -326,7 +355,7 @@
     return '' +
       '<main class="class-screen">' +
         '<h2>전사를 선택하세요</h2>' +
-        '<p class="sub">각 클래스는 다른 주사위와 스킬 슬롯을 가집니다</p>' +
+        '<p class="sub">각 클래스는 다른 주사위와 스킬 슬롯을 가집니다' + ((state.ui.asc || 0) ? ' · 승천 ' + state.ui.asc : '') + '</p>' +
         '<div class="class-list">' + cards + '</div>' +
       '</main>';
   }
@@ -492,19 +521,68 @@
       '</div></div>';
   }
 
+  function renderCodex(state) {
+    const meta = DC.Meta.get();
+    const pg = DC.Meta.progress();
+    const seenDice = meta.seen.dice || [], seenRelic = meta.seen.relics || [], seenEnemy = meta.seen.enemies || [];
+    const dice = DC.DICE_IDS.map(function (id) {
+      const D = DC.DICE[id];
+      const got = seenDice.indexOf(id) >= 0;
+      if (!got) return '<div class="cx-die locked">' + icon('lock') + '<span>???</span></div>';
+      return '<div class="cx-die" style="--c:' + D.c + '">' +
+        '<b>' + esc(D.name) + '</b><div class="cx-faces">' + D.faces.map(function (f) { return faceMini(f); }).join('') + '</div></div>';
+    }).join('');
+    const relics = DC.RELIC_IDS.map(function (id) {
+      const R = DC.RELICS[id];
+      const got = seenRelic.indexOf(id) >= 0;
+      return '<div class="cx-relic' + (got ? '' : ' locked') + '" style="--c:' + R.c + '">' + icon(got ? R.ic : 'lock') +
+        '<div><b>' + esc(got ? R.name : '???') + '</b><span>' + esc(got ? R.desc : '아직 발견하지 못했습니다') + '</span></div></div>';
+    }).join('');
+    const enemyList = [];
+    [1, 2, 3].forEach(function (a) {
+      (DC.ENEMIES[a] || []).forEach(function (e) { enemyList.push(e); });
+      (DC.ELITES[a] || []).forEach(function (e) { enemyList.push(e); });
+    });
+    enemyList.push(DC.BOSSES[1], DC.BOSSES[2], DC.BOSSES[3]);
+    const enemies = enemyList.map(function (e) {
+      const got = seenEnemy.indexOf(e.id) >= 0;
+      return '<div class="cx-enemy' + (got ? '' : ' locked') + '" style="--c:' + e.c + '">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + (got ? DC.monsterArt(e.art, { key: e.id }) : '<circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/>') + '</svg>' +
+        '<b>' + esc(got ? e.name : '???') + '</b>' +
+        '<span>' + (got ? e.hp + ' HP' : '미발견') + '</span></div>';
+    }).join('');
+    const achs = DC.Meta.achList().map(function (a) {
+      return '<div class="cx-ach' + (a.done ? ' done' : '') + '">' + icon(a.done ? 'check' : 'lock') +
+        '<div><b>' + esc(a.name) + '</b><span>' + esc(a.desc) + '</span></div></div>';
+    }).join('');
+    return '<div class="overlay" data-act="closecodex"><div class="panel codex-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('book') + ' 도감 · 업적</h3><button class="iconbtn" data-act="closecodex">' + icon('close') + '</button></div>' +
+      '<div class="cx-progress"><span>주사위 ' + pg.dice + '/' + pg.diceTotal + '</span><span>유물 ' + pg.relics + '/' + pg.relicTotal + '</span><span>적 ' + pg.enemies + '/' + pg.enemyTotal + '</span><span>업적 ' + pg.ach + '/' + pg.achTotal + '</span></div>' +
+      '<h4>' + icon('dice') + ' 주사위</h4><div class="cx-dice-grid">' + dice + '</div>' +
+      '<h4>' + icon('star') + ' 유물</h4><div class="cx-relics">' + relics + '</div>' +
+      '<h4>' + icon('skull') + ' 적</h4><div class="cx-enemies">' + enemies + '</div>' +
+      '<h4>' + icon('crown') + ' 업적</h4><div class="cx-achs">' + achs + '</div>' +
+      '</div></div>';
+  }
+
   function renderEnd(state, kind) {
     const r = state.run;
+    const winInfo = state.ui.winInfo;
+    const newAch = state.ui.newAch || [];
     return '' +
       '<main class="end-screen ' + kind + '">' +
         '<div class="end-ic">' + icon(kind === 'win' ? 'crown' : 'skull') + '</div>' +
         '<h1>' + (kind === 'win' ? '정상에 서다' : '무너지다') + '</h1>' +
         '<p class="sub">' + (kind === 'win' ? '주사위 군주를 쓰러뜨렸습니다.' : '여정은 여기서 끝났습니다.') + '</p>' +
+        (kind === 'win' && winInfo && winInfo.unlocked ? '<div class="unlock-chip">' + icon('up') + ' 승천 ' + winInfo.level + ' 해금!</div>' : '') +
+        (newAch.length ? '<div class="end-achs">' + newAch.map(function (a) { return '<span>' + icon('check') + esc(a.name) + '</span>'; }).join('') + '</div>' : '') +
         '<div class="end-stats">' +
           '<div><b>ACT ' + r.act + '</b><span>도달</span></div>' +
           '<div><b>' + (r.stats.kills || 0) + '</b><span>처치</span></div>' +
           '<div><b>' + (r.stats.turns || 0) + '</b><span>턴</span></div>' +
           '<div><b>' + (r.stats.dmg || 0) + '</b><span>누적 피해</span></div>' +
         '</div>' +
+        (kind === 'win' && r.asc ? '<p class="asc-clear">승천 ' + r.asc + ' 클리어</p>' : '') +
         '<div class="title-btns"><button class="bigbtn primary" data-act="newrun">새 게임</button><button class="bigbtn ghost" data-act="title">타이틀</button></div>' +
       '</main>';
   }
@@ -577,7 +655,10 @@
           case 'combo':
             DC.Audio.play('combo', ev.n);
             if (ev.n === 3) { DC.FX.banner('연쇄 3!', 'small'); }
-            else if (ev.n === 5) { DC.FX.banner('MAX CHAIN!', 'good'); DC.FX.shake(11); }
+            else if (ev.n === 5) { DC.FX.banner('연쇄 5!', 'good'); DC.FX.shake(9); }
+            else if (ev.n === 7) { DC.FX.banner('MAX CHAIN!', 'good'); DC.FX.shake(13); DC.FX.flash('rgba(255,190,80,.18)'); }
+            const comb = q('.combat');
+            if (comb) comb.classList.toggle('heat', ev.n >= 4);
             const badge = q('#combo-badge');
             if (badge) { badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop'); }
             delay = 90;
@@ -591,7 +672,7 @@
               DC.Audio.play('hit', ev.heavy);
               el.classList.remove('hurt'); void el.offsetWidth; el.classList.add('hurt');
             }
-            delay = 110;
+            delay = ev.heavy ? 190 : 110;
             break;
           }
           case 'pdam': {
@@ -639,8 +720,12 @@
             break;
           case 'kill': {
             const el = targetEl(ev.eid);
-            if (el) { el.classList.add('dying'); DC.Audio.play('big'); DC.FX.shake(9); }
-            delay = 140;
+            if (el) {
+              el.classList.add('dying'); DC.Audio.play('big'); DC.FX.shake(9);
+              DC.FX.burst(el, DC.Combat.faceColor('slash'), 18);
+              DC.FX.banner('격파!', 'small');
+            }
+            delay = 230;
             break;
           }
           case 'curse':
@@ -663,6 +748,7 @@
             break;
           case 'won':
             DC.Audio.play('win');
+            if (q('.combat')) q('.combat').classList.remove('heat');
             DC.FX.banner('VICTORY', 'good');
             delay = 260;
             break;
@@ -757,7 +843,7 @@
           const h = DC.Game.state.combat.hand[st.idx];
           const k = DC.KINDS[h.k] || DC.KINDS.blank;
           g.style.setProperty('--c', k.c);
-          g.innerHTML = '<span class="die-ic">' + icon(k.ic) + '</span><span class="die-val">' + h.v + '</span><span class="die-kind">' + k.n + '</span>';
+          g.innerHTML = pips(h.v) + '<span class="die-ic">' + icon(k.ic) + '</span><span class="die-val">' + h.v + '</span><span class="die-kind">' + k.n + '</span>';
           document.body.appendChild(g);
           st.ghost = g;
         }
@@ -818,6 +904,7 @@
       if (state.ui.modal === 'deck' && state.run) app.innerHTML += renderDeck(state);
       if (state.ui.modal === 'help') app.innerHTML += renderHelp();
       if (state.ui.modal === 'skills' && state.run) app.innerHTML += renderSkills(state);
+      if (state.ui.modal === 'codex') app.innerHTML += renderCodex(state);
       document.body.setAttribute('data-screen', state.screen);
       if (state.run) document.body.setAttribute('data-act', state.run.act);
       if (state.screen === 'map') requestAnimationFrame(drawMapEdges);
@@ -832,6 +919,11 @@
       t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
       clearTimeout(UI._toastTimer);
       UI._toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1700);
+    },
+
+    clearToast: function () {
+      const t = document.getElementById('toast');
+      if (t) t.classList.remove('show');
     },
 
     animate: animate,

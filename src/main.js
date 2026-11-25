@@ -16,7 +16,7 @@
       screen: 'title',
       run: null,
       combat: null,
-      ui: { sel: null, busy: false, modal: null, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1 },
+      ui: { sel: null, busy: false, modal: null, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1, asc: 0 },
       lastCombat: null,
     },
 
@@ -27,6 +27,8 @@
         if (s.muted) DC.Audio.setMuted(true);
         if (s.speed === 2) this.state.ui.speed = 2;
         DC.Speed = this.state.ui.speed;
+        const m = DC.Meta.get();
+        this.state.ui.asc = Math.min(m.unlockedAsc || 0, 5);
       } catch (e) {}
       this.bind();
       DC.UI.render();
@@ -68,6 +70,9 @@
         case 'resume': this.resume(); break;
         case 'title': s.screen = 'title'; s.ui.modal = null; DC.UI.render(); break;
         case 'pickclass': this.pickClass(d.id); break;
+        case 'asc': this.cycleAsc(parseInt(d.dir, 10)); break;
+        case 'codex': this.state.ui.modal = 'codex'; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'closecodex': this.state.ui.modal = null; DC.UI.render(); break;
         case 'node': this.travel(d.nid); break;
         case 'hand': this.tapDie(parseInt(d.idx, 10)); break;
         case 'slot': this.tapSlot(parseInt(d.idx, 10)); break;
@@ -102,6 +107,18 @@
     },
 
     /* ---------------- run setup ---------------- */
+    cycleAsc: function (dir) {
+      const m = DC.Meta.get();
+      const max = Math.min(5, m.unlockedAsc || 0);
+      const cur = this.state.ui.asc || 0;
+      let next = cur + (dir || 0);
+      if (next < 0) next = 0;
+      if (next > max) next = max;
+      this.state.ui.asc = next;
+      DC.Audio.play('click');
+      DC.UI.render();
+    },
+
     newRun: function () {
       this.state.screen = 'class';
       this.state.run = null;
@@ -111,10 +128,13 @@
 
     pickClass: function (id) {
       const C = DC.CLASSES[id];
+      const asc = this.state.ui.asc || 0;
+      const mod = DC.ascMod(asc);
       const run = {
         cls: id,
+        asc: asc,
         hp: C.hp, maxHp: C.hp,
-        gold: 60,
+        gold: Math.max(20, 60 + (mod.gold || 0)),
         act: 1,
         dice: C.startDice.map(function (d) { return DC.Dice.make(d); }),
         skills: C.skills.map(function () { return 0; }),
@@ -129,6 +149,8 @@
         nodeSeq: 0,
       };
       run.map = DC.MapGen.gen(Math.random, 1);
+      DC.Meta.noteRunStart(asc);
+      run.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });
       this.state.run = run;
       this.state.combat = null;
       this.goMap();
@@ -192,6 +214,7 @@
     startCombat: function (kind) {
       const r = this.state.run;
       const spawns = this.spawnsFor(kind);
+      spawns.forEach(function (sp) { DC.Meta.noteEnemy(sp.id); });
       const c = DC.Combat.create(r, spawns, kind);
       DC.Combat.attachBag(c, r.dice);
       c.hp = r.hp;
@@ -201,10 +224,12 @@
       this.state.ui.sel = null;
       this.state.ui.busy = false;
       this.state.ui.hist = [];
+      DC.UI.clearToast();
       DC.UI.render();
       DC.Audio.play('turn');
       if (kind === 'boss') {
         const lines = DC.BOSSES[r.act].lines;
+        DC.Audio.play('boss');
         setTimeout(function () { DC.FX.banner(lines.appear, 'boss'); }, 350);
         DC.UI.toast('보스 등장!');
       } else if (kind === 'elite') DC.UI.toast('정예 조우!');
@@ -365,6 +390,7 @@
       r.hp = c.hp;
       r.stats.kills += c.enemies.filter(function (e) { return e.hp <= 0; }).length;
       r.stats.dmg += c.totalDamage;
+      r.maxCombo = Math.max(r.maxCombo || 0, c.maxCombo || 0);
       let gold = c.kind === 'boss' ? 95 + r.act * 12 : c.kind === 'elite' ? 45 + ri(15) : 16 + ri(9);
       gold += r.act * 4;
       if (r.relics.indexOf('contract') >= 0) gold = Math.round(gold * 1.4);
@@ -374,6 +400,7 @@
       s.ui.reward = { gold: gold, options: this.makeRewardOptions(bossClear ? 4 : 3), boss: bossClear };
       s.screen = 'reward';
       s.ui.busy = false;
+      DC.Meta.noteBestAct(r.act);
       DC.Audio.play('coin');
       this.save();
       DC.UI.render();
@@ -382,6 +409,10 @@
     combatLost: function () {
       const s = this.state;
       if (s.combat) s.run.hp = 0;
+      if (s.run) {
+        DC.Meta.noteBestAct(s.run.act);
+        DC.Meta.check({ win: false, cls: s.run.cls, asc: s.run.asc || 0, maxCombo: s.run.maxCombo || 0, dmg: s.run.stats.dmg || 0 });
+      }
       s.screen = 'gameover';
       s.combat = null;
       s.ui.busy = false;
@@ -449,6 +480,11 @@
       const r = this.state.run;
       if (r.act >= 3) {
         this.state.screen = 'win';
+        const res = DC.Meta.noteWin(r.cls, r.asc || 0);
+        this.state.ui.winInfo = res;
+        const gained = DC.Meta.check({ win: true, cls: r.cls, asc: r.asc || 0, maxCombo: r.maxCombo || 0, dmg: r.stats.dmg || 0 });
+        this.state.ui.newAch = gained;
+        r.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });
         this.clearSave();
         DC.UI.render();
         return;
@@ -468,6 +504,7 @@
       const r = this.state.run;
       if (r.relics.indexOf(id) >= 0) { r.gold += 40; return; }
       r.relics.push(id);
+      DC.Meta.noteRelic(id);
       if (id === 'contract') { r.maxHp = Math.max(20, r.maxHp - 12); r.hp = Math.min(r.hp, r.maxHp); }
       if (id === 'gamblersHand') r.extraSpark = 0; // handled per combat
       DC.UI.toast('유물 획득: ' + DC.RELICS[id].name);
@@ -532,7 +569,8 @@
     /* ---------------- shop ---------------- */
     openShop: function (node) {
       const r = this.state.run;
-      const disc = r.relics.indexOf('merchant') >= 0 ? 0.7 : 1;
+      const ascPrice = 1 + (DC.ascMod(r.asc || 0).price || 0);
+      const disc = (r.relics.indexOf('merchant') >= 0 ? 0.7 : 1) * ascPrice;
       const tierMax = r.act >= 3 ? 3 : r.act >= 2 ? 2 : 1;
       const diePool = shuffle(DC.DICE_IDS.filter(function (id) { return DC.DICE[id].price > 0 && DC.DICE[id].tier <= tierMax; }));
       const relicPool = shuffle(DC.RELIC_IDS.filter(function (id) { return r.relics.indexOf(id) < 0; }));
@@ -704,7 +742,7 @@
         result: result, gains: gains,
         after: ch.thenForge || (eff.forge ? { forge: eff.forge } : null),
       };
-      DC.Audio.play(eff.selfDmgFlat ? 'error' : 'coin');
+      DC.Audio.play(eff.selfDmgFlat ? 'error' : 'event');
       this.save();
       DC.UI.render();
     },
@@ -742,7 +780,7 @@
       if (r.skills[i] >= 1) { DC.UI.toast('이미 각성한 스킬입니다'); return; }
       r.skills[i] = 1;
       const sk = DC.getSkill(r.cls, i, 1);
-      DC.Audio.play('big');
+      DC.Audio.play('upgrade');
       DC.FX.flash('rgba(251,191,36,.22)');
       DC.UI.toast('스킬 각성: ' + sk.name);
       this.save();
@@ -771,7 +809,7 @@
             cls: s.run.cls, hp: s.run.hp, maxHp: s.run.maxHp, gold: s.run.gold, act: s.run.act,
             dice: s.run.dice, relics: s.run.relics, map: s.run.map, current: s.run.current,
             cleared: s.run.cleared, extraSpark: s.run.extraSpark, stats: s.run.stats, startedAt: s.run.startedAt,
-            skills: s.run.skills, seenEvents: s.run.seenEvents,
+            skills: s.run.skills, seenEvents: s.run.seenEvents, asc: s.run.asc,
           },
           savedAt: Date.now(),
         };
@@ -791,7 +829,12 @@
       let data = null;
       try { data = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) {}
       if (!data || !data.run) { DC.UI.toast('저장된 게임이 없습니다'); this.newRun(); return; }
-      this.state.run = data.run;
+      const rr = data.run;
+      rr.skills = rr.skills || [0, 0, 0, 0, 0];
+      rr.seenEvents = rr.seenEvents || [];
+      rr.asc = rr.asc || 0;
+      rr.maxCombo = rr.maxCombo || 0;
+      this.state.run = rr;
       this.state.combat = null;
       this.state.screen = 'map';
       this.state.ui.busy = false;

@@ -167,7 +167,7 @@
       hp: 68, sparks: 2, c: '#ff7b72',
       desc: '두꺼운 방패와 묵직한 주사위. 맞으면서 때린다.',
       startDice: ['iron', 'bulwark', 'iron'],
-      passive: { n: '강철 의지', tip: '방어도가 남아 있으면 다음 턴 시작에 3 피해를 준다.' },
+      passive: { n: '강철 의지', tip: '방어도가 남아 있으면 다음 턴 시작에 2 피해를 준다.' },
       skills: [
         { id: 'strike', name: '강타', req: 'any', ic: 'sword', fx: { type: 'attack', ratio: 1.6 }, desc: '눈 × 1.6 피해' },
         { id: 'guard', name: '철벽', req: 'any', ic: 'shield', fx: { type: 'block', ratio: 2.4 }, desc: '눈 × 2.4 방어도' },
@@ -178,16 +178,16 @@
     },
     mage: {
       id: 'mage', name: '불꽃의 마도사', short: '마도사', en: 'ARCANIST',
-      hp: 76, sparks: 3, c: '#c084fc',
+      hp: 80, sparks: 3, c: '#c084fc',
       desc: '원소 주사위를 굴려 불태우고 연쇄시킨다. 눈을 바꿔 최적해를 만든다.',
       startDice: ['ember', 'arcane', 'frost'],
       passive: { n: '원소 친화', tip: '매 턴 기세 +1, 화염·번개 면을 쓰면 2 회복한다.' },
       skills: [
-        { id: 'ember', name: '불꽃 화살', req: 'any', ic: 'flame', fx: { type: 'attack', ratio: 2, burn: true }, desc: '눈 × 2 피해 · 화상' },
-        { id: 'ward', name: '마나 방벽', req: 'even', ic: 'shield', fx: { type: 'block', ratio: 2.8, heal: 1 }, desc: '눈 × 2.8 방어도 · 1 회복' },
-        { id: 'chain', name: '연쇄 번개', req: 'odd', ic: 'bolt', fx: { type: 'chain', ratio: 1.6 }, desc: '눈 × 1.6 + 다른 적에게 연쇄' },
+        { id: 'ember', name: '불꽃 화살', req: 'any', ic: 'flame', fx: { type: 'attack', ratio: 2.2, burn: true }, desc: '눈 × 2 피해 · 화상' },
+        { id: 'ward', name: '마나 방벽', req: 'even', ic: 'shield', fx: { type: 'block', ratio: 3.1, heal: 1 }, desc: '눈 × 3.1 방어도 · 1 회복' },
+        { id: 'chain', name: '연쇄 번개', req: 'odd', ic: 'bolt', fx: { type: 'chain', ratio: 1.9 }, desc: '눈 × 1.6 + 다른 적에게 연쇄' },
         { id: 'amplify', name: '증폭', req: 'any', ic: 'mult', fx: { type: 'mult', add: 0.5, dmgRatio: 0.5 }, desc: '연쇄 배율 +0.5 · 눈 × 0.5 피해' },
-        { id: 'meteor', name: '유성', req: 'gte4', ic: 'star', fx: { type: 'aoe', ratio: 1.8, burn: 2 }, desc: '모든 적에게 눈 × 1.8 · 화상 2' },
+        { id: 'meteor', name: '유성', req: 'gte4', ic: 'star', fx: { type: 'aoe', ratio: 2.0, burn: 2 }, desc: '모든 적에게 눈 × 1.8 · 화상 2' },
       ],
     },
     gambler: {
@@ -195,12 +195,12 @@
       hp: 76, sparks: 4, c: '#fbbf24',
       desc: '기세가 넘친다. 재굴림과 복제로 판을 뒤집고 콤보로 승부한다.',
       startDice: ['loaded', 'lucky', 'wild'],
-      passive: { n: '행운의 손', tip: '콤보가 3 이상이면 공격마다 +2 피해.' },
+      passive: { n: '행운의 손', tip: '콤보가 3 이상이면 공격마다 +3 피해.' },
       skills: [
-        { id: 'dagger', name: '단검', req: 'any', ic: 'sword', fx: { type: 'attack', ratio: 1.3, comboBonus: 1.5 }, desc: '눈 × 1.3 + 콤보 보너스' },
+        { id: 'dagger', name: '단검', req: 'any', ic: 'sword', fx: { type: 'attack', ratio: 1.3, comboBonus: 2.0 }, desc: '눈 × 1.3 + 콤보 보너스' },
         { id: 'coin', name: '동전 던지기', req: 'even', ic: 'coin', fx: { type: 'attack', ratio: 2.8 }, desc: '눈 × 2.8 피해' },
         { id: 'lucky', name: '행운', req: 'any', ic: 'spark', fx: { type: 'spark', amount: 2, block: 3 }, desc: '기세 +2 · 방어도 3' },
-        { id: 'allin', name: '올인', req: 'six', ic: 'flame', fx: { type: 'attack', ratio: 5, selfDmg: 3 }, desc: '눈 × 5 피해 · 자신 3 피해' },
+        { id: 'allin', name: '올인', req: 'six', ic: 'flame', fx: { type: 'attack', ratio: 6, selfDmg: 3 }, desc: '눈 × 5 피해 · 자신 3 피해' },
         { id: 'jackpot', name: '잭팟', req: 'prime', ic: 'star', fx: { type: 'multi', ratio: 1.2 }, desc: '눈 × 1.2 피해를 콤보 수만큼' },
       ],
     },
@@ -262,7 +262,7 @@
     3: [E('wyvern', '와이번', 120, 'flyer', '#fb923c', [{ k: 'attack', v: 26 }, { k: 'attack', v: 11, hits: 3 }, { k: 'buff', s: 'str', v: 4 }])],
   };
   DC.BOSSES = {
-    1: E('queen', '슬라임 여왕', 98, 'boss', '#34d399', [{ k: 'attack', v: 13 }, { k: 'curse', n: 1 }, { k: 'attack', v: 7, hits: 2 }, { k: 'drain', v: 10 }]),
+    1: E('queen', '슬라임 여왕', 92, 'boss', '#34d399', [{ k: 'attack', v: 13 }, { k: 'curse', n: 1 }, { k: 'attack', v: 7, hits: 2 }, { k: 'drain', v: 10 }]),
     2: E('lich', '심연의 리치', 150, 'boss', '#a78bfa', [{ k: 'curse', n: 2 }, { k: 'attack', v: 22 }, { k: 'debuff', s: 'vuln', v: 3 }, { k: 'attack', v: 10, hits: 3 }]),
     3: E('dicelord', '주사위 군주', 178, 'boss', '#fbbf24', [{ k: 'curse', n: 2 }, { k: 'attack', v: 30 }, { k: 'attack', v: 13, hits: 3 }, { k: 'buff', s: 'str', v: 5 }, { k: 'drain', v: 16 }]),
   };
@@ -274,7 +274,7 @@
     half: '여왕이 몸을 찢는다! "아이들아, 일어나!"',
     die: '"…결국, 다시… 흩어지는구나."',
   };
-  DC.BOSSES[1].gimmick = { kind: 'split', at: 0.5, adds: ['slime', 'slime'], once: true };
+  DC.BOSSES[1].gimmick = { kind: 'split', at: 0.5, adds: ['slime'], once: true };
 
   DC.BOSSES[2].title = '죽지 않는 자';
   DC.BOSSES[2].lines = {
@@ -282,7 +282,7 @@
     half: '리치가 웃는다. "죽음은 나의 하인이다."',
     die: '"이번에도… 잠시일 뿐이다."',
   };
-  DC.BOSSES[2].gimmick = { kind: 'revive', hpPct: 0.3, block: 16, once: true };
+  DC.BOSSES[2].gimmick = { kind: 'revive', hpPct: 0.22, block: 12, once: true };
 
   DC.BOSSES[3].title = '운명의 주인';
   DC.BOSSES[3].lines = {
@@ -290,7 +290,7 @@
     half: '군주가 손가락을 튕긴다. "주사위는 내 것이다."',
     die: '"…주사위는, 다시 굴러간다."',
   };
-  DC.BOSSES[3].gimmick = { kind: 'seal', every: 2, n: 2, once: false };
+  DC.BOSSES[3].gimmick = { kind: 'seal', every: 3, n: 1, once: false };
 
   /* ---------------- events ---------------- */
   DC.EVENTS = [
@@ -468,6 +468,36 @@
     if (!up) return base;
     return Object.assign({}, base, { fx: Object.assign({}, base.fx, up.fx), desc: up.desc, up: true });
   };
+
+
+  /* ---------------- ascension & achievements ---------------- */
+  DC.ASC_STEPS = [
+    { n: 0, name: '첫 운명', desc: '기본 난이도', hp: 0, atk: 0, gold: 0, bossHp: 0, price: 0 },
+    { n: 1, name: '승천 1', desc: '적 체력 +6%', hp: .06, atk: 0, gold: 0, bossHp: 0, price: 0 },
+    { n: 2, name: '승천 2', desc: '적 공격 +5%', hp: .06, atk: .05, gold: 0, bossHp: 0, price: 0 },
+    { n: 3, name: '승천 3', desc: '시작 골드 -20', hp: .06, atk: .05, gold: -20, bossHp: 0, price: 0 },
+    { n: 4, name: '승천 4', desc: '정예·보스 체력 +15%', hp: .06, atk: .05, gold: -20, bossHp: .15, price: 0 },
+    { n: 5, name: '승천 5', desc: '상점 가격 +20%', hp: .06, atk: .05, gold: -20, bossHp: .15, price: .20 },
+  ];
+  DC.ascMod = function (n) {
+    const out = { hp: 0, atk: 0, gold: 0, bossHp: 0, price: 0 };
+    for (let i = 1; i <= Math.min(5, n || 0); i++) {
+      const s = DC.ASC_STEPS[i];
+      out.hp += s.hp; out.atk += s.atk; out.gold += s.gold; out.bossHp += s.bossHp; out.price += s.price;
+    }
+    return out;
+  };
+
+  DC.ACHIEVEMENTS = [
+    { id: 'win1', name: '첫 승리', desc: '주사위 군주를 쓰러뜨린다', test: function (c) { return c.win; } },
+    { id: 'winWarrior', name: '강철의 의지', desc: '전사로 승리한다', test: function (c) { return c.win && c.cls === 'warrior'; } },
+    { id: 'winMage', name: '원소의 주인', desc: '마도사로 승리한다', test: function (c) { return c.win && c.cls === 'mage'; } },
+    { id: 'winGambler', name: '운명을 걸다', desc: '도박사로 승리한다', test: function (c) { return c.win && c.cls === 'gambler'; } },
+    { id: 'chain6', name: '끊이지 않는 사슬', desc: '한 턴에 콤보 6 달성', test: function (c) { return (c.maxCombo || 0) >= 6; } },
+    { id: 'dmg1000', name: '분쇄자', desc: '한 런에서 누적 1000 피해', test: function (c) { return (c.dmg || 0) >= 1000; } },
+    { id: 'asc3', name: '승천자', desc: '승천 3 이상에서 승리', test: function (c) { return c.win && (c.asc || 0) >= 3; } },
+    { id: 'codex', name: '도감 수집가', desc: '주사위 12종 이상 수집', test: function (c, m) { return (m.seen.dice || []).length >= 12; } },
+  ];
 
   /* map node meta */  /* map node meta */
   DC.NODES = {

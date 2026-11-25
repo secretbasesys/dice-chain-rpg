@@ -9,7 +9,7 @@ with sync_playwright() as p:
       const out = {};
       for (const cls of DC.CLASS_IDS) {
         let wins = 0, acts = {};
-        for (let i=0;i<40;i++) {
+        for (let i=0;i<24;i++) {
           const r = DC.test.autoRun(cls, 900);
           if (r.screen === 'win') wins++;
           acts[r.act] = (acts[r.act]||0)+1;

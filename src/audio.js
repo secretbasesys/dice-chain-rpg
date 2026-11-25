@@ -82,6 +82,14 @@
     lose: function () { [0, -3, -7, -12].forEach(function (s, i) { tone(330 * Math.pow(2, s / 12), 0.45, 'sine', 0.18, null, i * 0.14); }); },
     turn: function () { tone(240, 0.14, 'triangle', 0.12, 360); },
     spark: function () { tone(880, 0.1, 'sine', 0.12, 1320); },
+    boss: function () {
+      tone(70, 0.9, 'sawtooth', 0.22, 44);
+      tone(105, 0.7, 'square', 0.10, 60, 0.05);
+      noise(0.7, 0.14, 140, 0.02);
+    },
+    event: function () { [0, 5, 7, 12].forEach(function (s, i) { tone(523 * Math.pow(2, s / 12), 0.22, 'triangle', 0.11, null, i * 0.06); }); },
+    upgrade: function () { tone(660, 0.12, 'square', 0.12); tone(990, 0.16, 'square', 0.10, 1180, 0.08); tone(1320, 0.2, 'triangle', 0.09, null, 0.16); },
+    shatter: function () { noise(0.3, 0.2, 2200); tone(220, 0.2, 'square', 0.06, 90); },
   };
 
   DC.Audio = {
