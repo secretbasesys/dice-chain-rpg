@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '1.3.0';
+  DC.VERSION = '1.3.1';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -183,11 +183,11 @@
       startDice: ['ember', 'arcane', 'frost'],
       passive: { n: '원소 친화', tip: '매 턴 기세 +1, 화염·번개 면을 쓰면 2 회복한다.' },
       skills: [
-        { id: 'ember', name: '불꽃 화살', req: 'any', ic: 'flame', fx: { type: 'attack', ratio: 2.2, burn: true }, desc: '눈 × 2 피해 · 화상' },
+        { id: 'ember', name: '불꽃 화살', req: 'any', ic: 'flame', fx: { type: 'attack', ratio: 2.2, burn: true }, desc: '눈 × 2.2 피해 · 화상' },
         { id: 'ward', name: '마나 방벽', req: 'even', ic: 'shield', fx: { type: 'block', ratio: 3.1, heal: 1 }, desc: '눈 × 3.1 방어도 · 1 회복' },
-        { id: 'chain', name: '연쇄 번개', req: 'odd', ic: 'bolt', fx: { type: 'chain', ratio: 1.9 }, desc: '눈 × 1.6 + 다른 적에게 연쇄' },
+        { id: 'chain', name: '연쇄 번개', req: 'odd', ic: 'bolt', fx: { type: 'chain', ratio: 1.9 }, desc: '눈 × 1.9 + 다른 적에게 연쇄' },
         { id: 'amplify', name: '증폭', req: 'any', ic: 'mult', fx: { type: 'mult', add: 0.5, dmgRatio: 0.5 }, desc: '연쇄 배율 +0.5 · 눈 × 0.5 피해' },
-        { id: 'meteor', name: '유성', req: 'gte4', ic: 'star', fx: { type: 'aoe', ratio: 2.0, burn: 2 }, desc: '모든 적에게 눈 × 1.8 · 화상 2' },
+        { id: 'meteor', name: '유성', req: 'gte4', ic: 'star', fx: { type: 'aoe', ratio: 2.0, burn: 2 }, desc: '모든 적에게 눈 × 2 · 화상 2' },
       ],
     },
     gambler: {
