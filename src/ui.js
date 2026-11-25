@@ -123,7 +123,7 @@
     const req = DC.REQ[sk.req];
     const filled = slot.handIdx !== null ? c.hand[slot.handIdx] : null;
     const canAny = selHand != null ? DC.Combat.canPlay(c, selHand, idx).ok : null;
-    const info = selHand != null ? DC.Combat.previewInfo(c, selHand, idx) : null;
+    const info = (selHand != null && canAny) ? DC.Combat.previewInfo(c, selHand, idx) : null;
     const prev = info ? (info.lethal ? info.text + ' · 처치' : info.text) : '';
     const justPlaced = slot.anim && Date.now() - slot.anim < 500;
     return '' +

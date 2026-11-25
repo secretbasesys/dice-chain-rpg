@@ -1104,3 +1104,5 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 .slot.can .slot-eff { display: none; }
 .slot.can .slot-prev { font-size: 13.5px; }
 .strip-sub .speedbtn { min-height: 30px; }
+.slots { align-content: stretch; grid-auto-rows: minmax(58px, 1fr); row-gap: 7px; }
+.enemy-row { min-height: 198px; }
