@@ -1,0 +1,615 @@
+/* =========================================================
+   UI: all screens, rendering, tap handling, event animation.
+   State lives in DC.Game.state; UI is a pure-ish renderer.
+   ========================================================= */
+(function () {
+  'use strict';
+  const DC = window.DC;
+  const icon = DC.icon;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+  function pct(a, b) { return Math.max(0, Math.min(100, (a / Math.max(1, b)) * 100)); }
+
+  function dieChip(h, i, opts) {
+    opts = opts || {};
+    const k = DC.KINDS[h.k] || DC.KINDS.blank;
+    const cls = ['die', h.used ? 'used' : '', h.locked ? 'locked' : '', opts.sel ? 'sel' : '', h.phantom ? 'phantom' : ''].join(' ');
+    return '' +
+      '<div class="' + cls + '" data-act="hand" data-idx="' + i + '" style="--c:' + k.c + '" role="button" tabindex="0" aria-label="주사위 ' + h.v + ' ' + k.n + '">' +
+        '<span class="die-ic">' + icon(k.ic) + '</span>' +
+        '<span class="die-val">' + h.v + '</span>' +
+        '<span class="die-kind">' + k.n + '</span>' +
+        (h.locked ? '<span class="die-lock">' + icon('lock') + '</span>' : '') +
+        (h.used ? '<span class="die-used">' + icon('check') + '</span>' : '') +
+      '</div>';
+  }
+
+  function faceMini(f) {
+    const k = DC.KINDS[f.k] || DC.KINDS.blank;
+    return '<span class="face-mini" style="--c:' + k.c + '">' + icon(k.ic) + '<b>' + f.v + '</b></span>';
+  }
+
+  function statusChips(st, opts) {
+    let out = '';
+    ['burn', 'poison', 'weak', 'vuln', 'str'].forEach(function (s) {
+      const v = st[s];
+      if (v > 0) {
+        const d = DC.STATUS[s];
+        out += '<span class="schip" style="--c:' + d.c + '" title="' + d.tip + '">' + icon(d.ic) + '<b>' + v + '</b></span>';
+      }
+    });
+    return out;
+  }
+
+  function hud(state, extra) {
+    const c = state.combat;
+    const r = state.run;
+    const hp = c ? c.hp : r.hp;
+    const maxHpv = c ? c.maxHp : r.maxHp;
+    const gold = r.gold;
+    const relics = r.relics.map(function (id) {
+      const R = DC.RELICS[id];
+      return '<span class="relic" style="--c:' + R.c + '" title="' + esc(R.name) + ' — ' + esc(R.desc) + '">' + icon(R.ic) + '</span>';
+    }).join('');
+    return '' +
+      '<div class="hud">' +
+        '<div class="hud-left">' +
+          '<div class="hp">' +
+            '<div class="hp-top"><span class="hp-num">' + Math.max(0, hp) + '<i>/' + maxHpv + '</i></span>' +
+              (c && c.block > 0 ? '<span class="blockchip">' + icon('shield') + c.block + '</span>' : '') +
+            '</div>' +
+            '<div class="hpbar"><i style="width:' + pct(hp, maxHpv) + '%"></i></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="hud-mid">' + relics + '</div>' +
+        '<div class="hud-right">' +
+          '<span class="goldchip" title="골드">' + icon('coin') + gold + '</span>' +
+          '<button class="iconbtn" data-act="deck" title="덱 보기" aria-label="덱 보기">' + icon('book') + '</button>' +
+          '<button class="iconbtn" data-act="sound" title="소리" aria-label="소리">' + icon(DC.Audio.isMuted() ? 'mute' : 'sound') + '</button>' +
+          '<button class="iconbtn" data-act="help" title="도움말" aria-label="도움말">' + icon('mystery') + '</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /* ---------------- combat ---------------- */
+  function enemyCard(c, e, idx) {
+    const it = DC.Combat.intentOf(e);
+    const dead = e.hp <= 0;
+    const incoming = it && it.k === 'attack' ? it.v * (it.hits || 1) : 0;
+    const lethal = incoming > 0 && incoming >= (c.hp + c.block) && !dead;
+    return '' +
+      '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '">' +
+        (dead ? '' : '<div class="intent it-' + (it ? it.k : 'none') + (lethal ? ' lethal' : '') + '" title="의도: ' + esc(DC.Combat.intentText(it)) + '">' + icon(DC.Combat.intentIcon(it)) + '<b>' + esc(DC.Combat.intentText(it)) + '</b></div>') +
+        '<div class="enemy-art">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(e.art) + '</svg>' +
+        '</div>' +
+        '<div class="enemy-name">' + esc(e.name) + '</div>' +
+        '<div class="hpbar enemy-hp"><i style="width:' + pct(e.hp, e.maxHp) + '%"></i></div>' +
+        '<div class="enemy-foot"><span class="ehp">' + Math.max(0, e.hp) + '/' + e.maxHp + '</span>' + (e.block > 0 ? '<span class="echip">' + icon('shield') + e.block + '</span>' : '') + statusChips(e.st) + '</div>' +
+      '</div>';
+  }
+
+  function slotCard(c, idx, selHand) {
+    const sk = DC.CLASSES[c.cls].skills[idx];
+    const slot = c.slots[idx];
+    const req = DC.REQ[sk.req];
+    const filled = slot.handIdx !== null ? c.hand[slot.handIdx] : null;
+    const canAny = selHand != null ? DC.Combat.canPlay(c, selHand, idx).ok : null;
+    const preview = selHand != null ? DC.Combat.preview(c, selHand, idx) : '';
+    return '' +
+      '<div class="slot ' + (filled ? 'filled' : '') + ' ' + (canAny ? 'can' : '') + ' ' + (canAny === false ? 'cannot' : '') + '" data-act="slot" data-idx="' + idx + '" role="button" tabindex="0">' +
+        '<div class="slot-top">' +
+          '<span class="slot-ic">' + icon(sk.ic) + '</span>' +
+          '<span class="slot-name">' + esc(sk.name) + '</span>' +
+          '<span class="req req-' + sk.req + '">' + icon(req.ic) + esc(req.n) + '</span>' +
+        '</div>' +
+        '<div class="slot-bottom">' +
+          (filled
+            ? '<span class="slot-die" style="--c:' + (DC.KINDS[filled.k] || DC.KINDS.blank).c + '">' + icon((DC.KINDS[filled.k] || DC.KINDS.blank).ic) + '<b>' + filled.v + '</b></span><span class="slot-eff">' + esc(sk.desc) + '</span>'
+            : '<span class="slot-eff">' + esc(sk.desc) + '</span>' + (preview ? '<span class="slot-prev">' + esc(preview) + '</span>' : '')) +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderCombat(state) {
+    const c = state.combat;
+    const sel = state.ui.sel;
+    const canAct = c.phase === 'player' && !state.ui.busy;
+    const unused = c.hand.filter(function (h) { return !h.used && !h.locked; }).length;
+    const m = DC.Combat.mult(c);
+
+    let slots = '';
+    for (let i = 0; i < c.slots.length; i++) slots += slotCard(c, i, canAct ? sel : null);
+
+    let tray = '';
+    c.hand.forEach(function (h, i) { tray += dieChip(h, i, { sel: sel === i && canAct }); });
+
+    return '' +
+      hud(state) +
+      '<main class="combat">' +
+        '<div class="enemy-row">' + c.enemies.map(function (e, i) { return enemyCard(c, e, i); }).join('') + '</div>' +
+        '<div class="strip">' +
+          '<span class="combo-badge ' + (c.combo > 1 ? 'hot' : '') + '" id="combo-badge">' + icon('mult') + 'x' + m.toFixed(1) + '</span>' +
+          '<span class="strip-item">' + icon('dice') + '남은 <b id="left-dice">' + unused + '</b></span>' +
+          '<span class="strip-item spark">' + icon('spark') + '기세 <b id="spark-num">' + c.sparks + '</b></span>' +
+          '<span class="strip-item">' + icon('clock') + '턴 <b>' + c.turn + '</b></span>' +
+          statusChips(c.statuses) +
+          (c.turn === 1 && c.combo === 0 ? '<span class="strip-hint">주사위→슬롯</span>' : '') +
+        '</div>' +
+        '<div class="slots">' + slots + '</div>' +
+        '<div class="tray-wrap"><div class="tray" id="tray">' + tray + '</div></div>' +
+        '<div class="actions">' +
+          '<div class="manip">' +
+            '<button class="mbtn" data-act="manip" data-op="reroll" ' + (canAct ? '' : 'disabled') + ' title="재굴림 (기세 1)">' + icon('reroll') + '<span>재굴림</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="plus" ' + (canAct ? '' : 'disabled') + ' title="눈 +1 (기세 1)">' + icon('plus') + '<span>+1</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="minus" ' + (canAct ? '' : 'disabled') + ' title="눈 -1 (기세 1)">' + icon('minus') + '<span>-1</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="flip" ' + (canAct ? '' : 'disabled') + ' title="뒤집기 7-x (기세 1)">' + icon('flip') + '<span>뒤집기</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="copy" ' + (canAct ? '' : 'disabled') + ' title="복제 (기세 2)">' + icon('copy') + '<span>복제</span></button>' +
+          '</div>' +
+          '<button class="endbtn" data-act="endturn" ' + (canAct ? '' : 'disabled') + '>' + icon('check') + '턴 종료</button>' +
+        '</div>' +
+      '</main>';
+  }
+
+  /* ---------------- map ---------------- */
+  function renderMap(state) {
+    const r = state.run;
+    const map = r.map;
+    const avail = DC.MapGen.available(map);
+    let rows = '';
+    for (let ri = map.rows - 1; ri >= 0; ri--) {
+      const row = map.grid[ri].map(function (id) { return map.nodes[id]; });
+      rows += '<div class="map-row" data-row="' + ri + '">' + row.map(function (n) {
+        const meta = DC.NODES[n.type];
+        const isAvail = avail.indexOf(n.id) >= 0;
+        const isCur = map.current === n.id;
+        const isPast = r.cleared && r.cleared.indexOf(n.id) >= 0;
+        return '<div class="node ' + (isAvail ? 'avail' : '') + ' ' + (isCur ? 'cur' : '') + ' ' + (isPast ? 'past' : '') + '" data-act="node" data-nid="' + n.id + '" data-type="' + n.type + '" style="--c:' + meta.c + '" role="button" tabindex="0" title="' + meta.n + '">' +
+          icon(meta.ic) + '<span class="node-l">' + (n.type === 'boss' ? 'BOSS' : meta.n) + '</span></div>';
+      }).join('') + '</div>';
+    }
+    return '' +
+      hud(state) +
+      '<main class="map-screen">' +
+        '<div class="map-head">' +
+          '<div class="act-title">ACT ' + r.act + ' <span>' + ['', '잿빛 폐허', '가라앉은 성소', '운명의 정점'][r.act] + '</span></div>' +
+          '<div class="map-sub">' + (r.maxFloor ? '' : '') + '다음 목적지를 선택하세요</div>' +
+        '</div>' +
+        '<div class="map-wrap" id="map-wrap">' +
+          '<svg class="map-edges" id="map-edges"></svg>' +
+          rows +
+        '</div>' +
+        '<div class="map-legend">' +
+          '<span><i style="--c:#ff7b72">' + icon('sword') + '</i>전투</span>' +
+          '<span><i style="--c:#a78bfa">' + icon('skull') + '</i>정예</span>' +
+          '<span><i style="--c:#fb923c">' + icon('anvil') + '</i>단조</span>' +
+          '<span><i style="--c:#34d399">' + icon('shop') + '</i>상점</span>' +
+          '<span><i style="--c:#67e8f9">' + icon('mystery') + '</i>미지</span>' +
+          '<span><i style="--c:#fbbf24">' + icon('campfire') + '</i>휴식</span>' +
+        '</div>' +
+      '</main>';
+  }
+
+  function drawMapEdges() {
+    const svg = document.getElementById('map-edges');
+    const wrap = document.getElementById('map-wrap');
+    if (!svg || !wrap || !DC.Game.state.run) return;
+    const map = DC.Game.state.run.map;
+    const wr = wrap.getBoundingClientRect();
+    svg.setAttribute('viewBox', '0 0 ' + wrap.clientWidth + ' ' + wrap.clientHeight);
+    let out = '';
+    Object.keys(map.nodes).forEach(function (id) {
+      const n = map.nodes[id];
+      const a = wrap.querySelector('[data-nid="' + id + '"]');
+      if (!a) return;
+      const ar = a.getBoundingClientRect();
+      n.next.forEach(function (nid) {
+        const b = wrap.querySelector('[data-nid="' + nid + '"]');
+        if (!b) return;
+        const br = b.getBoundingClientRect();
+        const x1 = ar.left - wr.left + ar.width / 2, y1 = ar.top - wr.top;
+        const x2 = br.left - wr.left + br.width / 2, y2 = br.top - wr.top + br.height;
+        const active = map.current === id;
+        out += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" class="' + (active ? 'edge active' : 'edge') + '"/>';
+      });
+    });
+    svg.innerHTML = out;
+  }
+
+  /* ---------------- title / class ---------------- */
+  function renderTitle(state) {
+    const hasSave = DC.Game.hasSave();
+    return '' +
+      '<main class="title-screen">' +
+        '<div class="logo-dice">' +
+          '<span class="ld ld1">' + icon('sword') + '</span>' +
+          '<span class="ld ld2">' + icon('bolt') + '</span>' +
+          '<span class="ld ld3">' + icon('shield') + '</span>' +
+        '</div>' +
+        '<h1 class="logo">다이스 <em>체인</em></h1>' +
+        '<p class="logo-sub">DICE CHAIN RPG</p>' +
+        '<p class="tagline">주사위를 굴리고, 눈을 바꾸고, 연쇄를 터뜨려라.</p>' +
+        '<div class="title-btns">' +
+          (hasSave ? '<button class="bigbtn primary" data-act="resume">이어하기</button>' : '') +
+          '<button class="bigbtn ' + (hasSave ? '' : 'primary') + '" data-act="newrun">새 게임</button>' +
+          '<button class="bigbtn ghost" data-act="help">게임 방법</button>' +
+        '</div>' +
+        '<p class="ver">v' + DC.VERSION + ' · 모바일/데스크톱 · GitHub Pages</p>' +
+      '</main>';
+  }
+
+  function renderClass(state) {
+    const cards = DC.CLASS_IDS.map(function (id) {
+      const C = DC.CLASSES[id];
+      const dice = C.startDice.map(function (d) {
+        return '<span class="dchip" style="--c:' + DC.DICE[d].c + '">' + DC.DICE[d].name + '</span>';
+      }).join('');
+      return '' +
+        '<div class="class-card" data-act="pickclass" data-id="' + id + '" style="--c:' + C.c + '" role="button" tabindex="0">' +
+          '<div class="class-badge">' + icon(id === 'warrior' ? 'shield' : id === 'mage' ? 'flame' : 'star') + '</div>' +
+          '<div class="class-name">' + C.name + '</div>' +
+          '<div class="class-en">' + C.en + '</div>' +
+          '<p class="class-desc">' + C.desc + '</p>' +
+          '<div class="class-stats"><span>' + icon('heart') + C.hp + ' HP</span><span>' + icon('spark') + C.sparks + ' 기세</span></div>' +
+          '<div class="class-dice">' + dice + '</div>' +
+          '<div class="class-passive">' + icon('star') + '<b>' + C.passive.n + '</b> ' + C.passive.tip + '</div>' +
+        '</div>';
+    }).join('');
+    return '' +
+      '<main class="class-screen">' +
+        '<h2>전사를 선택하세요</h2>' +
+        '<p class="sub">각 클래스는 다른 주사위와 스킬 슬롯을 가집니다</p>' +
+        '<div class="class-list">' + cards + '</div>' +
+      '</main>';
+  }
+
+  /* ---------------- reward / forge / shop / rest / event ---------------- */
+  function renderReward(state) {
+    const rw = state.ui.reward;
+    const cards = rw.options.map(function (o, i) {
+      const faces = o.faces ? '<div class="rw-faces">' + o.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' : '';
+      return '<div class="rw-card" data-act="reward" data-i="' + i + '" style="--c:' + (o.c || '#fbbf24') + '" role="button" tabindex="0">' +
+        '<div class="rw-ic">' + icon(o.ic || 'star') + '</div>' +
+        '<div class="rw-kind">' + esc(o.kindLabel) + '</div>' +
+        '<div class="rw-name">' + esc(o.name) + '</div>' +
+        '<div class="rw-desc">' + esc(o.desc) + '</div>' +
+        faces +
+      '</div>';
+    }).join('');
+    return hud(state) + '' +
+      '<main class="reward-screen">' +
+        '<div class="banner-win">' + icon('check') + '승리!</div>' +
+        '<div class="gold-gain">' + icon('coin') + '+' + rw.gold + ' 골드</div>' +
+        '<h3>보상을 선택하세요</h3>' +
+        '<div class="rw-list">' + cards + '</div>' +
+        '<button class="bigbtn ghost skipbtn" data-act="skipreward">건너뛰기 (+20 골드)</button>' +
+      '</main>';
+  }
+
+  function renderForge(state) {
+    const f = state.ui.forge;
+    const r = state.run;
+    const die = f.dieIdx != null ? r.dice[f.dieIdx] : null;
+    let left = '<div class="forge-head">' +
+      '<h2>' + icon('anvil') + ' 주사위 단조</h2>' +
+      '<div class="forge-steps">' +
+        '<span class="' + (f.dieIdx != null ? 'on' : '') + '">1 주사위</span>' +
+        '<span class="' + (f.faceIdx != null ? 'on' : '') + '">2 면 선택</span>' +
+        '<span class="' + (f.options.length ? 'on' : '') + '">3 새 면</span>' +
+      '</div>' +
+      '<p class="sub">남은 무료 단조 <b>' + f.free + '회</b> · 주사위 면은 영구히 바뀝니다</p>' +
+      '</div>';
+    left += '<div class="forge-dice">';
+    r.dice.forEach(function (d, di) {
+      const on = f.dieIdx === di;
+      left += '<div class="forge-die ' + (on ? 'on' : '') + '" data-act="fdiedie" data-i="' + di + '" style="--c:' + d.c + '" role="button" tabindex="0">' +
+        '<div class="fd-name">' + esc(d.name) + '</div>' +
+        '<div class="fd-faces">' + d.faces.map(function (fc, fi) {
+          const k = DC.KINDS[fc.k];
+          return '<span class="fd-face ' + (on && f.faceIdx === fi ? 'on' : '') + '" data-act="fface" data-i="' + fi + '" style="--c:' + k.c + '" role="button" tabindex="0" aria-label="면 ' + (fi + 1) + ' ' + k.n + ' ' + fc.v + '">' + icon(k.ic) + '<b>' + fc.v + '</b></span>';
+        }).join('') + '</div>' +
+      '</div>';
+    });
+    left += '</div>';
+
+    let right = '';
+    if (die && f.faceIdx != null) {
+      right += '<div class="forge-panel">';
+      right += '<div class="forge-cur">현재 면: ' + faceMini(die.faces[f.faceIdx]) + ' ' + DC.KINDS[die.faces[f.faceIdx].k].n + ' ' + die.faces[f.faceIdx].v + '</div>';
+      right += '<div class="forge-opts">';
+      f.options.forEach(function (o, oi) {
+        const k = DC.KINDS[o.k];
+        const cost = f.free > 0 ? 0 : o.cost;
+        const afford = r.gold >= cost;
+        right += '<button class="forge-opt" data-act="fopt" data-i="' + oi + '" style="--c:' + k.c + '" ' + (afford ? '' : 'disabled') + '>' +
+          icon(k.ic) + '<b>' + k.n + ' ' + o.v + '</b><span>' + (cost === 0 ? '무료' : cost + 'G') + '</span></button>';
+      });
+      right += '</div></div>';
+    } else {
+      right = '<div class="forge-hint">' + icon('eye') + '<div><b>면을 탭하세요</b><span>바꿀 면을 고르면 새 면 5개가 나타납니다</span></div></div>';
+    }
+
+    return hud(state) + '' +
+      '<main class="forge-screen">' +
+        '<div class="forge-grid">' +
+          '<div class="forge-left">' + left + '</div>' +
+          '<div class="forge-right">' + right + '</div>' +
+        '</div>' +
+        '<div class="bottom-bar"><button class="bigbtn" data-act="forgeexit">단조 완료</button></div>' +
+      '</main>';
+  }
+
+  function renderShop(state) {
+    const sh = state.ui.shop;
+    const r = state.run;
+    const items = sh.items.map(function (it, i) {
+      const afford = r.gold >= it.price;
+      const sold = it.sold;
+      return '<div class="shop-item ' + (sold ? 'sold' : '') + '" style="--c:' + it.c + '">' +
+        '<div class="si-ic">' + icon(it.ic) + '</div>' +
+        '<div class="si-main"><div class="si-name">' + esc(it.name) + '</div><div class="si-desc">' + esc(it.desc) + '</div>' +
+          (it.faces ? '<div class="si-faces">' + it.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' : '') + '</div>' +
+        '<button class="buybtn" data-act="buy" data-i="' + i + '" ' + (sold || !afford ? 'disabled' : '') + '>' + (sold ? '판매됨' : it.price + 'G') + '</button>' +
+      '</div>';
+    }).join('');
+    return hud(state) + '' +
+      '<main class="shop-screen">' +
+        '<h2>' + icon('shop') + ' 상점</h2>' +
+        '<p class="sub">골드로 주사위·유물·단조를 삽니다' + (r.relics.indexOf('merchant') >= 0 ? ' (상인의 인장 -30%)' : '') + '</p>' +
+        '<div class="shop-list">' + items + '</div>' +
+        '<div class="bottom-bar"><button class="bigbtn" data-act="leave">떠난다</button></div>' +
+      '</main>';
+  }
+
+  function renderRest(state) {
+    return hud(state) + '' +
+      '<main class="rest-screen">' +
+        '<div class="campfire">' + icon('campfire') + '</div>' +
+        '<h2>모닥불</h2>' +
+        '<p class="sub">잠시 쉬며 몸을 추스른다.</p>' +
+        '<div class="rest-opts">' +
+          '<button class="rest-opt" data-act="rest" data-i="0">' + icon('heart') + '<b>회복</b><span>체력 40% 회복</span></button>' +
+          '<button class="rest-opt" data-act="rest" data-i="1">' + icon('shield') + '<b>단련</b><span>최대 체력 +8</span></button>' +
+          '<button class="rest-opt" data-act="rest" data-i="2">' + icon('anvil') + '<b>단조</b><span>주사위 면 1회 변경</span></button>' +
+        '</div>' +
+      '</main>';
+  }
+
+  function renderEvent(state) {
+    const ev = state.ui.event;
+    const choices = ev.def.choices.map(function (ch, i) {
+      const block = ch.need && ch.need.gold && state.run.gold < ch.need.gold;
+      return '<button class="ev-choice" data-act="choice" data-i="' + i + '" ' + (block ? 'disabled' : '') + '>' +
+        '<b>' + esc(ch.label) + '</b><span>' + esc(ch.desc || '') + '</span></button>';
+    }).join('');
+    return hud(state) + '' +
+      '<main class="event-screen">' +
+        '<div class="ev-art">' + icon(ev.def.ic) + '</div>' +
+        '<h2>' + esc(ev.def.name) + '</h2>' +
+        '<p class="ev-text">' + esc(ev.text || ev.def.text) + '</p>' +
+        '<div class="ev-choices">' + choices + '</div>' +
+      '</main>';
+  }
+
+  function renderEnd(state, kind) {
+    const r = state.run;
+    return '' +
+      '<main class="end-screen ' + kind + '">' +
+        '<div class="end-ic">' + icon(kind === 'win' ? 'crown' : 'skull') + '</div>' +
+        '<h1>' + (kind === 'win' ? '정상에 서다' : '무너지다') + '</h1>' +
+        '<p class="sub">' + (kind === 'win' ? '주사위 군주를 쓰러뜨렸습니다.' : '여정은 여기서 끝났습니다.') + '</p>' +
+        '<div class="end-stats">' +
+          '<div><b>ACT ' + r.act + '</b><span>도달</span></div>' +
+          '<div><b>' + (r.stats.kills || 0) + '</b><span>처치</span></div>' +
+          '<div><b>' + (r.stats.turns || 0) + '</b><span>턴</span></div>' +
+          '<div><b>' + (r.stats.dmg || 0) + '</b><span>누적 피해</span></div>' +
+        '</div>' +
+        '<div class="title-btns"><button class="bigbtn primary" data-act="newrun">새 게임</button><button class="bigbtn ghost" data-act="title">타이틀</button></div>' +
+      '</main>';
+  }
+
+  /* ---------------- overlays ---------------- */
+  function renderDeck(state) {
+    const r = state.run;
+    const dice = r.dice.map(function (d) {
+      return '<div class="deck-die" style="--c:' + d.c + '">' +
+        '<div class="dd-name">' + esc(d.name) + (d.mut ? ' <i>단조됨</i>' : '') + '</div>' +
+        '<div class="dd-faces">' + d.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' +
+      '</div>';
+    }).join('');
+    const relics = r.relics.length ? r.relics.map(function (id) {
+      const R = DC.RELICS[id];
+      return '<div class="deck-relic" style="--c:' + R.c + '">' + icon(R.ic) + '<div><b>' + esc(R.name) + '</b><span>' + esc(R.desc) + '</span></div></div>';
+    }).join('') : '<p class="empty">아직 유물이 없습니다.</p>';
+    return '<div class="overlay" data-act="closedeck"><div class="panel deck-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>덱 & 유물</h3><button class="iconbtn" data-act="closedeck">' + icon('close') + '</button></div>' +
+      '<h4>' + icon('dice') + ' 주사위 ' + r.dice.length + '개</h4><div class="deck-dice">' + dice + '</div>' +
+      '<h4>' + icon('star') + ' 유물 ' + r.relics.length + '개</h4><div class="deck-relics">' + relics + '</div>' +
+      '</div></div>';
+  }
+
+  function renderHelp() {
+    const rows = [
+      ['1', '주사위를 굴린다', '매 턴 가방의 주사위가 모두 굴려집니다.'],
+      ['2', '주사위 → 스킬 슬롯', '주사위를 탭하고 슬롯을 탭하거나, 슬롯만 탭하면 자동 배치.'],
+      ['3', '슬롯 조건', '짝수·홀수·4 이상·소수 등 조건이 맞아야 합니다.'],
+      ['4', '기세로 조작', '재굴림·+1/-1·뒤집기(7-x)·복제로 눈을 바꿉니다.'],
+      ['5', '연쇄 콤보', '한 턴에 스킬을 이어 쓸수록 배율이 오릅니다(최대 x3.5).'],
+      ['6', '단조', '단조 노드에서 주사위의 개별 면을 영구히 교체합니다.'],
+    ];
+    return '<div class="overlay" data-act="closehelp"><div class="panel help-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>게임 방법</h3><button class="iconbtn" data-act="closehelp">' + icon('close') + '</button></div>' +
+      rows.map(function (r) {
+        return '<div class="help-row"><span class="hn">' + r[0] + '</span><div><b>' + r[1] + '</b><p>' + r[2] + '</p></div></div>';
+      }).join('') +
+      '<p class="help-foot">적의 의도(머리 위 아이콘)를 보고 방어·공격을 고르세요. 주사위 면은 영구히 바뀌므로 단조가 곧 빌드입니다.</p>' +
+      '</div></div>';
+  }
+
+  /* ---------------- animation ---------------- */
+  let animToken = 0;
+
+  function q(sel) { return document.querySelector(sel); }
+
+  function animate(events, done) {
+    const token = ++animToken;
+    let i = 0;
+    const state = DC.Game.state;
+
+    function targetEl(eid) { return document.querySelector('[data-eid="' + eid + '"]'); }
+
+    function step() {
+      if (token !== animToken) return;
+      if (i >= events.length) { if (done) done(); return; }
+      const ev = events[i++];
+      let delay = 70;
+      try {
+        switch (ev.t) {
+          case 'combo':
+            DC.Audio.play('combo', ev.n);
+            if (ev.n === 3) { DC.FX.banner('연쇄 3!', 'small'); }
+            else if (ev.n === 5) { DC.FX.banner('MAX CHAIN!', 'good'); DC.FX.shake(11); }
+            const badge = q('#combo-badge');
+            if (badge) { badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop'); }
+            delay = 90;
+            break;
+          case 'edmg': {
+            const el = targetEl(ev.eid);
+            if (el) {
+              DC.FX.floatAt(el, '-' + ev.amount, ev.heavy ? 'dmg heavy' : 'dmg');
+              DC.FX.burst(el, DC.Combat.faceColor(ev.kind || 'slash'), ev.heavy ? 16 : 8);
+              DC.FX.shake(ev.heavy ? 10 : 3 + ev.amount / 6);
+              DC.Audio.play('hit', ev.heavy);
+              el.classList.remove('hurt'); void el.offsetWidth; el.classList.add('hurt');
+            }
+            delay = 110;
+            break;
+          }
+          case 'pdam': {
+            const el = q('.hp');
+            if (el) { DC.FX.floatAt(el, '-' + ev.amount, 'pdmg'); }
+            DC.FX.shake(6); DC.Audio.play('hit', ev.amount > 12);
+            delay = 130;
+            break;
+          }
+          case 'heal': {
+            const el = q('.hp');
+            if (el) DC.FX.floatAt(el, '+' + ev.amount, 'heal');
+            DC.Audio.play('heal');
+            break;
+          }
+          case 'pblock': {
+            const el = q('.hp');
+            if (el) DC.FX.floatAt(el, '+' + ev.amount, 'block');
+            DC.Audio.play('block');
+            break;
+          }
+          case 'eblock': {
+            const el = targetEl(ev.eid);
+            if (el) DC.FX.floatAt(el, '+' + ev.amount, 'block');
+            DC.Audio.play('block');
+            break;
+          }
+          case 'status': {
+            const el = targetEl(ev.eid);
+            if (el && DC.STATUS[ev.s]) DC.FX.floatAt(el, DC.STATUS[ev.s].n + ' +' + ev.amount, 'status', { size: 15 });
+            break;
+          }
+          case 'estatus': {
+            const el = targetEl(ev.eid);
+            if (el && DC.STATUS[ev.s]) DC.FX.floatAt(el, DC.STATUS[ev.s].n + ' +' + ev.amount, 'status', { size: 15 });
+            break;
+          }
+          case 'pstatus': {
+            const el = q('.hp');
+            if (el && DC.STATUS[ev.s]) DC.FX.floatAt(el, DC.STATUS[ev.s].n + ' ' + ev.amount, 'status', { size: 15 });
+            break;
+          }
+          case 'spark':
+            if (ev.amount > 0) { DC.Audio.play('spark'); DC.FX.floatAt(q('.spark') || q('.hud'), '+' + ev.amount + ' 기세', 'spark'); }
+            break;
+          case 'kill': {
+            const el = targetEl(ev.eid);
+            if (el) { el.classList.add('dying'); DC.Audio.play('big'); DC.FX.shake(9); }
+            delay = 140;
+            break;
+          }
+          case 'curse':
+            DC.FX.banner('주사위 ' + ev.n + '개 봉인!', 'bad'); DC.Audio.play('error');
+            delay = 200;
+            break;
+          case 'msg':
+            DC.FX.banner(ev.text, 'small');
+            break;
+          case 'won':
+            DC.Audio.play('win');
+            DC.FX.banner('VICTORY', 'good');
+            delay = 260;
+            break;
+          case 'lost':
+            DC.Audio.play('lose');
+            DC.FX.banner('DEFEAT', 'bad');
+            delay = 260;
+            break;
+          case 'newturn':
+            DC.Audio.play('turn');
+            delay = 40;
+            break;
+        }
+      } catch (e) { /* FX must never break the game */ }
+      setTimeout(step, delay);
+    }
+    step();
+  }
+
+  /* ---------------- public ---------------- */
+  const UI = {
+    render: function () {
+      const state = DC.Game.state;
+      const app = document.getElementById('app');
+      if (!app) return;
+      let html = '';
+      switch (state.screen) {
+        case 'title': html = renderTitle(state); break;
+        case 'class': html = renderClass(state); break;
+        case 'map': html = renderMap(state); break;
+        case 'combat': html = renderCombat(state); break;
+        case 'reward': html = renderReward(state); break;
+        case 'forge': html = renderForge(state); break;
+        case 'shop': html = renderShop(state); break;
+        case 'rest': html = renderRest(state); break;
+        case 'event': html = renderEvent(state); break;
+        case 'win': html = renderEnd(state, 'win'); break;
+        case 'gameover': html = renderEnd(state, 'lose'); break;
+        default: html = '<main class="title-screen"><h1>...</h1></main>';
+      }
+      app.className = 'app screen-' + state.screen;
+      app.innerHTML = html;
+      if (state.ui.modal === 'deck' && state.run) app.innerHTML += renderDeck(state);
+      if (state.ui.modal === 'help') app.innerHTML += renderHelp();
+      document.body.setAttribute('data-screen', state.screen);
+      if (state.screen === 'map') requestAnimationFrame(drawMapEdges);
+    },
+
+    toast: function (msg) {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+      clearTimeout(UI._toastTimer);
+      UI._toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1700);
+    },
+
+    animate: animate,
+    drawMapEdges: drawMapEdges,
+    esc: esc,
+    icon: icon,
+    dieChip: dieChip,
+    faceMini: faceMini,
+  };
+  DC.UI = UI;
+})();

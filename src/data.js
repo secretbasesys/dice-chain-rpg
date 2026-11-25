@@ -1,0 +1,319 @@
+/* =========================================================
+   다이스 체인 / Dice Chain RPG — data layer
+   All static content: icons, dice, classes, skills, relics,
+   enemies, events. No DOM access.
+   ========================================================= */
+(function () {
+  'use strict';
+  const DC = (window.DC = window.DC || {});
+
+  DC.VERSION = '1.0.0';
+  DC.BAL = {
+    comboStep: 0.2,     // +20% per chain link
+    comboCap: 3.0,
+    vulnMult: 1.5,
+    weakMult: 0.75,
+    burnFrac: 0.5,
+    handSize: 0,        // 0 = all dice in bag
+  };
+
+  /* ---------------- icons (inline SVG, no emoji) ---------------- */
+  const P = {
+    sword: '<path d="M19 3l2 2-9.5 9.5-2-2L19 3z"/><path d="M9.5 14.5L4 20l-1-4 6.5-6.5"/><path d="M5 15l4 4"/>',
+    hammer: '<path d="M14 3l7 7-3 3-2-2-6.5 6.5 2 2-2.5 2.5-3.5-3.5L3 22l-1-1 3.5-3.5L2 14l2.5-2.5 2 2L13 7l-2-2 3-3z"/>',
+    shield: '<path d="M12 2.8l7.5 3v6.3c0 4.4-3.1 7.7-7.5 9.6-4.4-1.9-7.5-5.2-7.5-9.6V5.8l7.5-3z"/>',
+    flame: '<path d="M12 2.5s5.4 4.3 5.4 9.3a5.4 5.4 0 0 1-10.8 0c0-2.1 1.1-3.4 2.1-4.4.1 2.1 1 3.2 2 3.2 1.2 0 1.4-5.2 1.3-8.1z"/>',
+    bolt: '<path d="M13.5 2L4 14.2h5.6L8.5 22 20 9.4h-6.1L13.5 2z"/>',
+    venom: '<path d="M12 2.5c3 3.6 6 7.2 6 10.5a6 6 0 0 1-12 0c0-3.3 3-6.9 6-10.5z"/><path d="M9.5 14a2.5 2.5 0 0 0 2.5 2.5"/>',
+    blood: '<path d="M12 2.5c3 3.6 6 7.2 6 10.5a6 6 0 0 1-12 0c0-3.3 3-6.9 6-10.5z"/>',
+    mult: '<path d="M6 6l12 12M18 6L6 18"/>',
+    skull: '<path d="M12 2.5a7.2 7.2 0 0 0-7.2 7.2v4.2l2 1.8v3.8h10.4v-3.8l2-1.8V9.7A7.2 7.2 0 0 0 12 2.5z"/><circle cx="9.2" cy="10.3" r="1.5"/><circle cx="14.8" cy="10.3" r="1.5"/><path d="M11 14.5h2"/>',
+    void: '<circle cx="12" cy="12" r="7.2" stroke-dasharray="3 3"/>',
+    heart: '<path d="M12 20.5S4.2 15.4 4.2 9.9A4.2 4.2 0 0 1 12 7.2a4.2 4.2 0 0 1 7.8 2.7c0 5.5-7.8 10.6-7.8 10.6z"/>',
+    coin: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.2v9.6M9.4 9.6h5.2M9.4 14.4h5.2"/>',
+    dice: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.4" cy="8.4" r="1.35" fill="currentColor" stroke="none"/><circle cx="15.6" cy="8.4" r="1.35" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="8.4" cy="15.6" r="1.35" fill="currentColor" stroke="none"/><circle cx="15.6" cy="15.6" r="1.35" fill="currentColor" stroke="none"/>',
+    reroll: '<path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 3.5v5.2h-5.2"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    minus: '<path d="M5 12h14"/>',
+    flip: '<path d="M12 3.5v17"/><path d="M7.5 8L3.5 12l4 4"/><path d="M16.5 8l4 4-4 4"/>',
+    copy: '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.5"/><path d="M15.5 5.5H6.5A2 2 0 0 0 4.5 7.5v9"/>',
+    crown: '<path d="M3.5 18.5h17l1.2-10-5.4 3.2L12 4.2 7.7 11.7 2.3 8.5l1.2 10z"/>',
+    anvil: '<path d="M3 20.5h18"/><path d="M5.5 16.5h13l-2.2-6.2H7.7L5.5 16.5z"/><path d="M10.2 10.3V6.2h3.6v4.1"/>',
+    shop: '<path d="M4 9.2h16l-1.2-4.4H5.2L4 9.2z"/><path d="M5.6 9.2v11h12.8v-11"/><path d="M10 20.2v-6h4v6"/>',
+    campfire: '<path d="M12 21c-3.9 0-6-2.4-6-5.4 0-3.5 3-6.4 3-8.6 2 1 3 3 3 5 1-1 2-3 2-4 2 2 4 4.4 4 7.4 0 3-2.1 5.6-6 5.6z"/>',
+    mystery: '<circle cx="12" cy="12" r="8.5"/><path d="M9.4 9.4a2.7 2.7 0 1 1 3.7 2.5c-.7.4-1.1.9-1.1 1.8"/><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"/>',
+    star: '<path d="M12 2.8l2.7 6.3 6.8.6-5.2 4.5 1.6 6.6L12 17.2l-5.9 3.6 1.6-6.6L2.5 9.7l6.8-.6L12 2.8z"/>',
+    up: '<path d="M12 19.5V5M6 11l6-6 6 6"/>',
+    down: '<path d="M12 4.5V19M6 13l6 6 6-6"/>',
+    lock: '<rect x="5" y="10.5" width="14" height="10.5" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
+    sound: '<path d="M4 9.5h3.4L12 5.6v12.8L7.4 14.5H4z"/><path d="M15.4 9a4 4 0 0 1 0 6M18 6.4a7.6 7.6 0 0 1 0 11.2"/>',
+    mute: '<path d="M4 9.5h3.4L12 5.6v12.8L7.4 14.5H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>',
+    book: '<path d="M4 4.5h6.2A2.8 2.8 0 0 1 13 7.3v13a2.2 2.2 0 0 0-2.2-2.2H4z"/><path d="M20 4.5h-6.2A2.8 2.8 0 0 0 11 7.3v13a2.2 2.2 0 0 1 2.2-2.2H20z"/>',
+    map: '<path d="M3 6.2l6-2.4 6 2.4 6-2.4v14l-6 2.4-6-2.4-6 2.4v-14z"/><path d="M9 3.8v14M15 6.2v14"/>',
+    target: '<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
+    whirl: '<path d="M12 3.5a8.5 8.5 0 1 1-8.2 6.3"/><path d="M12 20.5a8.5 8.5 0 0 1-8.2-6.3"/><path d="M3.5 12l2-3 2 3"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    close: '<path d="M6 6l12 12M18 6L6 18"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.2V12l3.4 2"/>',
+    eye: '<path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+    trash: '<path d="M4.5 6.5h15M9 6.5V4h6v2.5M6.5 6.5l1 13.5h9l1-13.5"/>',
+    spark: '<path d="M12 2.5l1.8 6.2 6.2 1.8-6.2 1.8L12 18.5l-1.8-6.2L4 10.5l6.2-1.8L12 2.5z"/>',
+  };
+  DC.ICONS = P;
+  DC.icon = function (name, cls) {
+    const p = P[name] || P.dice;
+    return '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+  };
+
+  /* ---------------- face kinds ---------------- */
+  DC.KINDS = {
+    slash: { n: '참격', ic: 'sword', c: '#ff7b72' },
+    guard: { n: '수호', ic: 'shield', c: '#6bc7ff' },
+    fire: { n: '화염', ic: 'flame', c: '#ff9f43' },
+    bolt: { n: '번개', ic: 'bolt', c: '#ffe066' },
+    venom: { n: '맹독', ic: 'venom', c: '#9ae66e' },
+    leech: { n: '흡혈', ic: 'blood', c: '#f472b6' },
+    mult: { n: '증폭', ic: 'mult', c: '#c084fc' },
+    curse: { n: '저주', ic: 'skull', c: '#a78bfa' },
+    blank: { n: '공허', ic: 'void', c: '#7f8ea3' },
+    wild: { n: '야생', ic: 'star', c: '#fbbf24' },
+  };
+
+  DC.STATUS = {
+    burn: { n: '화상', ic: 'flame', c: '#ff9f43', tip: '적 턴 시작에 피해' },
+    poison: { n: '중독', ic: 'venom', c: '#9ae66e', tip: '적 턴 시작에 피해(감소 없음)' },
+    weak: { n: '약화', ic: 'down', c: '#94a3b8', tip: '주는 피해 25% 감소' },
+    vuln: { n: '취약', ic: 'target', c: '#f87171', tip: '받는 피해 50% 증가' },
+    str: { n: '힘', ic: 'up', c: '#fbbf24', tip: '공격마다 추가 피해' },
+  };
+
+  /* ---------------- requirements ---------------- */
+  DC.REQ = {
+    any: { n: '아무 눈', ic: 'dice', test: function () { return true; } },
+    even: { n: '짝수', ic: 'mult', test: function (v) { return v % 2 === 0; } },
+    odd: { n: '홀수', ic: 'flip', test: function (v) { return v % 2 === 1; } },
+    gte4: { n: '4 이상', ic: 'up', test: function (v) { return v >= 4; } },
+    lte2: { n: '2 이하', ic: 'down', test: function (v) { return v <= 2; } },
+    six: { n: '6', ic: 'star', test: function (v) { return v === 6; } },
+    prime: { n: '소수', ic: 'spark', test: function (v) { return v === 2 || v === 3 || v === 5; } },
+  };
+
+  /* ---------------- dice ---------------- */
+  function f(k, v) { return { k: k, v: v }; }
+  DC.DICE = {
+    iron: { name: '강철 주사위', tier: 1, price: 0, c: '#9fb4cc', faces: [f('slash', 2), f('slash', 3), f('guard', 2), f('slash', 4), f('guard', 4), f('slash', 5)], tag: '균형' },
+    bulwark: { name: '방벽 주사위', tier: 1, price: 55, c: '#6bc7ff', faces: [f('guard', 3), f('guard', 4), f('slash', 2), f('guard', 5), f('guard', 6), f('slash', 3)], tag: '수비' },
+    ember: { name: '화염 주사위', tier: 1, price: 0, c: '#ff9f43', faces: [f('fire', 2), f('slash', 2), f('fire', 3), f('fire', 4), f('bolt', 2), f('fire', 5)], tag: '화염' },
+    frost: { name: '서리 주사위', tier: 1, price: 0, c: '#93c5fd', faces: [f('guard', 2), f('slash', 2), f('venom', 1), f('slash', 3), f('venom', 2), f('slash', 4)], tag: '독' },
+    arcane: { name: '비전 주사위', tier: 1, price: 0, c: '#c084fc', faces: [f('mult', 1), f('slash', 2), f('mult', 2), f('bolt', 3), f('mult', 1), f('leech', 2)], tag: '증폭' },
+    loaded: { name: '조작 주사위', tier: 1, price: 0, c: '#fbbf24', faces: [f('slash', 3), f('slash', 4), f('slash', 5), f('slash', 6), f('mult', 1), f('curse', 1)], tag: '도박' },
+    wild: { name: '야생 주사위', tier: 1, price: 0, c: '#f472b6', faces: [f('slash', 1), f('guard', 1), f('fire', 1), f('bolt', 1), f('venom', 1), f('leech', 1)], tag: '만능' },
+    lucky: { name: '행운 주사위', tier: 1, price: 0, c: '#34d399', faces: [f('slash', 2), f('mult', 1), f('slash', 4), f('leech', 2), f('mult', 2), f('slash', 6)], tag: '행운' },
+    vampire: { name: '흡혈 주사위', tier: 2, price: 75, c: '#f472b6', faces: [f('leech', 3), f('slash', 2), f('leech', 4), f('slash', 3), f('venom', 2), f('leech', 5)], tag: '흡혈' },
+    storm: { name: '폭풍 주사위', tier: 2, price: 80, c: '#ffe066', faces: [f('bolt', 3), f('bolt', 4), f('slash', 2), f('bolt', 5), f('mult', 1), f('bolt', 6)], tag: '번개' },
+    venomd: { name: '독니 주사위', tier: 2, price: 70, c: '#9ae66e', faces: [f('venom', 3), f('venom', 4), f('slash', 2), f('venom', 5), f('leech', 2), f('venom', 6)], tag: '맹독' },
+    chrono: { name: '시간 주사위', tier: 2, price: 85, c: '#67e8f9', faces: [f('mult', 2), f('slash', 3), f('guard', 3), f('mult', 2), f('bolt', 4), f('leech', 3)], tag: '증폭' },
+    cursed: { name: '저주받은 주사위', tier: 2, price: 60, c: '#a78bfa', faces: [f('slash', 6), f('curse', 2), f('slash', 5), f('curse', 1), f('mult', 2), f('slash', 6)], tag: '저주' },
+    prism: { name: '무지개 주사위', tier: 3, price: 120, c: '#f0abfc', faces: [f('fire', 4), f('bolt', 4), f('venom', 4), f('leech', 4), f('mult', 2), f('slash', 5)], tag: '전설' },
+    titan: { name: '거인의 주사위', tier: 3, price: 130, c: '#fca5a5', faces: [f('slash', 6), f('slash', 6), f('guard', 6), f('slash', 5), f('guard', 5), f('slash', 6)], tag: '전설' },
+  };
+  DC.DICE_IDS = Object.keys(DC.DICE);
+
+  /* forge face pool */
+  DC.FACE_POOL = [
+    { k: 'slash', v: 2, cost: 0 }, { k: 'slash', v: 3, cost: 0 }, { k: 'slash', v: 4, cost: 10 },
+    { k: 'slash', v: 5, cost: 18 }, { k: 'slash', v: 6, cost: 26 },
+    { k: 'guard', v: 3, cost: 0 }, { k: 'guard', v: 4, cost: 10 }, { k: 'guard', v: 5, cost: 18 },
+    { k: 'fire', v: 3, cost: 12 }, { k: 'fire', v: 4, cost: 20 },
+    { k: 'bolt', v: 3, cost: 12 }, { k: 'bolt', v: 4, cost: 20 },
+    { k: 'venom', v: 2, cost: 10 }, { k: 'venom', v: 3, cost: 16 },
+    { k: 'leech', v: 3, cost: 14 }, { k: 'leech', v: 4, cost: 22 },
+    { k: 'mult', v: 1, cost: 14 }, { k: 'mult', v: 2, cost: 24 },
+    { k: 'curse', v: 1, cost: 0 },
+  ];
+
+  /* ---------------- classes & skills ---------------- */
+  DC.CLASSES = {
+    warrior: {
+      id: 'warrior', name: '강철의 전사', short: '전사', en: 'IRONCLAD',
+      hp: 68, sparks: 2, c: '#ff7b72',
+      desc: '두꺼운 방패와 묵직한 주사위. 맞으면서 때린다.',
+      startDice: ['iron', 'bulwark', 'iron'],
+      passive: { n: '강철 의지', tip: '방어도가 남아 있으면 다음 턴 시작에 3 피해를 준다.' },
+      skills: [
+        { id: 'strike', name: '강타', req: 'any', ic: 'sword', fx: { type: 'attack', ratio: 1.6 }, desc: '눈 × 1.6 피해' },
+        { id: 'guard', name: '철벽', req: 'any', ic: 'shield', fx: { type: 'block', ratio: 2.4 }, desc: '눈 × 2.4 방어도' },
+        { id: 'bash', name: '분쇄', req: 'even', ic: 'hammer', fx: { type: 'attack', ratio: 2.0, status: { vuln: 1 } }, desc: '눈 × 2 피해 · 취약 1' },
+        { id: 'whirl', name: '회전베기', req: 'gte4', ic: 'whirl', fx: { type: 'aoe', ratio: 1.8 }, desc: '모든 적에게 눈 × 1.8' },
+        { id: 'warcry', name: '전투 함성', req: 'prime', ic: 'up', fx: { type: 'buff', str: 2, block: 5 }, desc: '힘 +2 · 방어도 5' },
+      ],
+    },
+    mage: {
+      id: 'mage', name: '불꽃의 마도사', short: '마도사', en: 'ARCANIST',
+      hp: 76, sparks: 3, c: '#c084fc',
+      desc: '원소 주사위를 굴려 불태우고 연쇄시킨다. 눈을 바꿔 최적해를 만든다.',
+      startDice: ['ember', 'arcane', 'frost'],
+      passive: { n: '원소 친화', tip: '매 턴 기세 +1, 화염·번개 면을 쓰면 2 회복한다.' },
+      skills: [
+        { id: 'ember', name: '불꽃 화살', req: 'any', ic: 'flame', fx: { type: 'attack', ratio: 2, burn: true }, desc: '눈 × 2 피해 · 화상' },
+        { id: 'ward', name: '마나 방벽', req: 'even', ic: 'shield', fx: { type: 'block', ratio: 2.8, heal: 1 }, desc: '눈 × 2.8 방어도 · 1 회복' },
+        { id: 'chain', name: '연쇄 번개', req: 'odd', ic: 'bolt', fx: { type: 'chain', ratio: 1.6 }, desc: '눈 × 1.6 + 다른 적에게 연쇄' },
+        { id: 'amplify', name: '증폭', req: 'any', ic: 'mult', fx: { type: 'mult', add: 0.5, dmgRatio: 0.5 }, desc: '연쇄 배율 +0.5 · 눈 × 0.5 피해' },
+        { id: 'meteor', name: '유성', req: 'gte4', ic: 'star', fx: { type: 'aoe', ratio: 1.8, burn: 2 }, desc: '모든 적에게 눈 × 1.8 · 화상 2' },
+      ],
+    },
+    gambler: {
+      id: 'gambler', name: '운명의 도박사', short: '도박사', en: 'GAMBLER',
+      hp: 76, sparks: 4, c: '#fbbf24',
+      desc: '기세가 넘친다. 재굴림과 복제로 판을 뒤집고 콤보로 승부한다.',
+      startDice: ['loaded', 'lucky', 'wild'],
+      passive: { n: '행운의 손', tip: '콤보가 3 이상이면 공격마다 +2 피해.' },
+      skills: [
+        { id: 'dagger', name: '단검', req: 'any', ic: 'sword', fx: { type: 'attack', ratio: 1.3, comboBonus: 1.5 }, desc: '눈 × 1.3 + 콤보 보너스' },
+        { id: 'coin', name: '동전 던지기', req: 'even', ic: 'coin', fx: { type: 'attack', ratio: 2.8 }, desc: '눈 × 2.8 피해' },
+        { id: 'lucky', name: '행운', req: 'any', ic: 'spark', fx: { type: 'spark', amount: 2, block: 3 }, desc: '기세 +2 · 방어도 3' },
+        { id: 'allin', name: '올인', req: 'six', ic: 'flame', fx: { type: 'attack', ratio: 5, selfDmg: 3 }, desc: '눈 × 5 피해 · 자신 3 피해' },
+        { id: 'jackpot', name: '잭팟', req: 'prime', ic: 'star', fx: { type: 'multi', ratio: 1.2 }, desc: '눈 × 1.2 피해를 콤보 수만큼' },
+      ],
+    },
+  };
+  DC.CLASS_IDS = ['warrior', 'mage', 'gambler'];
+
+  /* ---------------- relics ---------------- */
+  DC.RELICS = {
+    rune: { name: '룬 주사위', ic: 'dice', c: '#67e8f9', desc: '전투 시작 시 주사위를 하나 더 굴린다.', price: 95 },
+    doubleRoll: { name: '이중 굴림', ic: 'reroll', c: '#6bc7ff', desc: '매 턴 첫 재굴림이 무료다.', price: 90 },
+    luckyCoin: { name: '행운의 동전', ic: 'coin', c: '#fbbf24', desc: '짝수 눈으로 스킬을 쓰면 기세 +1 (턴당 2회).', price: 85 },
+    flameHeart: { name: '화염 심장', ic: 'flame', c: '#ff9f43', desc: '화염 피해가 60% 증가한다.', price: 95 },
+    conductor: { name: '번개 도체', ic: 'bolt', c: '#ffe066', desc: '번개 연쇄가 적 하나를 더 때린다.', price: 90 },
+    wrist: { name: '강철 손목', ic: 'shield', c: '#6bc7ff', desc: '방어도 획득이 25% 증가한다.', price: 80 },
+    mask: { name: '광기의 가면', ic: 'skull', c: '#a78bfa', desc: '콤보 배율 상승폭이 0.1 더 커진다.', price: 110 },
+    gamblersHand: { name: '도박꾼의 손', ic: 'star', c: '#fbbf24', desc: '전투마다 기세를 1 더 얻는다.', price: 100 },
+    grail: { name: '피의 성배', ic: 'blood', c: '#f472b6', desc: '적을 처치할 때마다 6 회복한다.', price: 90 },
+    hourglass: { name: '시간의 모래', ic: 'clock', c: '#67e8f9', desc: '턴 시작에 무작위 주사위 하나의 눈이 +1 된다.', price: 100 },
+    contract: { name: '저주받은 계약', ic: 'skull', c: '#a78bfa', desc: '골드 획득 40% 증가 · 최대 체력 12 감소.', price: 60 },
+    scale: { name: '균형의 천칭', ic: 'flip', c: '#93c5fd', desc: '홀수 눈 공격 피해가 40% 증가한다.', price: 95 },
+    pledge: { name: '짝수의 서약', ic: 'mult', c: '#c084fc', desc: '짝수 눈 공격 피해가 40% 증가한다.', price: 95 },
+    echo: { name: '잔향', ic: 'reroll', c: '#67e8f9', desc: '턴 종료 시 남은 주사위 하나당 기세 +1.', price: 85 },
+    sixBless: { name: '6의 축복', ic: 'star', c: '#fbbf24', desc: '6이 나올 때마다 기세 +1.', price: 90 },
+    merchant: { name: '상인의 인장', ic: 'coin', c: '#34d399', desc: '상점 가격 30% 할인.', price: 75 },
+    vampireFang: { name: '흡혈귀의 송곳니', ic: 'blood', c: '#f472b6', desc: '가한 피해의 8%를 회복한다.', price: 100 },
+    karma: { name: '업보의 사슬', ic: 'mult', c: '#f472b6', desc: '콤보 4 이상에서 모든 공격이 2번 적중한다.', price: 130 },
+  };
+  DC.RELIC_IDS = Object.keys(DC.RELICS);
+
+  /* ---------------- enemies ---------------- */
+  function E(id, name, hp, art, c, intents, extra) {
+    return Object.assign({ id: id, name: name, hp: hp, art: art, c: c, intents: intents }, extra || {});
+  }
+  DC.ENEMIES = {
+    1: [
+      E('slime', '점액 슬라임', 28, 'blob', '#6ee7b7', [{ k: 'attack', v: 7 }, { k: 'attack', v: 4, hits: 2 }, { k: 'defend', v: 6 }]),
+      E('rat', '쥐떼', 22, 'beast', '#a8a29e', [{ k: 'attack', v: 4, hits: 2 }, { k: 'attack', v: 6 }, { k: 'debuff', s: 'weak', v: 1 }]),
+      E('goblin', '고블린 약탈자', 34, 'humanoid', '#84cc16', [{ k: 'attack', v: 9 }, { k: 'debuff', s: 'vuln', v: 2 }, { k: 'attack', v: 7 }]),
+      E('bat', '동굴 박쥐', 20, 'flyer', '#c084fc', [{ k: 'attack', v: 3, hits: 3 }, { k: 'curse', n: 1 }, { k: 'attack', v: 5 }]),
+      E('wolf', '굶주린 늑대', 34, 'beast', '#fca5a5', [{ k: 'attack', v: 11 }, { k: 'buff', s: 'str', v: 2 }, { k: 'attack', v: 9 }]),
+    ],
+    2: [
+      E('skeleton', '해골 병사', 34, 'humanoid', '#e2e8f0', [{ k: 'attack', v: 12 }, { k: 'defend', v: 10 }, { k: 'attack', v: 8, hits: 2 }]),
+      E('spider', '독거미', 30, 'beast', '#9ae66e', [{ k: 'attack', v: 8 }, { k: 'attack', v: 4, hits: 2, apply: 'poison' }, { k: 'debuff', s: 'weak', v: 2 }]),
+      E('gargoyle', '가고일', 46, 'construct', '#94a3b8', [{ k: 'defend', v: 12 }, { k: 'attack', v: 15 }, { k: 'attack', v: 7, hits: 2 }]),
+      E('shaman', '주술사', 36, 'humanoid', '#a78bfa', [{ k: 'debuff', s: 'vuln', v: 2 }, { k: 'attack', v: 12 }, { k: 'curse', n: 2 }, { k: 'buff', s: 'str', v: 3 }]),
+      E('wraith', '망령', 33, 'flyer', '#67e8f9', [{ k: 'attack', v: 10 }, { k: 'drain', v: 6 }, { k: 'debuff', s: 'weak', v: 1 }]),
+    ],
+    3: [
+      E('knight', '심연 기사', 58, 'humanoid', '#f87171', [{ k: 'attack', v: 21 }, { k: 'defend', v: 14 }, { k: 'attack', v: 10, hits: 3 }]),
+      E('imp', '화염 임프', 46, 'flyer', '#fb923c', [{ k: 'attack', v: 10, apply: 'burn' }, { k: 'attack', v: 6, hits: 3 }, { k: 'buff', s: 'str', v: 3 }]),
+      E('shadow', '심연의 그림자', 62, 'blob', '#8b5cf6', [{ k: 'curse', n: 2 }, { k: 'attack', v: 24 }, { k: 'drain', v: 12 }]),
+      E('serpent', '독니 뱀', 52, 'beast', '#9ae66e', [{ k: 'attack', v: 12, apply: 'poison' }, { k: 'attack', v: 7, hits: 2 }, { k: 'debuff', s: 'vuln', v: 3 }]),
+    ],
+  };
+  DC.ELITES = {
+    1: [E('ogre', '오우거 투사', 58, 'humanoid', '#fbbf24', [{ k: 'attack', v: 14 }, { k: 'buff', s: 'str', v: 2 }, { k: 'attack', v: 8, hits: 2 }])],
+    2: [E('golem', '고대 골렘', 84, 'construct', '#94a3b8', [{ k: 'defend', v: 16 }, { k: 'attack', v: 20 }, { k: 'attack', v: 8, hits: 3 }])],
+    3: [E('wyvern', '와이번', 120, 'flyer', '#fb923c', [{ k: 'attack', v: 26 }, { k: 'attack', v: 11, hits: 3 }, { k: 'buff', s: 'str', v: 4 }])],
+  };
+  DC.BOSSES = {
+    1: E('queen', '슬라임 여왕', 98, 'boss', '#34d399', [{ k: 'attack', v: 13 }, { k: 'curse', n: 1 }, { k: 'attack', v: 7, hits: 2 }, { k: 'drain', v: 10 }]),
+    2: E('lich', '심연의 리치', 150, 'boss', '#a78bfa', [{ k: 'curse', n: 2 }, { k: 'attack', v: 22 }, { k: 'debuff', s: 'vuln', v: 3 }, { k: 'attack', v: 10, hits: 3 }]),
+    3: E('dicelord', '주사위 군주', 178, 'boss', '#fbbf24', [{ k: 'curse', n: 2 }, { k: 'attack', v: 30 }, { k: 'attack', v: 13, hits: 3 }, { k: 'buff', s: 'str', v: 5 }, { k: 'drain', v: 16 }]),
+  };
+
+  /* ---------------- events ---------------- */
+  DC.EVENTS = [
+    {
+      id: 'altar', name: '도박의 제단', ic: 'coin',
+      text: '녹슨 제단 위에 금화가 쌓여 있다. "네 운을 걸어라."',
+      choices: [
+        { label: '30 골드를 건다', need: { gold: 30 }, fn: 'gamble', desc: '50% 확률로 90 골드' },
+        { label: '무시하고 지나간다', fn: 'leave' },
+      ],
+    },
+    {
+      id: 'cursedSword', name: '저주받은 검', ic: 'skull',
+      text: '검은 연기를 뿜는 검이 땅에 박혀 있다. 잡으면 힘이 솟지만 대가가 있을 것이다.',
+      choices: [
+        { label: '검을 뽑는다', fn: 'cursedSword', desc: '유물 획득 · 최대 체력 8 감소' },
+        { label: '지나간다', fn: 'leave' },
+      ],
+    },
+    {
+      id: 'dicePile', name: '버려진 주사위 더미', ic: 'dice',
+      text: '누군가 버린 주사위가 수북하다. 쓸 만한 것을 골라보자.',
+      choices: [
+        { label: '뒤적여 본다', fn: 'gainDie', desc: '무작위 주사위 획득 · 10 피해' },
+        { label: '지나간다', fn: 'leave' },
+      ],
+    },
+    {
+      id: 'spring', name: '빛나는 샘', ic: 'star',
+      text: '따뜻한 빛이 흐르는 샘. 마시면 몸이 가벼워진다.',
+      choices: [
+        { label: '마신다', fn: 'heal35', desc: '체력 35% 회복' },
+        { label: '손을 담근다', fn: 'sparkMax', desc: '최대 기세 +1' },
+      ],
+    },
+    {
+      id: 'merchant', name: '수상한 상인', ic: 'shop',
+      text: '"이 주사위, 아주 특별해. 45 골드면 넘겨주지."',
+      choices: [
+        { label: '45 골드에 산다', need: { gold: 45 }, fn: 'buyEpicDie', desc: '고급 주사위 획득' },
+        { label: '거절한다', fn: 'leave' },
+      ],
+    },
+    {
+      id: 'forgeSpirit', name: '단조의 정령', ic: 'anvil',
+      text: '불꽃으로 이루어진 정령이 주사위를 두드리고 있다. "한 면만 바꿔줄까?"',
+      choices: [
+        { label: '부탁한다', fn: 'freeForge', desc: '주사위 면 1회 단조' },
+        { label: '지나간다', fn: 'leave' },
+      ],
+    },
+  ];
+
+  /* map node meta */
+  DC.NODES = {
+    combat: { n: '전투', ic: 'sword', c: '#ff7b72' },
+    elite: { n: '정예', ic: 'skull', c: '#a78bfa' },
+    forge: { n: '단조', ic: 'anvil', c: '#fb923c' },
+    shop: { n: '상점', ic: 'shop', c: '#34d399' },
+    mystery: { n: '미지', ic: 'mystery', c: '#67e8f9' },
+    rest: { n: '휴식', ic: 'campfire', c: '#fbbf24' },
+    boss: { n: '보스', ic: 'crown', c: '#ef4444' },
+  };
+
+  DC.monsterArt = function (art) {
+    const A = {
+      blob: '<path d="M12 3.5c4.6 0 8 3.9 8 8.6 0 4.6-3.2 8.4-8 8.4s-8-3.8-8-8.4c0-4.7 3.4-8.6 8-8.6z"/><circle cx="9" cy="11" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="11" r="1.4" fill="currentColor" stroke="none"/>',
+      humanoid: '<circle cx="12" cy="5.6" r="3"/><path d="M8 10h8l2 6.5H6L8 10z"/><path d="M6.2 11.2L3.8 15.6M17.8 11.2L19.4 14"/><path d="M9.4 16.5L8.4 21M14.6 16.5l1 4.5"/><path d="M19.6 6.2l1.8 6-2.4.7"/>',
+      beast: '<path d="M5 9.5l1.5-4 3 2h5l3-2 1.5 4v5.5c0 2.5-2 4.5-4.5 4.5h-5C7 19.5 5 17.5 5 15V9.5z"/><circle cx="9.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="14.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><path d="M9.5 16.5l2.5 1 2.5-1"/>',
+      flyer: '<path d="M12 6c2.2 0 4 2 4 4.5S14.2 20 12 20s-4-7-4-9.5S9.8 6 12 6z"/><path d="M8 9L2.5 6.5 4 13l4 2M16 9l5.5-2.5L20 13l-4 2"/>',
+      construct: '<rect x="5" y="6" width="14" height="12" rx="2"/><path d="M9 6V3.5h6V6M8.5 11h2M13.5 11h2"/><path d="M9 15h6"/>',
+      boss: '<path d="M12 3.5l2.5 5 5-2-1.5 5.5h-12L4.5 6.5l5 2 2.5-5z"/><path d="M6 12h12v6.5a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V12z"/><circle cx="9.5" cy="15" r="1.3" fill="currentColor" stroke="none"/><circle cx="14.5" cy="15" r="1.3" fill="currentColor" stroke="none"/>',
+    };
+    return A[art] || A.humanoid;
+  };
+
+  DC.uid = (function () { let n = 0; return function (p) { n += 1; return (p || 'id') + n; }; })();
+  DC.clamp = function (v, a, b) { return v < a ? a : v > b ? b : v; };
+})();
