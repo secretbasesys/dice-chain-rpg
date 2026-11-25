@@ -17,9 +17,10 @@ def build(out_path):
         js_parts.append("/* ===== src/%s ===== */\n%s" % (name, src))
     js = "\n".join(js_parts)
 
-    html = html.replace(
-        '<link rel="stylesheet" href="style.css" />',
-        "<style>\n" + css + "\n</style>",
+    html = re.sub(
+        r'<link rel="stylesheet" href="style\.css[^"]*"\s*/?>',
+        lambda m: "<style>\n" + css + "\n</style>",
+        html,
     )
     html = re.sub(r'\n\s*<script src="src/[^"]+"></script>', "", html)
     html = html.replace("</body>", "  <script>\n" + js + "\n  </script>\n</body>")
