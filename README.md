@@ -12,6 +12,16 @@
 
 ---
 
+## 스크린샷
+
+| 전투 (모바일 390×844) | 주사위 단조 | 맵 |
+|---|---|---|
+| ![전투](screenshots/combat.png) | ![단조](screenshots/forge.png) | ![맵](screenshots/map.png) |
+
+| 보상 | 덱 · 유물 | 데스크톱 (1280×800) |
+|---|---|---|
+| ![보상](screenshots/reward.png) | ![덱](screenshots/deck.png) | ![데스크톱](screenshots/desktop_combat.png) |
+
 ## 게임 방법
 
 1. **굴린다** — 매 턴 가방 속 주사위가 전부 굴려집니다.
