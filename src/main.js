@@ -453,6 +453,7 @@
       if (r.relics.indexOf('bloodRite') >= 0) c.hp = Math.max(1, c.hp - 3);
       this.state.combat = c;
       this.state.screen = 'combat';
+      if (DC.preloadCombat) DC.preloadCombat(r.act, c.enemies);
       this.state.ui.sel = null;
       this.state.ui.busy = false;
       this.state.ui.hist = [];
@@ -465,12 +466,13 @@
         const bossName = (c.enemies[0] && c.enemies[0].title) || 'BOSS';
         DC.Audio.play('boss');
         setTimeout(function () {
-          DC.FX.banner(bossName, 'cinematic');
+          if (DC.VFX) DC.VFX.bossCutin(document.querySelector('.enemy.is-boss'), bossName, lines.appear, DC.enemyArt(c.enemies[0]));
+          else DC.FX.banner(bossName, 'cinematic');
           DC.FX.flash('rgba(251, 191, 36, .16)');
           DC.FX.shake(10);
         }, 260);
-        setTimeout(function () { DC.FX.banner(lines.appear, 'boss'); }, 1500);
-        DC.UI.toast('보스 등장!');
+        setTimeout(function () { if (!DC.VFX) DC.FX.banner(lines.appear, 'boss'); }, 2100);
+        if (!DC.VFX) DC.UI.toast('보스 등장!');
       } else if (kind === 'elite') DC.UI.toast('정예 조우!');
       const syns = DC.synergiesFor ? DC.synergiesFor(r.relics) : [];
       if (syns.length) {

@@ -27,8 +27,8 @@
     const k = DC.KINDS[h.k] || DC.KINDS.blank;
     const cls = ['die', h.used ? 'used' : '', h.locked ? 'locked' : '', opts.sel ? 'sel' : '', h.phantom ? 'phantom' : ''].join(' ');
     return '' +
-      '<div class="' + cls + '" data-act="hand" data-idx="' + i + '" style="--c:' + k.c + '" role="button" tabindex="0" aria-label="주사위 ' + h.v + ' ' + k.n + '">' +
-        pips(h.v) +
+      '<div class="' + cls + '" data-act="hand" data-idx="' + i + '" style="--c:' + k.c + ';--i:' + i + '" role="button" tabindex="0" aria-label="주사위 ' + h.v + ' ' + k.n + '">' +
+        '<span class="die-face">' + pips(h.v) + '</span>' +
         '<span class="die-ic">' + icon(k.ic) + '</span>' +
         '<span class="die-val">' + h.v + '</span>' +
         '<span class="die-kind">' + k.n + '</span>' +
@@ -64,39 +64,65 @@
     return out;
   }
 
-  function hud(state, extra) {
+  /* =========================================================
+     v7.0 combat UI — 4단 시선 흐름
+     적(의도·HP) → 스킬(아이콘+배율) → 내 주사위 → 핵심 액션
+     ========================================================= */
+
+  function hpBar(cur, max, block, pred) {
+    const w = pct(cur, max);
+    const bw = block > 0 ? Math.min(100 - w, pct(block, max)) : 0;
+    const pw = pred > 0 ? Math.min(100 - w - bw, pct(pred, max)) : 0;
+    return '<div class="hpbar">' +
+      '<i class="hp-fill" style="width:' + w + '%"></i>' +
+      (bw ? '<i class="hp-block" style="width:' + bw + '%"></i>' : '') +
+      (pw ? '<i class="hp-pred" style="width:' + pw + '%"></i>' : '') +
+      '</div>';
+  }
+
+  /* total incoming damage of this enemy phase */
+  function incomingTotal(c) {
+    let total = 0;
+    DC.Combat.alive(c).forEach(function (e) {
+      const it = DC.Combat.intentOf(e);
+      if (it && it.k === 'attack') total += it.v * (it.hits || 1);
+    });
+    return total;
+  }
+
+  function hud(state) {
     const c = state.combat;
     const r = state.run;
-    const hp = c ? c.hp : r.hp;
+    const hp = Math.max(0, c ? c.hp : r.hp);
     const maxHpv = c ? c.maxHp : r.maxHp;
-    const gold = r.gold;
+    const block = c ? c.block : 0;
+    const pred = c && c.phase === 'player' ? Math.max(0, incomingTotal(c) - block) : 0;
     const relicHtml = r.relics.map(function (id) {
       const R = DC.RELICS[id];
       return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc) + '" data-tip-title="' + esc(R.name) + '">' + relicIcon(id) + '</span>';
-    });
-    const relics = relicHtml.join('');
+    }).join('');
+    const lethal = pred >= hp && pred > 0;
     return '' +
-      '<div class="hud">' +
-        '<div class="hud-left">' +
-          '<div class="hp" data-tip="피해는 방어도가 먼저 흡수합니다. 0이 되면 패배." data-tip-title="체력">' +
-            '<div class="hp-top"><span class="hp-num">' + Math.max(0, hp) + '<i>/' + maxHpv + '</i></span>' +
-              (c && c.block > 0 ? '<span class="blockchip" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + c.block + '</span>' : '') +
-            '</div>' +
-            '<div class="hpbar"><i style="width:' + pct(hp, maxHpv) + '%"></i></div>' +
+      '<header class="hud">' +
+        '<div class="hp' + (lethal ? ' lethal' : '') + '" data-tip="' + (pred > 0 ? '다음 적 턴 예상 피해 ' + pred : '피해는 방어도가 먼저 흡수합니다.') + '" data-tip-title="체력 ' + hp + '/' + maxHpv + '">' +
+          '<div class="hp-top">' +
+            '<span class="hp-heart">' + icon('heart') + '</span>' +
+            '<span class="hp-num">' + hp + '<i>/' + maxHpv + '</i></span>' +
+            (block > 0 ? '<span class="blockchip" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + block + '</span>' : '') +
           '</div>' +
+          hpBar(hp, maxHpv, block, pred) +
         '</div>' +
-        '<div class="hud-mid">' + relics + '</div>' +
+        '<div class="hud-mid">' + relicHtml + '</div>' +
         '<div class="hud-right">' +
-          '<span class="goldchip" title="골드">' + icon('coin') + gold + '</span>' +
+          '<span class="goldchip" title="골드">' + icon('coin') + r.gold + '</span>' +
           '<button class="iconbtn deckbtn" data-act="deck" title="덱 · 유물 보기" aria-label="덱 보기">' + icon('book') +
             (r.relics.length ? '<i class="cntbadge" data-tip="유물 ' + r.relics.length + '개 — 눌러서 확인" data-tip-title="보유 유물">' + r.relics.length + '</i>' : '') + '</button>' +
           '<button class="iconbtn" data-act="sound" title="소리" aria-label="소리">' + icon(DC.Audio.isMuted() ? 'mute' : 'sound') + '</button>' +
           '<button class="iconbtn" data-act="settings" title="설정 · 도움말" aria-label="설정">' + icon('gear') + '</button>' +
         '</div>' +
-      '</div>';
+      '</header>';
   }
 
-  /* ---------------- combat ---------------- */
   function intentTip(it, e) {
     if (!it) return '의도 없음';
     switch (it.k) {
@@ -110,84 +136,163 @@
     }
   }
 
-  function enemyCard(c, e, idx) {
+  /* small status marks (icon + stacks) */
+  function statusMarks(st) {
+    let out = '';
+    ['burn', 'poison', 'weak', 'vuln', 'str'].forEach(function (s) {
+      let v = st[s];
+      if (s === 'burn') v = Math.max(v || 0, st.burnOnPlayer || 0);
+      if (s === 'poison') v = Math.max(v || 0, st.poisonOnPlayer || 0);
+      if (v > 0) {
+        const d = DC.STATUS[s];
+        out += '<span class="smark" style="--c:' + d.c + '" data-tip="' + esc(d.t) + '" data-tip-title="' + esc(d.n) + '">' + icon(d.ic) + '<b>' + v + '</b></span>';
+      }
+    });
+    return out ? '<span class="smarks">' + out + '</span>' : '';
+  }
+
+  /* 의도: 큰 수치 + 작은 라벨 */
+  function intentParts(it) {
+    if (!it) return { big: '', small: '' };
+    switch (it.k) {
+      case 'attack': return { big: String(it.v), small: (it.hits > 1 ? '×' + it.hits + ' 연타' : '피해') };
+      case 'defend': return { big: String(it.v), small: '방어' };
+      case 'buff': return { big: '+' + it.v, small: '힘' };
+      case 'debuff': return { big: String(it.v), small: (DC.STATUS[it.s] ? DC.STATUS[it.s].n : '약화') };
+      case 'curse': return { big: String(it.n), small: '봉인' };
+      case 'drain': return { big: String(it.v), small: '흡혈' };
+      default: return { big: '?', small: '' };
+    }
+  }
+
+  function intentBadge(c, e) {
     const it = DC.Combat.intentOf(e);
-    const dead = e.hp <= 0;
-    const incoming = it && it.k === 'attack' ? it.v * (it.hits || 1) : 0;
-    const lethal = incoming > 0 && incoming >= (c.hp + c.block) && !dead;
-    return '' +
-      '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + (e.title ? ' is-boss' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '">' +
-        (dead ? '' : '<div class="intent it-' + (it ? it.k : 'none') + (lethal ? ' lethal' : '') + '" data-tip="' + esc(intentTip(it, e)) + '" data-tip-title="적의 의도">' + icon(DC.Combat.intentIcon(it)) + '<b>' + esc(DC.Combat.intentText(it)) + '</b></div>') +
-        '<div class="enemy-art">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(e.art, e) + '</svg>' +
-        '</div>' +
-        '<div class="enemy-shadow"></div>' +
-        '<div class="enemy-name">' + esc(e.name) + '</div>' +
-        (e.title ? '<div class="enemy-title">' + esc(e.title) + '</div>' : '') +
-        '<div class="hpbar enemy-hp"><i style="width:' + pct(e.hp, e.maxHp) + '%"></i></div>' +
-        '<div class="enemy-foot"><span class="ehp">' + Math.max(0, e.hp) + '/' + e.maxHp + '</span>' + (e.block > 0 ? '<span class="echip" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + e.block + '</span>' : '') + statusChips(e.st) + '</div>' +
+    if (!it || e.hp <= 0) return '';
+    const incoming = it.k === 'attack' ? it.v * (it.hits || 1) : 0;
+    const lethal = incoming > 0 && incoming >= (c.hp + c.block);
+    const p = intentParts(it);
+    return '<div class="intent it-' + it.k + (lethal ? ' lethal' : '') + '" data-tip="' + esc(intentTip(it, e)) + '" data-tip-title="적의 의도">' +
+      icon(DC.Combat.intentIcon(it)) +
+      '<b>' + esc(p.big) + '</b>' +
+      '<i>' + esc(p.small) + '</i>' +
       '</div>';
+  }
+
+  function enemyCard(c, e, idx) {
+    const dead = e.hp <= 0;
+    const boss = !!e.title;
+    return '' +
+      '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + (boss ? ' is-boss' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '">' +
+        intentBadge(c, e) +
+        '<div class="e-art-wrap">' +
+          '<img class="e-art" src="' + DC.enemyArt(e) + '" alt="" draggable="false" />' +
+          '<span class="e-glow"></span>' +
+          statusMarks(e.st) +
+        '</div>' +
+        '<div class="e-foot">' +
+          '<div class="e-line">' +
+            '<span class="e-name">' + esc(e.name) + '</span>' +
+            (e.block > 0 ? '<span class="e-block" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + e.block + '</span>' : '') +
+          '</div>' +
+          '<div class="e-hp">' +
+            '<div class="hpbar"><i class="hp-fill" style="width:' + pct(e.hp, e.maxHp) + '%"></i></div>' +
+            '<b>' + Math.max(0, e.hp) + '<i>/' + e.maxHp + '</i></b>' +
+          '</div>' +
+          (boss ? '<div class="e-title">' + esc(e.title) + '</div>' : '') +
+        '</div>' +
+        '<span class="e-reticle"></span>' +
+      '</div>';
+  }
+
+  /* 슬롯 카드: 아이콘 + 배율만 크게, 설명은 길게 누르기/호버 */
+  const REQ_SHORT = { any: '아무', even: '짝', odd: '홀', gte4: '4+', lte2: '2-', six: '6', prime: '소수' };
+
+  function skillHeadline(sk) {
+    const fx = sk.fx || {};
+    function mul(v) { return '×' + (Math.round(v * 10) / 10).toFixed(1); }
+    switch (fx.type) {
+      case 'attack': return { k: 'atk', ic: 'sword', main: mul(fx.ratio), sub: fx.status && fx.status.vuln ? '취약' : (fx.burn ? '화상' : (fx.status && fx.status.poison ? '중독' : '')) };
+      case 'multi': return { k: 'atk', ic: 'sword', main: mul(fx.ratio), sub: '콤보수' };
+      case 'aoe': return { k: 'atk', ic: 'whirl', main: mul(fx.ratio), sub: '전체' };
+      case 'chain': return { k: 'atk', ic: 'bolt', main: mul(fx.ratio), sub: '연쇄' };
+      case 'block': return { k: 'def', ic: 'shield', main: mul(fx.ratio), sub: fx.heal ? '회복' : (fx.verdictGain ? '심판' : '방어') };
+      case 'buff': return { k: 'buf', ic: 'up', main: '+' + fx.str + '힘', sub: fx.block ? '방어' + fx.block : '' };
+      case 'mult': return { k: 'buf', ic: 'mult', main: '+' + (Math.round((fx.add || 0) * 10) / 10).toFixed(1), sub: '배율' };
+      case 'spark': return { k: 'buf', ic: 'spark', main: '+' + fx.amount, sub: '기세' };
+      case 'verdict': return { k: 'buf', ic: 'crown', main: '+' + (fx.gain || 1), sub: '심판' };
+      case 'mix': return { k: 'atk', ic: 'flask', main: '×1.0', sub: '정수' };
+      default: return { k: 'atk', ic: sk.ic || 'star', main: '·', sub: '' };
+    }
   }
 
   function slotCard(c, idx, selHand) {
     const sk = DC.Combat.skill(c, idx);
     const slot = c.slots[idx];
-    const req = DC.REQ[sk.req];
     const filled = slot.handIdx !== null ? c.hand[slot.handIdx] : null;
     const canAny = selHand != null ? DC.Combat.canPlay(c, selHand, idx).ok : null;
     const info = (selHand != null && canAny) ? DC.Combat.previewInfo(c, selHand, idx) : null;
-    const prev = info ? (info.lethal ? info.text + ' · 처치' : info.text) : '';
-    const justPlaced = slot.anim && Date.now() - slot.anim < 500;
+    const justPlaced = slot.anim && Date.now() - slot.anim < 520;
+    const hd = skillHeadline(sk);
+    const req = REQ_SHORT[sk.req] || '';
     return '' +
-      '<div class="slot ' + (filled ? 'filled' : '') + ' ' + (canAny ? 'can' : '') + ' ' + (canAny === false ? 'cannot' : '') + (justPlaced ? ' landed' : '') + '" data-act="slot" data-idx="' + idx + '" role="button" tabindex="0">' +
-        '<div class="slot-top">' +
-          '<span class="slot-ic">' + icon(sk.ic) + '</span>' +
-          '<span class="slot-name">' + esc(sk.name) + (sk.up ? '<i class="upmark">각성</i>' : '') + '</span>' +
-          '<span class="req req-' + sk.req + '" data-tip="' + esc(DC.KEYWORDS.req.t) + '" data-tip-title="' + esc(req.n) + '">' + icon(req.ic) + esc(req.n) + '</span>' +
-        '</div>' +
-        '<div class="slot-bottom">' +
-          (filled
-            ? '<span class="slot-die" style="--c:' + (DC.KINDS[filled.k] || DC.KINDS.blank).c + '">' + icon((DC.KINDS[filled.k] || DC.KINDS.blank).ic) + '<b>' + filled.v + '</b></span><span class="slot-eff">' + esc(sk.desc) + '</span>'
-            : '<span class="slot-eff">' + esc(sk.desc) + '</span>' + (prev ? '<span class="slot-prev' + (info.lethal ? ' lethal' : '') + '">' + esc(prev) + '</span>' : '')) +
-        '</div>' +
-      '</div>';
+      '<button class="slot type-' + hd.k + (filled ? ' filled' : '') + (canAny ? ' can' : '') + (canAny === false ? ' cannot' : '') + (justPlaced ? ' landed' : '') + '"' +
+        ' data-act="slot" data-idx="' + idx + '"' +
+        ' data-tip="' + esc(sk.desc + (sk.up ? ' (각성)' : '') + ' · 조건: ' + DC.REQ[sk.req].n) + '" data-tip-title="' + esc(sk.name) + '">' +
+        '<span class="sk-top">' +
+          '<span class="sk-req">' + esc(req) + '</span>' +
+          (sk.up ? '<span class="sk-up">각</span>' : '') +
+        '</span>' +
+        '<span class="sk-ic">' + icon(hd.ic) + '</span>' +
+        '<span class="sk-val">' + esc(hd.main) + '</span>' +
+        '<span class="sk-name">' + esc(sk.name) + '</span>' +
+        '<span class="sk-sub">' + esc(hd.sub) + '</span>' +
+        (filled
+          ? '<span class="sk-die" style="--c:' + (DC.KINDS[filled.k] || DC.KINDS.blank).c + '">' + filled.v + '</span>'
+          : '') +
+        (info ? '<span class="sk-now' + (info.lethal ? ' lethal' : '') + '">' + esc(info.text.replace('≈', '')) + '</span>' : '') +
+      '</button>';
   }
 
-  function forecast(c) {
-    const list = DC.Combat.alive(c);
-    if (!list.length) return '';
-    let total = 0, chips = '';
-    list.forEach(function (e) {
-      const it = DC.Combat.intentOf(e);
-      if (!it) return;
-      let danger = false;
-      if (it.k === 'attack') { total += it.v * (it.hits || 1); danger = true; }
-      chips += '<span class="fc-chip' + (danger ? ' dmg' : '') + '" data-tip="' + esc(intentTip(it, e)) + '" data-tip-title="' + esc(e.name) + ' 의도">' +
-        icon(DC.Combat.intentIcon(it)) + '<b>' + esc(e.name) + '</b> ' + esc(DC.Combat.intentText(it)) + '</span>';
-    });
-    const lethal = total > 0 && total >= c.hp + c.block;
-    const hpAfter = Math.max(0, c.hp + c.block - total);
-    return '<div class="forecast' + (lethal ? ' lethal' : '') + '">' +
-      '<div class="fc-head">' + icon('eye') + '다음 적 턴' +
-        (total > 0
-          ? '<span class="fc-total' + (lethal ? ' lethal' : '') + '">' + total + ' 피해' + (lethal ? ' · 치명적' : ' → HP ' + hpAfter) + '</span>'
-          : '<span class="fc-total calm">직접 공격 없음</span>') +
+  function resourceChips(c) {
+    const out = [];
+    out.push('<span class="rchip spark" data-tip="' + esc(DC.KEYWORDS.spark.t) + '" data-tip-title="기세">' + icon('spark') + '<b id="spark-num">' + c.sparks + '</b></span>');
+    if (c.cls === 'alchemist') {
+      const f = c.flask || { fire: 0, poison: 0, bolt: 0 };
+      const n = (f.fire || 0) + (f.poison || 0) + (f.bolt || 0);
+      const COL = { fire: '#ff9f43', poison: '#9ae66e', bolt: '#ffe066' };
+      let pips = '';
+      ['fire', 'poison', 'bolt'].forEach(function (e) {
+        for (let i = 0; i < (f[e] || 0); i++) pips += '<i style="--c:' + COL[e] + '"></i>';
+      });
+      for (let i = n; i < 3; i++) pips += '<i class="empty"></i>';
+      out.push('<span class="rchip flask-chip' + (n >= 3 ? ' full' : '') + '" data-tip="' + esc(DC.KEYWORDS.flask.t) + '" data-tip-title="플라스크">' + icon('flask') + '<span class="flask-pips">' + pips + '</span><b>' + n + '</b><i>/3</i></span>');
+    }
+    if (c.cls === 'paladin') out.push(verdictUi(c));
+    return out.join('');
+  }
+
+  function logPanel(c, r) {
+    return '<div class="overlay" data-act="log"><div class="panel log-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('book') + ' 전투 기록</h3><button class="iconbtn" data-act="log" aria-label="닫기">' + icon('close') + '</button></div>' +
+      '<div class="battle-log">' +
+        ((c.battleLog || []).slice(-40).map(function (l) {
+          const k = DC.KINDS[l.k];
+          return '<div class="bl-row ' + l.side + '">' +
+            '<span class="bl-turn">T' + l.turn + '</span>' +
+            (l.side === 'p'
+              ? '<span class="bl-ic" style="--c:' + (k ? k.c : '#8ea3c4') + '">' + icon(k ? k.ic : 'dice') + '</span><b>' + esc(l.skill) + '</b><i>' + l.v + '</i>'
+              : '<span class="bl-ic foe">' + icon('skull') + '</span><b>' + esc(l.name) + '</b>') +
+            '<span class="bl-txt">' + esc(l.txt) + '</span>' +
+          '</div>';
+        }).join('') || '<div class="bl-empty">아직 기록이 없습니다</div>') +
       '</div>' +
-      '<div class="fc-list">' + chips + '</div>' +
-    '</div>';
-  }
-
-  function flaskUi(c) {
-    const f = c.flask || { fire: 0, poison: 0, bolt: 0 };
-    const n = (f.fire || 0) + (f.poison || 0) + (f.bolt || 0);
-    const COL = { fire: '#ff9f43', poison: '#9ae66e', bolt: '#ffe066' };
-    let pips = '';
-    ['fire', 'poison', 'bolt'].forEach(function (e) {
-      for (let i = 0; i < (f[e] || 0); i++) pips += '<i style="--c:' + COL[e] + '"></i>';
-    });
-    for (let i = n; i < 3; i++) pips += '<i class="empty"></i>';
-    return '<span class="strip-item flask-chip' + (n >= 3 ? ' full' : '') + '" data-tip="' + esc(DC.KEYWORDS.flask.t) + '" data-tip-title="플라스크">' +
-      icon('flask') + '<span class="flask-pips">' + pips + '</span><b>' + n + '</b>/3</span>';
+      '<div class="bl-foot">' +
+        (r.relics.length ? '<div class="bf-relics">' + r.relics.map(function (id) {
+          const R = DC.RELICS[id];
+          return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc) + '" data-tip-title="' + esc(R.name) + '">' + relicIcon(id) + '</span>';
+        }).join('') + '</div>' : '') +
+      '</div>' +
+    '</div></div>';
   }
 
   function renderCombat(state) {
@@ -197,100 +302,56 @@
     const canAct = c.phase === 'player' && !state.ui.busy;
     const unused = c.hand.filter(function (h) { return !h.used && !h.locked; }).length;
     const m = DC.Combat.mult(c);
-    const speed = state.ui.speed === 2 ? 2 : 1;
     const canUndo = canAct && (state.ui.hist || []).length > 0;
 
     let slots = '';
     for (let i = 0; i < c.slots.length; i++) slots += slotCard(c, i, canAct ? sel : null);
 
-    const logLen = (c.battleLog || []).length;
-    const logOpen = !!state.ui.logOpen;
-    const logHtml = '<aside class="battle-log-wrap' + (logOpen ? ' open' : '') + ' ' + (c.phase === 'enemy' ? 'foe-turn' : '') + '">' +
-      '<div class="bl-head">' + icon('book') + '<span>전투 기록</span>' + (logLen ? '<b>' + logLen + '</b>' : '') +
-        '<button class="bl-close" data-act="log" aria-label="기록 닫기">' + icon('close') + '</button></div>' +
-      '<div class="battle-log">' +
-      ((c.battleLog || []).slice(-40).map(function (l) {
-        const k = DC.KINDS[l.k];
-        return '<div class="bl-row ' + l.side + '">' +
-          '<span class="bl-turn">T' + l.turn + '</span>' +
-          (l.side === 'p'
-            ? '<span class="bl-ic" style="--c:' + (k ? k.c : '#8ea3c4') + '">' + icon(k ? k.ic : 'dice') + '</span><b>' + esc(l.skill) + '</b><i>' + l.v + '</i>'
-            : '<span class="bl-ic foe">' + icon('skull') + '</span><b>' + esc(l.name) + '</b>') +
-          '<span class="bl-txt">' + esc(l.txt) + '</span>' +
-        '</div>';
-      }).join('') || '<div class="bl-empty">아직 기록이 없습니다</div>') +
-      '</div>' +
-      '<div class="bl-foot">' +
-        '<div class="bf-stats">' +
-          '<span>' + icon('heart') + '<b>' + Math.max(0, c.hp) + '</b>/' + c.maxHp + '</span>' +
-          '<span>' + icon('coin') + '<b>' + r.gold + '</b></span>' +
-          '<span>' + icon('dice') + '<b>' + c.hand.length + '</b></span>' +
-        '</div>' +
-        ((DC.synergiesFor ? DC.synergiesFor(r.relics) : []).length ? '<div class="bf-syns">' +
-          DC.synergiesFor(r.relics).map(function (sy) {
-            return '<span class="eb-chip" style="--c:' + sy.c + '" data-tip="' + esc(sy.desc) + '" data-tip-title="' + esc(sy.name) + '">' + icon('spark') + esc(sy.name) + '</span>';
-          }).join('') + '</div>' : '') +
-        (r.relics.length ? '<div class="bf-relics">' + r.relics.map(function (id) {
-          const R = DC.RELICS[id];
-          return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc) + '" data-tip-title="' + esc(R.name) + '">' + relicIcon(id) + '</span>';
-        }).join('') + '</div>' : '') +
-      '</div>' +
-      '</aside>';
-
     let tray = '';
     c.hand.forEach(function (h, i) { tray += dieChip(h, i, { sel: sel === i && canAct }); });
 
     let chain = '';
-    (c.chainLog || []).slice(-6).forEach(function (l) {
+    (c.chainLog || []).slice(-7).forEach(function (l) {
       const k = DC.KINDS[l.k] || DC.KINDS.blank;
-      chain += '<i class="chain-dot" style="--c:' + k.c + '" data-tip="' + esc(l.skill + ' · ' + k.n + ' ' + l.v + ' — 연쇄 ' + '콤보에 기여') + '">' + icon(k.ic) + '</i>';
+      chain += '<i class="chain-dot" style="--c:' + k.c + '">' + icon(k.ic) + '</i>';
     });
 
-    const intent = c.phase === 'enemy' ? '<span class="phase-tag enemy">적의 턴…</span>' :
-      (c.phase === 'player' ? '<span class="phase-tag">내 턴</span>' : '');
+    const selText = sel != null
+      ? '<span class="pick">' + esc(DC.KINDS[c.hand[sel].k].n + ' ' + c.hand[sel].v) + ' 선택 — 슬롯을 탭</span>'
+      : '';
 
     return '' +
       hud(state) +
-      '<main class="combat' + (state.ui.busy ? ' busy' : '') + (logOpen ? ' log-open' : '') + '">' +
-        '<div class="arena">' +
-          '<div class="arena-scene act-' + c.act + '">' +
-            '<svg viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' + DC.actScene(c.act) + '</svg>' +
-          '</div>' +
+      '<main class="combat' + (state.ui.busy ? ' busy' : '') + ' phase-' + c.phase + (c.combo >= 4 ? ' heat' : '') + '" data-n="' + c.enemies.length + '">' +
+        '<section class="stage act-' + c.act + (c.kind === 'boss' ? ' boss-stage' : '') + '">' +
+          '<div class="stage-bg" style="background-image:url(&quot;' + DC.bgUrl(c.act) + '&quot;)"></div>' +
+          '<div class="stage-veil"></div>' +
           '<div class="enemy-row" data-n="' + c.enemies.length + '">' + c.enemies.map(function (e, i) { return enemyCard(c, e, i); }).join('') + '</div>' +
-          '<div class="arena-floor"></div>' +
-        '</div>' +
-        '<div class="strip">' +
-          '<div class="strip-main">' +
-            '<span class="combo-badge ' + (c.combo > 1 ? 'hot' : '') + '" id="combo-badge" data-tip="' + esc(DC.KEYWORDS.combo.t) + '" data-tip-title="콤보 x' + m.toFixed(1) + '배율 · 다음 +' + (DC.Combat.nextMult(c) - m).toFixed(1) + '">' + icon('mult') + 'x' + m.toFixed(1) + '</span>' +
+          '<div class="stage-floor"></div>' +
+          '<div class="phase-banner ' + (c.phase === 'enemy' ? 'foe' : 'own') + '">' +
+            (c.phase === 'enemy' ? '<span>적의 턴</span>' : '<span>내 턴 ' + c.turn + '</span>') +
+          '</div>' +
+        '</section>' +
+        '<div class="tray-head">' +
+          '<div class="th-left">' +
+            '<span class="die-label">' + icon('dice') + '<b>' + unused + '</b><i>/' + c.hand.length + '</i></span>' +
+            '<span class="combo-badge' + (c.combo > 1 ? ' hot' : '') + '" id="combo-badge" data-tip="' + esc(DC.KEYWORDS.combo.t) + '" data-tip-title="연쇄 배율 x' + m.toFixed(1) + ' · 다음 +' + (DC.Combat.nextMult(c) - m).toFixed(1) + '">' +
+              '<span class="cb-x">×</span><span class="cb-n">' + m.toFixed(1) + '</span></span>' +
             (chain ? '<span class="chain">' + chain + '</span>' : '') +
-            '<span class="strip-item">' + icon('dice') + '남은 <b id="left-dice">' + unused + '</b></span>' +
-            '<span class="strip-item spark" data-tip="' + esc(DC.KEYWORDS.spark.t) + '" data-tip-title="기세">' + icon('spark') + '기세 <b id="spark-num">' + c.sparks + '</b></span>' +
-            (c.cls === 'alchemist' ? flaskUi(c) : '') +
-            (c.cls === 'paladin' ? verdictUi(c) : '') +
-            '<span class="strip-item">' + icon('clock') + '턴 <b>' + c.turn + '</b></span>' +
-            '<button class="log-toggle' + (logOpen ? ' on' : '') + '" data-act="log" aria-label="전투 기록">' + icon('book') + (logLen ? '<b>' + logLen + '</b>' : '') + '</button>' +
-            statusChips(c.statuses) +
           '</div>' +
-          '<div class="strip-sub">' +
-            (c.phase === 'enemy' ? '<span class="phase-tag enemy">적의 턴…</span>' : '<span class="phase-tag">내 턴</span>') +
-            (c.turn === 1 && c.combo === 0 ? '<span class="strip-hint">' + icon('eye') + '주사위를 슬롯으로 끌어다 놓으세요</span>' : '') +
-            '<button class="speedbtn" data-act="speed" data-tip="애니메이션 속도를 바꿉니다 (현재 ' + speed + 'x)" data-tip-title="속도">' + speed + 'x</button>' +
+          '<div class="th-right">' + resourceChips(c) +
+            '<button class="logbtn' + (state.ui.logOpen ? ' on' : '') + '" data-act="log" aria-label="전투 기록" data-tip="최근 턴의 스킬·적 행동·피해 내역" data-tip-title="전투 기록">' + icon('book') + '</button>' +
           '</div>' +
         '</div>' +
-        forecast(c) +
-        logHtml +
-        '<div class="sr-only" role="status" aria-live="polite" id="sr-status">' +
-        (c.battleLog && c.battleLog.length ? esc((c.battleLog[c.battleLog.length - 1].skill || '적') + ' ' + (c.battleLog[c.battleLog.length - 1].txt || '')) : '전투 시작 — 턴 ' + c.turn) +
-      '</div>' +
-      '<div class="slots">' + slots + '</div>' +
+        (selText ? '<div class="sel-hint">' + selText + '</div>' : '') +
+        '<div class="slots">' + slots + '</div>' +
         '<div class="tray-wrap">' +
-          '<div class="tray-label">' + icon('dice') + '주사위 <b>' + c.hand.length + '</b>' + (sel != null ? ' · <span class="pick">' + esc(DC.KINDS[c.hand[sel].k].n + ' ' + c.hand[sel].v) + ' 선택됨 — 슬롯을 탭하세요</span>' : '') + '</div>' +
           '<div class="tray" id="tray">' + tray + '</div>' +
         '</div>' +
         '<div class="actions">' +
           '<div class="manip">' +
             '<button class="mbtn undo" data-act="undo" ' + (canUndo ? '' : 'disabled') + ' data-tip="방금 배치나 주사위 조작을 되돌립니다 (Z)" data-tip-title="되돌리기">' + icon('reroll') + '<span>되돌</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="reroll" ' + (canAct ? '' : 'disabled') + ' data-tip="' + esc(DC.KEYWORDS.reroll.t) + '" data-tip-title="재굴림 (기세 1)">' + icon('reroll') + '<span>재굴림</span></button>' +
+            '<button class="mbtn" data-act="manip" data-op="reroll" ' + (canAct ? '' : 'disabled') + ' data-tip="' + esc(DC.KEYWORDS.reroll.t) + '" data-tip-title="재굴림 (기세 1)">' + icon('dice') + '<span>재굴림</span></button>' +
             '<button class="mbtn" data-act="manip" data-op="plus" ' + (canAct ? '' : 'disabled') + ' data-tip="기세 1을 쓰고 눈을 +1 합니다." data-tip-title="+1">' + icon('plus') + '<span>+1</span></button>' +
             '<button class="mbtn" data-act="manip" data-op="minus" ' + (canAct ? '' : 'disabled') + ' data-tip="기세 1을 쓰고 눈을 -1 합니다." data-tip-title="-1">' + icon('minus') + '<span>-1</span></button>' +
             '<button class="mbtn" data-act="manip" data-op="flip" ' + (canAct ? '' : 'disabled') + ' data-tip="' + esc(DC.KEYWORDS.flip.t) + '" data-tip-title="뒤집기 7-x">' + icon('flip') + '<span>뒤집기</span></button>' +
@@ -298,6 +359,10 @@
           '</div>' +
           '<button class="endbtn" data-act="endturn" ' + (canAct ? '' : 'disabled') + '>' + icon('check') + '턴 종료</button>' +
         '</div>' +
+        '<div class="sr-only" role="status" aria-live="polite" id="sr-status">' +
+        (c.battleLog && c.battleLog.length ? esc((c.battleLog[c.battleLog.length - 1].skill || '적') + ' ' + (c.battleLog[c.battleLog.length - 1].txt || '')) : '전투 시작 — 턴 ' + c.turn) +
+        '</div>' +
+        (state.ui.logOpen ? logPanel(c, r) : '') +
       '</main>';
   }
 
@@ -507,34 +572,14 @@
     const maxAsc = Math.min(10, meta.unlockedAsc || 0);
     const step = DC.ASC_STEPS[asc] || DC.ASC_STEPS[0];
     const prog = DC.Meta.progress();
+    const clsnow = (state.ui.challenge && state.ui.challenge !== 'none') ? ' · ' + DC.challengeById(state.ui.challenge).short : '';
     return '' +
-      '<main class="title-screen">' +
+      '<main class="title-screen" style="--title-art:url(&quot;' + DC.titleArt() + '&quot;)">' +
         '<button class="title-gear" data-act="settings" aria-label="설정">' + icon('gear') + '</button>' +
-        '<div class="logo-dice">' +
-          '<span class="ld ld1">' + icon('sword') + '</span>' +
-          '<span class="ld ld2">' + icon('bolt') + '</span>' +
-          '<span class="ld ld3">' + icon('shield') + '</span>' +
-        '</div>' +
-        '<h1 class="logo">다이스 <em>체인</em></h1>' +
-        '<p class="logo-sub">DICE CHAIN RPG</p>' +
-        '<p class="tagline">주사위를 굴리고, 눈을 바꾸고, 연쇄를 터뜨려라.</p>' +
-        '<div class="asc-row">' +
-          '<button class="asc-btn" data-act="asc" data-dir="-1" ' + (asc <= 0 ? 'disabled' : '') + ' aria-label="승천 낮추기">' + icon('minus') + '</button>' +
-          '<div class="asc-label' + (asc ? ' on' : '') + ' ' + (maxAsc ? '' : 'locked') + '">' +
-            '<b>' + (maxAsc ? '승천 ' + asc : '승천 잠김') + '</b>' +
-            '<span>' + (maxAsc ? esc(step.desc) : '한 번 승리하면 열립니다') + '</span>' +
-          '</div>' +
-          '<button class="asc-btn" data-act="asc" data-dir="1" ' + (asc >= maxAsc ? 'disabled' : '') + ' aria-label="승천 높이기">' + icon('plus') + '</button>' +
-        '</div>' +
-        dailyCard(state) +
-        '<button class="challenge-chip' + ((state.ui.challenge && state.ui.challenge !== 'none') ? ' on' : '') + '" data-act="challenge">' +
-          icon('crown') + '도전 모드 <b>' + esc(DC.challengeById(state.ui.challenge || 'none').short) + '</b>' +
-        '</button>' +
-        '<div class="seed-row">' +
-          '<span class="seed-ic">' + icon('dice') + '</span>' +
-          '<input id="seed-input" class="seed-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" maxlength="14"' +
-            ' placeholder="시드 입력 (비우면 무작위)" value="' + esc(state.ui.seed || '') + '" aria-label="시드" />' +
-          '<button class="seed-btn" data-act="daily">' + icon('clock') + '오늘의 시드</button>' +
+        '<div class="t-logo">' +
+          '<h1 class="logo">다이스 <em>체인</em></h1>' +
+          '<p class="logo-sub">DICE CHAIN RPG</p>' +
+          '<p class="tagline">주사위를 굴리고, 눈을 바꾸고, 연쇄를 터뜨려라.</p>' +
         '</div>' +
         '<div class="title-btns">' +
           (hasSave && DC.Game.saveInfo() ? (function () {
@@ -545,11 +590,36 @@
               '<span class="rc-sub">ACT ' + inf.act + (inf.depth > 3 ? ' · 깊이 ' + inf.depth : '') + ' · HP ' + inf.hp + '/' + inf.maxHp +
               ' · 주사위 ' + inf.dice + ' · 유물 ' + inf.relics + '</span></button>';
           })() : (hasSave ? '<button class="bigbtn primary" data-act="resume">이어하기</button>' : '')) +
-          '<button class="bigbtn ' + (hasSave ? '' : 'primary') + '" data-act="newrun">새 게임</button>' +
-          '<button class="bigbtn ghost" data-act="codex">도감 · 업적 <i class="badge-num">' + (prog.dice + prog.relics + prog.enemies) + '</i></button>' +
-          '<button class="bigbtn ghost" data-act="history">런 기록 <i class="badge-num">' + DC.Meta.history().length + '</i></button>' +
-          '<button class="bigbtn ghost" data-act="help">게임 방법</button>' +
+          '<button class="bigbtn ' + (hasSave ? '' : 'primary') + '" data-act="newrun">새 게임' + (maxAsc ? ' · 승천 ' + asc : '') + clsnow + '</button>' +
         '</div>' +
+        '<div class="title-sub">' +
+          '<button class="bigbtn ghost" data-act="codex">도감 <i class="badge-num">' + (prog.dice + prog.relics + prog.enemies) + '</i></button>' +
+          '<button class="bigbtn ghost" data-act="history">기록 <i class="badge-num">' + DC.Meta.history().length + '</i></button>' +
+          '<button class="bigbtn ghost" data-act="help">방법</button>' +
+        '</div>' +
+        '<details class="title-opts">' +
+          '<summary>' + icon('flag') + '런 설정 · 승천 ' + (maxAsc ? asc : '잠김') + clsnow + '</summary>' +
+          '<div class="opt-body">' +
+            '<div class="asc-row">' +
+              '<button class="asc-btn" data-act="asc" data-dir="-1" ' + (asc <= 0 ? 'disabled' : '') + ' aria-label="승천 낮추기">' + icon('minus') + '</button>' +
+              '<div class="asc-label' + (asc ? ' on' : '') + ' ' + (maxAsc ? '' : 'locked') + '">' +
+                '<b>' + (maxAsc ? '승천 ' + asc : '승천 잠김') + '</b>' +
+                '<span>' + (maxAsc ? esc(step.desc) : '한 번 승리하면 열립니다') + '</span>' +
+              '</div>' +
+              '<button class="asc-btn" data-act="asc" data-dir="1" ' + (asc >= maxAsc ? 'disabled' : '') + ' aria-label="승천 높이기">' + icon('plus') + '</button>' +
+            '</div>' +
+            '<button class="challenge-chip' + ((state.ui.challenge && state.ui.challenge !== 'none') ? ' on' : '') + '" data-act="challenge">' +
+              icon('crown') + '도전 모드 <b>' + esc(DC.challengeById(state.ui.challenge || 'none').short) + '</b>' +
+            '</button>' +
+            '<div class="seed-row">' +
+              '<span class="seed-ic">' + icon('dice') + '</span>' +
+              '<input id="seed-input" class="seed-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" maxlength="14"' +
+                ' placeholder="시드 (비우면 무작위)" value="' + esc(state.ui.seed || '') + '" aria-label="시드" />' +
+              '<button class="seed-btn" data-act="daily">' + icon('clock') + '오늘</button>' +
+            '</div>' +
+            dailyCard(state) +
+          '</div>' +
+        '</details>' +
         '<p class="ver">v' + DC.VERSION + ' · 승리 ' + meta.wins + '회 · GitHub Pages</p>' +
       '</main>';
   }
@@ -563,19 +633,21 @@
       return '' +
         '<div class="class-card' + (C.fresh ? ' fresh' : '') + '" data-act="pickclass" data-id="' + id + '" style="--c:' + C.c + '" role="button" tabindex="0">' +
           (C.fresh ? '<span class="class-new">' + icon('star') + 'NEW</span>' : '') +
-          '<div class="class-badge">' + icon(C.ic || (id === 'warrior' ? 'shield' : id === 'mage' ? 'flame' : id === 'gambler' ? 'star' : 'flask')) + '</div>' +
-          '<div class="class-name">' + C.name + '</div>' +
-          '<div class="class-en">' + C.en + '</div>' +
-          '<p class="class-desc">' + C.desc + '</p>' +
-          '<div class="class-stats"><span>' + icon('heart') + C.hp + ' HP</span><span>' + icon('spark') + C.sparks + ' 기세</span></div>' +
-          '<div class="class-dice">' + dice + '</div>' +
-          '<div class="class-passive">' + icon('star') + '<b>' + C.passive.n + '</b> ' + C.passive.tip + '</div>' +
+          '<div class="cc-art" style="background-image:url(&quot;' + DC.classArt(id) + '&quot;)"></div>' +
+          '<div class="cc-info">' +
+            '<div class="cc-name">' + C.name + '</div>' +
+            '<div class="cc-en">' + C.en + '</div>' +
+            '<p class="cc-desc">' + C.desc + '</p>' +
+            '<div class="cc-stats"><span>' + icon('heart') + C.hp + ' HP</span><span>' + icon('spark') + C.sparks + ' 기세</span></div>' +
+            '<div class="cc-dice">' + dice + '</div>' +
+            '<div class="cc-passive">' + icon('star') + '<span><b>' + C.passive.n + '</b> ' + C.passive.tip + '</span></div>' +
+          '</div>' +
         '</div>';
     }).join('');
     return '' +
       '<main class="class-screen">' +
         '<h2>클래스를 선택하세요</h2>' +
-        '<p class="sub">각 클래스는 다른 주사위와 스킬 슬롯을 가집니다 · ' + DC.CLASS_IDS.length + '개 클래스' + ((state.ui.asc || 0) ? ' · 승천 ' + state.ui.asc : '') +
+        '<p class="sub">클래스마다 주사위와 스킬이 다릅니다 · ' + DC.CLASS_IDS.length + '종' + ((state.ui.asc || 0) ? ' · 승천 ' + state.ui.asc : '') +
           ((state.ui.challenge && state.ui.challenge !== 'none') ? ' · ' + esc(DC.challengeById(state.ui.challenge).short) : '') + '</p>' +
         '<div class="class-list">' + cards + '</div>' +
       '</main>';
@@ -586,23 +658,29 @@
     const rw = state.ui.reward;
     const cards = rw.options.map(function (o, i) {
       const faces = o.faces ? '<div class="rw-faces">' + o.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' : '';
-      return '<div class="rw-card" data-act="reward" data-i="' + i + '" style="--c:' + (o.c || '#fbbf24') + '" role="button" tabindex="0">' +
-        '<div class="rw-ic">' + (o.kind === 'relic' ? relicIcon(o.id, 'relic-art rw-art') : icon(o.ic || 'star')) + '</div>' +
-        '<div class="rw-kind">' + esc(o.kindLabel) + '</div>' +
-        '<div class="rw-name">' + esc(o.name) + '</div>' +
-        '<div class="rw-desc">' + esc(o.desc) + '</div>' +
+      return '<button class="rw-card kind-' + (o.kind || 'misc') + '" data-act="reward" data-i="' + i + '" style="--c:' + (o.c || '#e8b45a') + '">' +
+        '<span class="rw-glow"></span>' +
+        '<span class="rw-kind">' + esc(o.kindLabel) + '</span>' +
+        '<span class="rw-ic">' + (o.kind === 'relic' ? relicIcon(o.id, 'relic-art rw-art') : icon(o.ic || 'star')) + '</span>' +
+        '<span class="rw-name">' + esc(o.name) + '</span>' +
+        '<span class="rw-desc">' + esc(o.desc) + '</span>' +
         faces +
-      '</div>';
+      '</button>';
     }).join('');
     return hud(state) + '' +
       '<main class="reward-screen">' +
-        '<div class="banner-win">' + icon('check') + '승리!</div>' +
-        '<div class="gold-gain">' + icon('coin') + '+' + rw.gold + ' 골드</div>' +
-        '<h3>보상을 선택하세요</h3>' +
+        '<header class="scr-head">' +
+          '<span class="scr-kicker">VICTORY</span>' +
+          '<h2>전투 승리</h2>' +
+          '<div class="scr-gold">' + icon('coin') + '+' + rw.gold + '</div>' +
+        '</header>' +
+        '<p class="scr-sub">보상을 선택하세요</p>' +
         '<div class="rw-list">' + cards + '</div>' +
-        '<button class="reroll-btn" data-act="rerollreward" ' + (rw.rerolled ? 'disabled' : '') + '>' +
-          icon('reroll') + (rw.rerolled ? '보상 변경 완료' : '보상 다시 뽑기 (15G)') + '</button>' +
-        '<button class="bigbtn ghost skipbtn" data-act="skipreward">건너뛰기 (+20 골드)</button>' +
+        '<div class="scr-foot">' +
+          '<button class="ghostbtn" data-act="rerollreward" ' + (rw.rerolled ? 'disabled' : '') + '>' +
+            icon('reroll') + (rw.rerolled ? '변경 완료' : '다시 뽑기 · 15G') + '</button>' +
+          '<button class="ghostbtn" data-act="skipreward">건너뛰기 · +20G</button>' +
+        '</div>' +
       '</main>';
   }
 
@@ -1015,7 +1093,7 @@
         return '<i title="' + esc(DC.Combat.intentText(it)) + '">' + icon(DC.Combat.intentIcon(it)) + '</i>';
       }).join('') : '';
       return '<div class="cx-enemy' + (got ? '' : ' locked') + '" style="--c:' + e.c + '">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + (got ? DC.monsterArt(e.art, { key: e.id }) : '<circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/>') + '</svg>' +
+        (got ? '<img class="cx-enemy-art" src="' + DC.enemyArt({ key: e.id }) + '" alt="" draggable="false">' : '<span class="cx-q">?</span>') +
         '<b>' + esc(got ? e.name : '???') + '</b>' +
         '<span>' + (got ? e.hp + ' HP' : '미발견') + '</span>' +
         (got && intents ? '<div class="cx-intents">' + intents + '</div>' : '') +
@@ -1222,7 +1300,7 @@
         ['B', '적의 의도', '적 머리 위 아이콘이 다음 행동입니다. 공격 수치·연타·방어·저주를 미리 보고 방어와 공격을 고르세요.'],
         ['C', '상태이상', '화상은 턴마다 감소, 중독은 계속, 취약은 받는 피해 +50%, 약화는 주는 피해 -25%, 힘은 공격마다 추가 피해.'],
         ['D', '플라스크 (연금술사)', '화염·독·번개 면을 쓸 때마다 정수가 담기고 3개가 차면 조합별 비약이 자동 발동합니다. 촉매로 즉시 터뜨릴 수도 있습니다.'],
-        ['E', '전투 기록', '상단 책 아이콘을 누르면 최근 턴의 스킬·적 행동·피해 내역이 펼쳐집니다.'],
+        ['E', '전투 기록', '주사위 줄 오른쪽 책 아이콘을 누르면 최근 턴의 스킬·적 행동·피해 내역이 펼쳐집니다.'],
         ['F', '되돌리기', '같은 턴 안에서 배치·재굴림·눈 조작을 되돌립니다(Z 또는 ↺).'],
         ['G', '단축키', '1~5 주사위 선택 · Q W E R T 슬롯에 배치 · Enter 턴 종료 · Z 되돌리기 · Esc 창 닫기.'],
       ],
@@ -1292,6 +1370,7 @@
                 DC.FX.burst(badge, '#fbbf24', ev.n >= 7 ? 16 : ev.n >= 5 ? 11 : 7);
               }
             }
+            if (DC.VFX) DC.VFX.combo(ev.n, badge);
             const dots = document.querySelectorAll('.chain .chain-dot');
             if (dots.length) {
               const last = dots[dots.length - 1];
@@ -1303,8 +1382,8 @@
             const el = targetEl(ev.eid);
             if (el) {
               DC.FX.floatAt(el, '-' + ev.amount, ev.heavy ? 'dmg heavy' : 'dmg');
-              DC.FX.burst(el, DC.Combat.faceColor(ev.kind || 'slash'), ev.heavy ? 16 : 8);
-              DC.FX.ring(el, 'rgba(255,255,255,.8)');
+              if (DC.VFX) { DC.VFX.hit(el, ev.kind || 'slash', !!ev.heavy); DC.VFX.cast(q('#tray') || q('.hp'), el, ev.kind || 'slash'); }
+              else DC.FX.burst(el, DC.Combat.faceColor(ev.kind || 'slash'), ev.heavy ? 16 : 8);
               DC.FX.shake(ev.heavy ? 10 : 3 + ev.amount / 6);
               const comboPitch = 1 + Math.min(0.55, ((DC.Game.state.combat && DC.Game.state.combat.combo) || 1) * 0.045);
               if (ev.amount >= 20 || ev.heavy) {
@@ -1334,7 +1413,7 @@
           }
           case 'pblock': {
             const el = q('.hp');
-            if (el) DC.FX.floatAt(el, '+' + ev.amount, 'block');
+            if (el) { DC.FX.floatAt(el, '+' + ev.amount, 'block'); if (DC.VFX) DC.VFX.guard(el); }
             DC.Audio.play('block');
             break;
           }
@@ -1395,7 +1474,7 @@
             const el = targetEl(ev.eid);
             if (el) {
               el.classList.add('dying'); DC.Audio.play('big'); DC.FX.shake(9);
-              DC.FX.burst(el, DC.Combat.faceColor('slash'), 18);
+              if (DC.VFX) DC.VFX.death(el, 'slash'); else DC.FX.burst(el, DC.Combat.faceColor('slash'), 18);
               DC.FX.banner('격파!', 'small');
             }
             delay = 230;
@@ -1432,7 +1511,7 @@
           case 'won':
             DC.Audio.play('win');
             if (q('.combat')) q('.combat').classList.remove('heat');
-            DC.FX.banner('VICTORY', 'good');
+            if (DC.VFX) DC.VFX.clear(); else DC.FX.banner('VICTORY', 'good');
             delay = 260;
             break;
           case 'lost':
@@ -1586,6 +1665,13 @@
         default: html = '<main class="title-screen"><h1>...</h1></main>';
       }
       app.className = 'app screen-' + state.screen + (state.run ? ' act-' + state.run.act : '');
+      const WORLDBG = { map: 1, reward: 1, shop: 1, forge: 1, rest: 1, event: 1, bossrelic: 1, deep: 1, win: 1, gameover: 1, gift: 1 };
+      if (state.run && WORLDBG[state.screen] && DC.bgUrl) {
+        app.classList.add('has-world');
+        app.style.setProperty('--world', 'url("' + DC.bgUrl(state.run.act) + '")');
+      } else {
+        app.classList.remove('has-world');
+      }
       app.innerHTML = html;
       if (state.ui.modal === 'deck' && state.run) app.innerHTML += renderDeck(state);
       if (state.ui.modal === 'help') app.innerHTML += renderHelp();
@@ -1615,7 +1701,16 @@
       if (state.screen === 'combat' && state.combat) {
         if (state.ui._lastTurn !== state.combat.turn) {
           const tr = document.querySelector('.tray');
-          if (tr) tr.classList.add('roll-in');
+          if (tr) {
+            tr.classList.add('roll-in');
+            const dice = tr.querySelectorAll('.die');
+            dice.forEach(function (d, i) {
+              setTimeout(function () {
+                if (DC.VFX) DC.VFX.diceLand(d, '#' + ((DC.KINDS[(state.combat.hand[i] || {}).k] || DC.KINDS.blank).c || 'ffffff').replace('#', ''));
+              }, 380 + i * 42);
+            });
+            setTimeout(function () { tr.classList.remove('roll-in'); }, 1100);
+          }
           state.ui._lastTurn = state.combat.turn;
         }
       } else {

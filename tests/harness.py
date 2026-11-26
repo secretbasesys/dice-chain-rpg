@@ -1,5 +1,6 @@
 """Shared Playwright harness for Dice Chain verify passes."""
 import sys, json, os, threading, functools, socketserver
+os.environ.setdefault("LD_LIBRARY_PATH", "/workspace/.cache/sysroot/usr/lib/x86_64-linux-gnu")
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from playwright.sync_api import sync_playwright
 

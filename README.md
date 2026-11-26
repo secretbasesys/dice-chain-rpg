@@ -11,44 +11,42 @@
 
 - 모바일(390×844) · 데스크톱(1280×800) 대응, 설치 없이 브라우저에서 실행
 - **클래스 5종** · 주사위 30종 · 유물 37종(보스 8 · 시너지 5쌍) · 적 31종(정예·보스 포함) · 미지 이벤트 23종 · 보편 스킬 10종 · 업적 20종 · 심연 변칙 5종
-- 서버·외부 라이브러리·이미지 파일 없음 (CSS/JS/SVG/WebAudio 자체 생성)
+- **일러스트 41종**(클래스 5 · 적 31 · 막별 배경 4 · 타이틀) — AI 생성 원화를 투명 스프라이트/WebP로 최적화(총 1.7MB)
+- 서버·외부 라이브러리 없음 · 단일 HTML 빌드는 이미지를 data URI로 내장
 - 진행 상황은 `localStorage`에 저장 — 도감·승천 해금은 런이 끝나도 유지
 
 ---
 
 ## 스크린샷
 
-| 전투 (모바일 390×844) | 도감 · 업적 | 맵 |
+| 타이틀 (390×844) | 전투 | 3인 전투 |
 |---|---|---|
-| ![전투](screenshots/combat.png) | ![도감](screenshots/codex.png) | ![맵](screenshots/map.png) |
+| ![타이틀](screenshots/v7_title.png) | ![전투](screenshots/v7_combat.png) | ![3인 전투](screenshots/v7_combat3.png) |
 
-| 이벤트 선택 | 상점 | 데스크톱 맵 (1280×800) |
+| 공격 연출 | 보스 컷인 | 보스전 |
 |---|---|---|
-| ![이벤트](screenshots/event.png) | ![상점](screenshots/shop.png) | ![데스크톱 맵](screenshots/desktop_map.png) |
+| ![공격 연출](screenshots/v7_fx.png) | ![보스 컷인](screenshots/v7_boss_cutin.png) | ![보스전](screenshots/v7_boss.png) |
 
-| 타이틀 · 시드 입력 | 첫 판 튜토리얼 | 런 기록 |
+| 클래스 선택 | 보상 | 상점 |
 |---|---|---|
-| ![타이틀](screenshots/title.png) | ![튜토리얼](screenshots/tutorial.png) | ![기록](screenshots/history.png) |
+| ![클래스 선택](screenshots/v7_class.png) | ![보상](screenshots/v7_reward.png) | ![상점](screenshots/v7_shop.png) |
 
-| 보스 유물 3지선다 | 보스 유물 (데스크톱) | 그림자 주사위 |
+| 맵 | 도감 | 연쇄 콤보 연출 |
 |---|---|---|
-| ![보스 유물](screenshots/bossrelic.png) | ![데스크톱 보스 유물](screenshots/desktop_bossrelic.png) | ![그림자 주사위](screenshots/shadow_die.png) |
+| ![맵](screenshots/v7_map.png) | ![도감](screenshots/v7_codex.png) | ![콤보](screenshots/v7_fx2.png) |
 
-| 데스크톱 전투 (2칼럼) | 보스 등장 연출 | 상점 (데스크톱) |
+| 데스크톱 타이틀 (1280×800) | 데스크톱 전투 | 데스크톱 연출 |
 |---|---|---|
-| ![데스크톱 전투](screenshots/desktop_combat.png) | ![보스 등장](screenshots/fx_boss_cinematic.png) | ![데스크톱 상점](screenshots/desktop_shop.png) |
+| ![데스크톱 타이틀](screenshots/v7_desktop_title.png) | ![데스크톱 전투](screenshots/v7_desktop_combat.png) | ![데스크톱 연출](screenshots/v7_desktop_fx.png) |
 
-| 성기사 전투 | 클래스 선택 (5종) | 성기사 도감·덱 |
-|---|---|---|
-| ![성기사](screenshots/paladin.png) | ![클래스 선택](screenshots/class5.png) | ![성기사 덱](screenshots/paladin_deck.png) |
-
-| 스킬 드래프트 | 슬롯 교체 | 새 이벤트 「무쇠의 맹세」 |
-|---|---|---|
-| ![스킬 드래프트](screenshots/draft_pick.png) | ![슬롯 교체](screenshots/draft_slot.png) | ![무쇠의 맹세](screenshots/ev_ironVow.png) |
-
-| 설정 (글씨·대비) | 고대비 + 아주 큰 글씨 전투 |
-|---|---|
-| ![설정](screenshots/settings_v48.png) | ![고대비](screenshots/combat_hc_xl.png) |
+### v7.0 — 아트·UI·연출 전면 리뉴얼
+- **실제 일러스트 도입**: 클래스 5 초상화 · 적 31종(일반 22 · 정예 3 · 보스 6) · 막별 배경 4 · 타이틀 키아트. 다크 판타지 오일 화풍으로 통일하고, 적은 명도 기반 알파 매트로 잘라 배경에 자연스럽게 얹었습니다.
+- **전투 화면 재구성(4단 흐름)**: 적(의도·HP) → 스킬(아이콘+배율) → 내 주사위 → 턴 종료. 배지·칩·안내 줄을 걷어내고, 적 예상 피해는 체력바의 빗금 구간으로만 표시합니다.
+- **스킬 카드**: 긴 설명 대신 `⚔ ×1.6` 같은 핵심 수치만 크게. 설명은 모바일 길게 누르기 / 데스크톱 마우스 오버.
+- **연출**: 캔버스 파티클 엔진(참격 궤적 · 화염/번개/독/신성 폭발 · 충격 링 · 파편), 피격 화이트 플래시 + 넉백 + 데미지 팝업, 주사위 회전·착지 스파크, 연쇄 배율 펄스, 보스 등장 컷인, 처치 시 산산조각.
+- **화면 통일**: 상점·보상·이벤트·휴식·단조·맵·도감도 같은 팔레트와 서체로 정리, 막별 배경을 배경 레이어로 공유.
+- 저장 호환: v6.x 세이브 그대로 이어하기 가능. 반응형 360×640 / 390×844 / 1280×800 검증.
+- 단일 파일 3.4MB(이미지 내장) · 웹 배포는 외부 이미지 호스팅 없이 `assets/*.webp`(1.7MB) 사용.
 
 ### v6.9 — 최종 QA
 - 실제 클릭 E2E 3해상도(390 성기사 · 360 연금술사 · 1280 마도사): 전 구간 콘솔 에러 0.
@@ -394,16 +392,20 @@
 ```
 src/
   data.js    정적 데이터 — 주사위·면·클래스·스킬·유물·적·보스·이벤트·승천·업적
-  art.js     적 24종 + 막별 배경 손그림 SVG
+  art.js     적 실루엣 SVG (구버전 폴백 · 알파 매트 실패 시)
   art2.js    맵 노드 7종 · 유물 22종 · 이벤트 16종 손그림 SVG
+  art3.js    래스터 아트 레이어 — 적/클래스/배경 WebP 경로 · 프리로드 · 단일 파일 data URI 대응
   meta.js    도감·승천·업적 영구 저장
   dice.js    주사위 모델 (굴림·면 교체)
   map.js     막별 분기 맵 생성
   combat.js  전투 엔진 (스냅샷 되돌리기·보스 기믹·연쇄 배율)
   audio.js   WebAudio 합성 효과음 + 절차적 BGM 신시사이저
-  fx.js      파티클·화면 흔들림·배너
+  fx.js      DOM 파티클·화면 흔들림·배너 (구버전)
+  vfx.js     캔버스 연출 엔진 — 참격 궤적 · 원소 폭발 · 충격 링 · 파편 · 보스 컷인
   ui.js      전 화면 렌더 + 드래그·툴팁·애니메이션
   main.js    런 진행·이벤트 효과·상점·저장, 봇 시뮬 레이어
+assets/      e_*.webp 적 스프라이트(투명) · c_*.webp 클래스 초상화 · bg_*.webp 막별 배경 · title.webp
+tools/       build_assets.py 원화→WebP 파이프라인 (cutout.py: 명도→알파 매트)
 tests/       Playwright 검증 스크립트 (모바일/데스크톱 스크린샷, 레이아웃, 시뮬레이션)
 ```
 
