@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '2.1.0';
+  DC.VERSION = '2.2.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -106,6 +106,7 @@
     req: { n: '슬롯 조건', t: '슬롯에 올릴 주사위가 맞춰야 하는 눈입니다. 조건이 다르면 올릴 수 없습니다.' },
     forge: { n: '단조', t: '주사위의 면 하나를 영구히 교체합니다. 면이 곧 빌드입니다.' },
     block: { n: '방어도', t: '이번 턴 피해를 먼저 흡수합니다. 내 턴이 시작되면 사라집니다.' },
+    pair: { n: '페어', t: '방금 쓴 주사위와 같은 눈의 주사위를 연달아 쓰면 그 스킬 피해가 25% 증가합니다.' },
     flask: { n: '플라스크', t: '연금술사 전용. 화염(불)·독(독)·번개(번개) 면을 쓸 때마다 정수가 1 담기고, 3개가 차면 조합에 따라 비약이 터집니다. 촉매 스킬로 원할 때 터뜨릴 수도 있습니다.' },
     ascension: { n: '승천', t: '승리할 때마다 단계가 오르는 더 어려운 모드입니다. 적 체력·공격이 강해지고 보상이 줄어듭니다.' },
   };
@@ -575,6 +576,11 @@
     { id: 'winAlchemist', name: '비약의 대가', desc: '연금술사로 승리한다', test: function (c) { return c.win && c.cls === 'alchemist'; } },
     { id: 'challenger', name: '다른 길', desc: '도전 모드로 승리한다', test: function (c) { return c.win && c.challenge && c.challenge !== 'none'; } },
     { id: 'chain6', name: '끊이지 않는 사슬', desc: '한 턴에 콤보 6 달성', test: function (c) { return (c.maxCombo || 0) >= 6; } },
+    { id: 'chain8', name: '완전 연쇄', desc: '한 턴에 콤보 8 달성', test: function (c) { return (c.maxCombo || 0) >= 8; } },
+    { id: 'noRelic', name: '맨손의 승리', desc: '유물 없이 승리한다', test: function (c) { return c.win && (c.relics || 0) === 0; } },
+    { id: 'asc10', name: '운명을 초월한 자', desc: '승천 10에서 승리한다', test: function (c) { return c.win && (c.asc || 0) >= 10; } },
+    { id: 'daily', name: '오늘의 주사위', desc: '일일 시드로 승리한다', test: function (c) { return c.win && String(c.seed || '').indexOf('DAILY-') === 0; } },
+    { id: 'relicHunter', name: '유물 수집가', desc: '유물 18종 이상 수집', test: function (c, m) { return (m.seen.relics || []).length >= 18; } },
     { id: 'dmg1000', name: '분쇄자', desc: '한 런에서 누적 1000 피해', test: function (c) { return (c.dmg || 0) >= 1000; } },
     { id: 'asc3', name: '승천자', desc: '승천 3 이상에서 승리', test: function (c) { return c.win && (c.asc || 0) >= 3; } },
     { id: 'codex', name: '도감 수집가', desc: '주사위 12종 이상 수집', test: function (c, m) { return (m.seen.dice || []).length >= 12; } },

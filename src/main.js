@@ -155,6 +155,7 @@
         case 'closedeck': s.ui.modal = null; DC.UI.render(); break;
         case 'help': s.ui.modal = s.ui.modal === 'help' ? null : 'help'; DC.UI.render(); break;
         case 'closehelp': s.ui.modal = null; DC.UI.render(); break;
+        case 'helptab': s.ui.helpTab = d.tab || 'basic'; DC.Audio.play('click'); DC.UI.render(); break;
         case 'sound':
           DC.Audio.setMuted(!DC.Audio.isMuted());
           try { localStorage.setItem(SET_KEY, JSON.stringify({ muted: DC.Audio.isMuted() })); } catch (e) {}
@@ -500,7 +501,7 @@
       if (s.combat) s.run.hp = 0;
       if (s.run) {
         DC.Meta.noteBestAct(s.run.act);
-        DC.Meta.check({ win: false, cls: s.run.cls, asc: s.run.asc || 0, maxCombo: s.run.maxCombo || 0, dmg: s.run.stats.dmg || 0, challenge: s.run.challenge });
+        DC.Meta.check({ win: false, cls: s.run.cls, asc: s.run.asc || 0, maxCombo: s.run.maxCombo || 0, dmg: s.run.stats.dmg || 0, challenge: s.run.challenge, relics: s.run.relics.length, seed: s.run.seed });
         this.recordRun(false);
       }
       s.screen = 'gameover';
@@ -572,7 +573,7 @@
         this.state.screen = 'win';
         const res = DC.Meta.noteWin(r.cls, r.asc || 0);
         this.state.ui.winInfo = res;
-        const gained = DC.Meta.check({ win: true, cls: r.cls, asc: r.asc || 0, maxCombo: r.maxCombo || 0, dmg: r.stats.dmg || 0, challenge: r.challenge });
+        const gained = DC.Meta.check({ win: true, cls: r.cls, asc: r.asc || 0, maxCombo: r.maxCombo || 0, dmg: r.stats.dmg || 0, challenge: r.challenge, relics: r.relics.length, seed: r.seed });
         this.state.ui.newAch = gained;
         this.recordRun(true);
         r.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });
