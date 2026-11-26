@@ -1078,6 +1078,21 @@
   }
 
   /* ---------------- overlays ---------------- */
+  function synBlock(r) {
+    if (!DC.synergiesFor) return '';
+    const act = DC.synergiesFor(r.relics);
+    const all = DC.SYNERGIES || [];
+    const rows = all.map(function (sy) {
+      const on = act.some(function (a) { return a.id === sy.id; });
+      return '<div class="syn-row' + (on ? ' on' : '') + '" style="--c:' + sy.c + '">' +
+        '<span class="syn-ic">' + icon(on ? 'spark' : 'lock') + '</span>' +
+        '<div><b>' + esc(sy.name) + '</b><span>' + esc(sy.desc) + '</span>' +
+        '<i>' + sy.relics.map(function (id) { return esc((DC.RELICS[id] || {}).name || id); }).join(' + ') + '</i></div>' +
+      '</div>';
+    }).join('');
+    return '<h4>' + icon('spark') + ' 유물 시너지 ' + act.length + '/' + all.length + '</h4><div class="syn-list">' + rows + '</div>';
+  }
+
   function renderDeck(state) {
     const r = state.run;
     const dice = r.dice.map(function (d) {
@@ -1115,6 +1130,7 @@
       }).join('') +
       '</div>' +
       '<h4>' + icon('star') + ' 유물 ' + r.relics.length + '개</h4><div class="deck-relics">' + relics + '</div>' +
+      synBlock(r) +
       '</div></div>';
   }
 

@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '5.1.0';
+  DC.VERSION = '5.2.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -325,6 +325,26 @@
   DC.BOSS_RELIC_IDS = DC.RELIC_IDS.filter(function (id) { return !!DC.RELICS[id].boss; });
   /* shop / reward / gift pools exclude boss relics */
   DC.POOL_RELIC_IDS = DC.RELIC_IDS.filter(function (id) { return !DC.RELICS[id].boss; });
+
+  /* ---------------- relic synergies (v5.2) ---------------- */
+  DC.SYNERGIES = [
+    { id: 'storm', name: '폭풍의 심장', relics: ['flameHeart', 'conductor'], c: '#ff9f43',
+      desc: '화염·번개 피해 +15%, 번개 면을 쓸 때 적 하나에게 4 추가 피해' },
+    { id: 'ironWall', name: '철의 성벽', relics: ['wrist', 'thornMail'], c: '#93c5fd',
+      desc: '매 턴 시작에 방어도 3을 얻는다' },
+    { id: 'bloodMoon', name: '핏빛 달', relics: ['vampireFang', 'grail'], c: '#f472b6',
+      desc: '모든 회복량 +50%' },
+    { id: 'fate', name: '운명의 실타래', relics: ['sixBless', 'hourglass'], c: '#fbbf24',
+      desc: '6이 나오면 방어도 3을 얻는다' },
+    { id: 'gambit', name: '도박의 성좌', relics: ['luckyCoin', 'gamblersHand'], c: '#fde68a',
+      desc: '매 턴 시작에 기세 +1' },
+  ];
+  DC.synergiesFor = function (relics) {
+    const owned = relics || [];
+    return DC.SYNERGIES.filter(function (sy) {
+      return sy.relics.every(function (r) { return owned.indexOf(r) >= 0; });
+    });
+  };
 
   /* ---------------- enemies ---------------- */
   function E(id, name, hp, art, c, intents, extra) {

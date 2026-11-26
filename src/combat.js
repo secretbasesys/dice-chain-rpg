@@ -12,6 +12,11 @@
   /* abyss anomaly modifiers (v5.0) */
   function abyss(c) { return (c.abyss && c.abyss.mod) || null; }
 
+  function synOn(c, id) {
+    if (!DC.synergiesFor) return false;
+    return DC.synergiesFor(c.relics).some(function (sy) { return sy.id === id; });
+  }
+
   function alive(c) { return c.enemies.filter(function (e) { return e.hp > 0; }); }
 
   function mult(c) {
@@ -165,7 +170,9 @@
 
   function healPlayer(c, amount, ev) {
     const before = c.hp;
-    c.hp = Math.min(c.maxHp, c.hp + Math.round(amount));
+    let amt = amount;
+    if (synOn(c, 'bloodMoon')) amt = amt * 1.5;
+    c.hp = Math.min(c.maxHp, c.hp + Math.round(amt));
     const d = c.hp - before;
     if (d > 0) ev.push({ t: 'heal', amount: d });
     return d;
@@ -234,6 +241,7 @@
       if (has(c, 'pledge') && v % 2 === 0) d *= 1.4;
       if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 3;
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
+      if (synOn(c, 'storm') && (k === 'fire' || k === 'bolt' || (opts && opts.fire))) d *= 1.15;
       if (c.prevV != null && c.prevV === v) d *= 1.25;
       if ((c.sameVal || 1) >= 3) d *= 1.15;
       if ((c.sameVal || 1) >= 4) d *= 1.15;
@@ -359,6 +367,10 @@
     } else if (k === 'bolt') {
       const extra = pickTargets(c, 3).filter(function (e) { return !who || e !== who; })[0];
       if (extra) { hitEnemy(c, extra, Math.max(1, Math.round((v / 2) * m)), { kind: 'bolt' }, ev); ev.push({ t: 'chain' }); }
+      if (synOn(c, 'storm')) {
+        const t3 = pickTargets(c, 2).filter(function (e) { return !who || e !== who; })[0] || who;
+        if (t3) { hitEnemy(c, t3, 4, { kind: 'bolt' }, ev); ev.push({ t: 'chain' }); }
+      }
     } else if (k === 'venom') {
       if (who) { who.st.poison += Math.max(1, Math.floor(v / 2)); ev.push({ t: 'status', eid: who.id, s: 'poison', amount: Math.max(1, Math.floor(v / 2)) }); }
     } else if (k === 'leech') {
@@ -388,6 +400,10 @@
 
     /* relic: spark on 6 / even */
     if (v === 6 && has(c, 'sixBless')) { c.sparks += 1; ev.push({ t: 'spark', amount: 1 }); }
+    if (v === 6 && synOn(c, 'fate')) {
+      const bf = gainBlock(c, 3);
+      ev.push({ t: 'pblock', amount: bf });
+    }
     if (v === 6 && has(c, 'sixGuard')) {
       const b6 = gainBlock(c, 4);
       ev.push({ t: 'pblock', amount: b6 });
@@ -493,6 +509,7 @@
       c.luckyCoinUsed = 0;
       c.engineUsed = false;
       c.sparks = c.maxSparks + ((abyss(c) && abyss(c).spark) || 0);
+      if (synOn(c, 'gambit')) c.sparks += 1;
       c.slots.forEach(function (s) { s.handIdx = null; s.resolved = false; });
       c.chainLog = [];
 
@@ -529,6 +546,7 @@
       }
       c.hand = hand;
       c.block = 0;
+      if (synOn(c, 'ironWall')) c.block += 3;
       if (c.statuses.weak > 0) c.statuses.weak -= 1;
       if (c.statuses.vuln > 0) c.statuses.vuln -= 1;
     },

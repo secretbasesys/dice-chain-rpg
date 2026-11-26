@@ -2134,3 +2134,16 @@ body.fs-xl .die-val { font-size: 29px; }
 .dc-streak { display: inline-flex; align-items: center; gap: 3px; color: #ffb86b; font-weight: 800; }
 .dc-streak .ic { width: 11px; height: 11px; }
 .dc-btn.ghost { background: #182135; color: #dbe8fb; border: 1px solid var(--line); }
+
+/* v5.2 — relic synergy list (deck modal) */
+.syn-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.syn-row {
+  display: flex; gap: 8px; align-items: flex-start; padding: 7px 9px; border-radius: 10px;
+  background: #101825; border: 1px solid #1d2840; opacity: .62;
+}
+.syn-row.on { opacity: 1; border-color: color-mix(in srgb, var(--c) 45%, #1d2840); background: linear-gradient(120deg, color-mix(in srgb, var(--c) 12%, #101825), #101825); }
+.syn-ic { width: 22px; height: 22px; display: grid; place-items: center; color: var(--c); flex: none; }
+.syn-ic .ic { width: 14px; height: 14px; }
+.syn-row b { display: block; font-size: 12px; }
+.syn-row span { display: block; font-size: 10.5px; color: var(--dim); line-height: 1.4; }
+.syn-row i { display: block; font-style: normal; font-size: 9.5px; color: color-mix(in srgb, var(--c) 70%, #8ea3c4); margin-top: 2px; }
