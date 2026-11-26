@@ -54,7 +54,7 @@ def layout_report(page):
         const r = el.getBoundingClientRect();
         if (r.width < 2 || r.height < 2) return;
         if (r.right > innerWidth + 2 || r.bottom > innerHeight + 2 || r.left < -2 || r.top < -2) {
-          if (el.closest('.tray')) return; // horizontal scroll tray is allowed
+          if (el.closest('.tray') || el.closest('.forge-strip') || el.closest('.strip-main')) return; // horizontal scroll strips
           if (el.tagName === 'svg' || el.tagName === 'path' || el.tagName === 'line') return;
           off.push({cls: el.className && el.className.toString().slice(0, 40), tag: el.tagName,
                     r: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)]});

@@ -1566,3 +1566,41 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 .cx-intents i { color: #93a4c2; display: inline-flex; }
 .cx-intents .ic { width: 10px; height: 10px; }
 .cx-gimmick { font-size: 8px; color: #c4b5fd; margin-top: 2px; line-height: 1.25; word-break: keep-all; padding: 0 2px; }
+
+/* ---------------- forge v2.9 ---------------- */
+.fh-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.fh-top h2 { font-size: 19px; }
+.fh-free { font-size: 10px; color: #9aabc6; border: 1px solid #2a3852; border-radius: 7px; padding: 2px 7px; }
+.fh-free b { color: var(--gold); font-size: 12px; }
+.forge-strip {
+  display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: none;
+}
+.forge-strip::-webkit-scrollbar { display: none; }
+.fd-chip {
+  flex: none; display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  min-height: 58px; min-width: 104px; padding: 6px 8px; border-radius: 11px; cursor: pointer;
+  background: #131c2d; border: 1px solid #26324c; color: #cbd7ef;
+}
+.fd-chip.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, #131c2d); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 22%, transparent); }
+.fd-chip-name { font-size: 10px; font-weight: 800; white-space: nowrap; }
+.fd-chip-faces { display: flex; gap: 3px; }
+.fd-chip-faces i {
+  display: inline-flex; align-items: center; gap: 1px; font-style: normal;
+  font-size: 9px; font-weight: 800; color: var(--c);
+}
+.fd-chip-faces .ic { width: 9px; height: 9px; }
+.forge-faces { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin: 2px 0 8px; }
+.ff {
+  position: relative; min-height: 74px; border-radius: 11px; cursor: pointer;
+  background: #131c2d; border: 1px solid #26324c; color: var(--c);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+}
+.ff .ff-ic .ic { width: 17px; height: 17px; }
+.ff b { font-size: 15px; color: #e8eefc; }
+.ff i { font-style: normal; font-size: 8px; color: var(--dim); }
+.ff.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, #131c2d); }
+.ff-pick {
+  position: absolute; bottom: 3px; font-size: 7.5px; font-weight: 900; color: #0b1220;
+  background: var(--c); border-radius: 5px; padding: 0 4px;
+}
+.forge-hint.small { margin-top: 4px; }

@@ -1,0 +1,25 @@
+import sys, json; sys.path.insert(0,'/workspace/work/dice-rpg/tests')
+from harness import *
+serve()
+with sync_playwright() as p:
+    b,ctx,page,errors=launch(p,390,844,True)
+    page.goto(BASE); page.wait_for_timeout(300)
+    page.evaluate("() => localStorage.clear()"); page.reload(); page.wait_for_timeout(300)
+    page.evaluate("""() => { DC.Game.newRun(); DC.Game.pickClass('warrior'); DC.Game.state.ui.modal=null;
+      DC.Game.state.run.dice.push(DC.Dice.make('storm'), DC.Dice.make('moon'));
+      DC.Game.state.run.gold = 120; DC.Game.openForge(2, null); }""")
+    page.wait_for_timeout(300)
+    page.screenshot(path=OUT + "/v29_forge1.png")
+    print("chips:", page.evaluate("() => document.querySelectorAll('.fd-chip').length"))
+    page.click('[data-act="fdiedie"][data-i="0"]'); page.wait_for_timeout(250)
+    print("faces:", page.evaluate("() => document.querySelectorAll('.ff').length"))
+    page.screenshot(path=OUT + "/v29_forge2.png")
+    page.click('[data-act="fface"][data-i="2"]'); page.wait_for_timeout(250)
+    print("opts:", page.evaluate("() => document.querySelectorAll('.forge-opt').length"))
+    page.screenshot(path=OUT + "/v29_forge3.png")
+    page.click('[data-act="fopt"][data-i="0"]'); page.wait_for_timeout(300)
+    print("after forge dice faces:", page.evaluate("() => DC.Game.state.run.dice[0].faces.map(f=>f.k+f.v).join(',')"))
+    print("free left:", page.evaluate("() => DC.Game.state.ui.forge && DC.Game.state.ui.forge.free"))
+    print("LAYOUT", json.dumps(layout_report(page)))
+    print("ERRORS", json.dumps(errors, ensure_ascii=False))
+    b.close()

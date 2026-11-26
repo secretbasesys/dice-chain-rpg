@@ -545,51 +545,59 @@
     const f = state.ui.forge;
     const r = state.run;
     const die = f.dieIdx != null ? r.dice[f.dieIdx] : null;
-    let left = '<div class="forge-head">' +
-      '<h2>' + icon('anvil') + ' 주사위 단조</h2>' +
+    const head = '<div class="forge-head">' +
+      '<div class="fh-top"><h2>' + icon('anvil') + ' 주사위 단조</h2>' +
+        '<span class="fh-free">무료 <b>' + f.free + '</b>회</span></div>' +
       '<div class="forge-steps">' +
         '<span class="' + (f.dieIdx != null ? 'on' : '') + '">1 주사위</span>' +
         '<span class="' + (f.faceIdx != null ? 'on' : '') + '">2 면 선택</span>' +
         '<span class="' + (f.options.length ? 'on' : '') + '">3 새 면</span>' +
       '</div>' +
-      '<p class="sub">남은 무료 단조 <b>' + f.free + '회</b> · 주사위 면은 영구히 바뀝니다</p>' +
+      '<p class="sub">면은 영구히 바뀝니다 · 남은 골드 ' + r.gold + 'G</p>' +
       '</div>';
-    left += '<div class="forge-dice">';
+
+    let strip = '<div class="forge-strip">';
     r.dice.forEach(function (d, di) {
       const on = f.dieIdx === di;
-      left += '<div class="forge-die ' + (on ? 'on' : '') + '" data-act="fdiedie" data-i="' + di + '" style="--c:' + d.c + '" role="button" tabindex="0">' +
-        '<div class="fd-name">' + esc(d.name) + '</div>' +
-        '<div class="fd-faces">' + d.faces.map(function (fc, fi) {
+      strip += '<button class="fd-chip ' + (on ? 'on' : '') + '" data-act="fdiedie" data-i="' + di + '" style="--c:' + d.c + '">' +
+        '<span class="fd-chip-name">' + esc(d.name) + '</span>' +
+        '<span class="fd-chip-faces">' + d.faces.map(function (fc) {
           const k = DC.KINDS[fc.k];
-          return '<span class="fd-face ' + (on && f.faceIdx === fi ? 'on' : '') + '" data-act="fface" data-i="' + fi + '" style="--c:' + k.c + '" role="button" tabindex="0" aria-label="면 ' + (fi + 1) + ' ' + k.n + ' ' + fc.v + '">' + icon(k.ic) + '<b>' + fc.v + '</b></span>';
-        }).join('') + '</div>' +
-      '</div>';
+          return '<i style="--c:' + k.c + '">' + icon(k.ic) + fc.v + '</i>';
+        }).join('') + '</span>' +
+      '</button>';
     });
-    left += '</div>';
+    strip += '</div>';
 
-    let right = '';
-    if (die && f.faceIdx != null) {
-      right += '<div class="forge-panel">';
-      right += '<div class="forge-cur">현재 면: ' + faceMini(die.faces[f.faceIdx]) + ' ' + DC.KINDS[die.faces[f.faceIdx].k].n + ' ' + die.faces[f.faceIdx].v + '</div>';
-      right += '<div class="forge-opts">';
-      f.options.forEach(function (o, oi) {
-        const k = DC.KINDS[o.k];
-        const cost = f.free > 0 ? 0 : o.cost;
-        const afford = r.gold >= cost;
-        right += '<button class="forge-opt" data-act="fopt" data-i="' + oi + '" style="--c:' + k.c + '" ' + (afford ? '' : 'disabled') + '>' +
-          icon(k.ic) + '<b>' + k.n + ' ' + o.v + '</b><span>' + (cost === 0 ? '무료' : cost + 'G') + '</span></button>';
-      });
-      right += '</div></div>';
+    let body = '';
+    if (!die) {
+      body = '<div class="forge-hint">' + icon('eye') + '<div><b>단조할 주사위를 고르세요</b><span>위 목록에서 주사위를 탭하면 면이 펼쳐집니다</span></div></div>';
     } else {
-      right = '<div class="forge-hint">' + icon('eye') + '<div><b>면을 탭하세요</b><span>바꿀 면을 고르면 새 면 5개가 나타납니다</span></div></div>';
+      body = '<div class="forge-faces" style="--c:' + die.c + '">' +
+        die.faces.map(function (fc, fi) {
+          const k = DC.KINDS[fc.k];
+          return '<button class="ff ' + (f.faceIdx === fi ? 'on' : '') + '" data-act="fface" data-i="' + fi + '" style="--c:' + k.c + '">' +
+            '<span class="ff-ic">' + icon(k.ic) + '</span><b>' + fc.v + '</b><i>' + esc(k.n) + '</i>' +
+            (f.faceIdx === fi ? '<span class="ff-pick">교체</span>' : '') +
+          '</button>';
+        }).join('') +
+      '</div>';
+      if (f.faceIdx != null) {
+        body += '<div class="forge-opts">' + f.options.map(function (o, oi) {
+          const k = DC.KINDS[o.k];
+          const cost = f.free > 0 ? 0 : o.cost;
+          const afford = r.gold >= cost;
+          return '<button class="forge-opt" data-act="fopt" data-i="' + oi + '" style="--c:' + k.c + '" ' + (afford ? '' : 'disabled') + '>' +
+            icon(k.ic) + '<b>' + k.n + ' ' + o.v + '</b><span>' + (cost === 0 ? '무료' : cost + 'G') + '</span></button>';
+        }).join('') + '</div>';
+      } else {
+        body += '<div class="forge-hint small">' + icon('eye') + '<div><b>바꿀 면을 탭하세요</b><span>새 면 5개가 나타납니다</span></div></div>';
+      }
     }
 
     return hud(state) + '' +
       '<main class="forge-screen">' +
-        '<div class="forge-grid">' +
-          '<div class="forge-left">' + left + '</div>' +
-          '<div class="forge-right">' + right + '</div>' +
-        '</div>' +
+        head + strip + body +
         '<div class="bottom-bar"><button class="bigbtn" data-act="forgeexit">단조 완료</button></div>' +
       '</main>';
   }
