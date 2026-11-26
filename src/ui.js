@@ -1324,7 +1324,7 @@
             if (el) {
               DC.FX.floatAt(el, '심판 +' + Math.max(1, (ev.n || 1) - 0) , 'status', { size: 14 });
               el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
-              DC.Audio.play('block');
+              DC.Audio.play('verdict');
             }
             break;
           }

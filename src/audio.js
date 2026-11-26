@@ -241,6 +241,9 @@
     event: function () { [0, 5, 7, 12].forEach(function (s, i) { tone(523 * Math.pow(2, s / 12), 0.22, 'triangle', 0.11, null, i * 0.06); }); },
     upgrade: function () { tone(660, 0.12, 'square', 0.12); tone(990, 0.16, 'square', 0.10, 1180, 0.08); tone(1320, 0.2, 'triangle', 0.09, null, 0.16); },
     shatter: function () { noise(0.3, 0.2, 2200); tone(220, 0.2, 'square', 0.06, 90); },
+    verdict: function () { [0, 7, 12].forEach(function (s, i) { tone(523 * Math.pow(2, s / 12), 0.18, 'triangle', 0.09, null, i * 0.03); }); },
+    draft: function () { tone(392, 0.1, 'triangle', 0.09, 523); tone(659, 0.14, 'sine', 0.07, 784, 0.05); },
+    shrine: function () { tone(196, 0.5, 'sine', 0.12, 262); tone(392, 0.4, 'triangle', 0.06, null, 0.1); },
   };
 
   DC.Audio = {

@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '5.4.0';
+  DC.VERSION = '5.6.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -181,6 +181,9 @@
     titan: { name: '거인의 주사위', tier: 3, price: 130, c: '#fca5a5', faces: [f('slash', 6), f('slash', 6), f('guard', 6), f('slash', 5), f('guard', 5), f('slash', 6)], tag: '전설' },
     aegis: { name: '성역 주사위', tier: 1, price: 0, c: '#fde68a', faces: [f('guard', 3), f('holy', 3), f('guard', 4), f('holy', 4), f('guard', 5), f('slash', 3)], tag: '신성' },
     mace: { name: '심판 망치', tier: 1, price: 0, c: '#fcd34d', faces: [f('slash', 3), f('holy', 2), f('slash', 4), f('guard', 4), f('holy', 5), f('slash', 5)], tag: '심판' },
+    tide: { name: '조수 주사위', tier: 2, price: 80, c: '#38bdf8', faces: [f('guard', 4), f('leech', 3), f('guard', 5), f('holy', 4), f('leech', 4), f('guard', 6)], tag: '조수' },
+    cinder: { name: '잿불 주사위', tier: 2, price: 85, c: '#fb7185', faces: [f('fire', 5), f('curse', 1), f('fire', 6), f('slash', 4), f('bolt', 4), f('curse', 2)], tag: '잿불' },
+    oracle: { name: '예언 주사위', tier: 3, price: 120, c: '#e9d5ff', faces: [f('mult', 2), f('holy', 5), f('mult', 2), f('bolt', 5), f('guard', 5), f('leech', 4)], tag: '전설' },
     sanctum: { name: '성소 주사위', tier: 2, price: 85, c: '#fef3c7', faces: [f('holy', 4), f('guard', 5), f('holy', 5), f('guard', 6), f('mult', 1), f('leech', 3)], tag: '성소' },
   };
   DC.DICE_IDS = Object.keys(DC.DICE);
@@ -469,6 +472,32 @@
           result: '손바닥이 타들어간다. 힘이 솟구치고, 무언가가 조금 죽었다.' },
         { label: '뽑아서 부순다', desc: '+45 골드 (파편을 판다)', eff: { gold: 45 }, result: '검은 비명을 지르며 부서졌다. 파편이 팔렸다.' },
         { label: '지나간다', result: '검을 그냥 두고 왔다.' },
+      ],
+    },
+    {
+      id: 'caravan', name: '떠돌이 행상', ic: 'shop', tag: '거래',
+      text: '낙타 두 마리와 낡은 수레. 행상이 천을 걷자 유물과 주사위가 반짝인다. "값은 정직하게 받지."',
+      choices: [
+        { label: '유물을 산다', desc: '60 골드 · 유물 획득', need: { gold: 60 }, eff: { gold: -60, relic: 'random' },
+          result: '행상이 유물을 천으로 싸서 건넸다.' },
+        { label: '주사위를 산다', desc: '40 골드 · 주사위 획득', need: { gold: 40 }, eff: { gold: -40, dice: 1 },
+          result: '손에 쥐자 아직 따뜻하다. 방금 굴린 주사위인가.' },
+        { label: '값을 깎아 본다', desc: '25% 확률로 40 골드 획득 · 아니면 12 피해',
+          chance: [ { p: 0.25, eff: { gold: 40 }, result: '행상이 웃으며 동전을 쥐여줬다. "오늘은 흥이 나서."' },
+                    { p: 0.75, eff: { selfDmgFlat: 12 }, result: '행상의 지팡이가 어깨를 내리쳤다.' } ] },
+        { label: '지나간다', result: '수레바퀴 소리가 멀어졌다.' },
+      ],
+    },
+    {
+      id: 'statue', name: '속삭이는 석상', ic: 'mystery', tag: '성소',
+      text: '얼굴이 지워진 석상이 무언가를 중얼거린다. 가까이 가면 그 목소리가 머릿속을 채운다.',
+      choices: [
+        { label: '귀를 기울인다', desc: '50% 기세 최대치 +1 · 아니면 최대 체력 -6',
+          chance: [ { p: 0.5, eff: { sparkMax: 1 }, result: '속삭임이 기세가 되었다. 손끝이 가볍다.' },
+                    { p: 0.5, eff: { maxHp: -6 }, result: '속삭임이 뼈를 갉아먹었다.' } ] },
+        { label: '돌을 깎아 낸다', desc: '+35 골드 · 6 피해', eff: { gold: 35, selfDmgFlat: 6 },
+          result: '정강이에 돌조각이 튀었지만, 쓸 만한 대리석이 나왔다.' },
+        { label: '지나간다', result: '속삭임이 잦아들었다.' },
       ],
     },
     {
@@ -784,6 +813,10 @@
     { id: 'dmg1000', name: '분쇄자', desc: '한 런에서 누적 1000 피해', test: function (c) { return (c.dmg || 0) >= 1000; } },
     { id: 'asc3', name: '승천자', desc: '승천 3 이상에서 승리', test: function (c) { return c.win && (c.asc || 0) >= 3; } },
     { id: 'codex', name: '도감 수집가', desc: '주사위 12종 이상 수집', test: function (c, m) { return (m.seen.dice || []).length >= 12; } },
+    { id: 'synergy', name: '맞물린 톱니', desc: '유물 시너지를 발동한 채로 런을 마친다', test: function (c) { return (c.syn || 0) >= 1; } },
+    { id: 'bossRelic', name: '보스의 유산', desc: '보스 유물을 획득한다', test: function (c) { return (c.bossRelics || 0) >= 1; } },
+    { id: 'depth6', name: '심연의 끝', desc: '심연 깊이 6에 도달한다', test: function (c, m) { return (m.bestDepth || 3) >= 6; } },
+    { id: 'daily3', name: '삼일의 굴림', desc: '일일 도전 3일 연속 클리어', test: function (c, m) { return (m.dailyStreak || 0) >= 3; } },
   ];
 
   /* map node meta */  /* map node meta */

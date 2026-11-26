@@ -368,6 +368,26 @@
   /* ---------------- event illustrations (14) ---------------- */
   DC.EVENT_ART = {
     /* ---- v4.7 events ---- */
+    caravan:
+      glow(16, 18, 14, 0.12) +
+      '<path d="M3.4 24.6h25.2" stroke-width="2" opacity=".7"/>' +
+      '<path d="M7 15.4h11.6l3.4 4v5.2H7z" fill="currentColor" opacity=".18"/>' +
+      '<path d="M7 15.4h11.6l3.4 4v5.2H7z"/>' +
+      '<circle cx="10.4" cy="25" r="2.4"/><circle cx="18.4" cy="25" r="2.4"/>' +
+      '<path d="M22.6 17.6c1.4-3.6 3.6-5.2 5.6-4 1.6 1 1.2 3.4-.6 5.6-1 1.2-1.4 2.4-1.4 3.8" fill="currentColor" opacity=".18"/>' +
+      '<path d="M22.6 17.6c1.4-3.6 3.6-5.2 5.6-4 1.6 1 1.2 3.4-.6 5.6-1 1.2-1.4 2.4-1.4 3.8"/>' +
+      '<circle cx="25.4" cy="9.4" r="1.1" fill="currentColor" stroke="none" opacity=".7"/>' +
+      '<path d="M8.6 12.4h8" stroke-width="1.4" opacity=".5"/>',
+    statue:
+      glow(16, 16, 14, 0.1) +
+      '<path d="M10.6 26.6h10.8v-3.2H10.6z" fill="currentColor" opacity=".22"/>' +
+      '<path d="M10.6 26.6h10.8v-3.2H10.6z"/>' +
+      '<path d="M11.8 23.4c-.6-6 1-10.4 4.2-10.4s4.8 4.4 4.2 10.4" fill="currentColor" opacity=".16"/>' +
+      '<path d="M11.8 23.4c-.6-6 1-10.4 4.2-10.4s4.8 4.4 4.2 10.4"/>' +
+      '<path d="M12.6 8.6c0-2.4 1.5-4 3.4-4s3.4 1.6 3.4 4c0 2-1.5 3.4-3.4 3.4s-3.4-1.4-3.4-3.4z" fill="currentColor" opacity=".22"/>' +
+      '<path d="M12.6 8.6c0-2.4 1.5-4 3.4-4s3.4 1.6 3.4 4c0 2-1.5 3.4-3.4 3.4s-3.4-1.4-3.4-3.4z"/>' +
+      '<path d="M13.8 8.6h1.6M16.6 8.6h1.6" opacity=".8"/>' +
+      '<path d="M22.4 12.6c1.4 1 2 2.6 1.4 4.2M9.6 12.6c-1.4 1-2 2.6-1.4 4.2" opacity=".4" stroke-dasharray="1.6 2"/>',
     ironVow:
       glow(16, 17, 14, 0.12) +
       '<path d="M6.4 26.6l4-4.6 3.2 2.6 2.6-3.4 3 2.6 4.4-5.2" stroke-width="2"/>' +

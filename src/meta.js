@@ -154,6 +154,7 @@
         dmg1000: [m.bestDmg || 0, 1000], codex: [(m.seen.dice || []).length, 12],
         relicHunter: [(m.seen.relics || []).length, 18], asc10: [m.unlockedAsc || 0, 10],
         asc3: [m.unlockedAsc || 0, 3],
+        depth6: [m.bestDepth || 3, 6], daily3: [m.dailyStreak || 0, 3],
       };
       return DC.ACHIEVEMENTS.map(function (a) {
         const p = prog[a.id];
