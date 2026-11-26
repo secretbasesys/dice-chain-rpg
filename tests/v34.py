@@ -1,0 +1,20 @@
+import sys, json; sys.path.insert(0,'/workspace/work/dice-rpg/tests')
+from harness import *
+serve()
+with sync_playwright() as p:
+    b,ctx,page,errors=launch(p,390,844,True)
+    page.goto(BASE); page.wait_for_timeout(300)
+    page.evaluate("() => localStorage.clear()"); page.reload(); page.wait_for_timeout(300)
+    page.evaluate("""() => { const m=DC.Meta.get(); m.bestCombo=5; m.bestDmg=640; m.seen.dice=['iron','ember','storm']; DC.Meta.save();
+      DC.Game.state.ui.modal='codex'; DC.UI.render(); }""")
+    page.wait_for_timeout(300)
+    page.evaluate("""() => { const p=document.querySelector('.codex-panel'); const h=[...p.querySelectorAll('h4')].find(x=>x.textContent.indexOf('업적')>=0); if(h) h.scrollIntoView(); }""")
+    page.wait_for_timeout(250)
+    page.screenshot(path=OUT + "/v34_ach.png")
+    print("prog bars:", page.evaluate("() => document.querySelectorAll('.ach-prog').length"))
+    page.evaluate("() => { DC.Game.state.ui.modal='help'; DC.UI.render(); }")
+    page.wait_for_timeout(250)
+    page.click('[data-act="showtut"]'); page.wait_for_timeout(300)
+    print("tut after help:", page.evaluate("() => !!document.querySelector('.tut-panel')"))
+    print("ERRORS", json.dumps(errors, ensure_ascii=False))
+    b.close()

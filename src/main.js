@@ -179,6 +179,7 @@
         case 'help': s.ui.modal = s.ui.modal === 'help' ? null : 'help'; DC.UI.render(); break;
         case 'closehelp': s.ui.modal = null; DC.UI.render(); break;
         case 'helptab': s.ui.helpTab = d.tab || 'basic'; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'showtut': s.ui.modal = 'tut'; DC.Audio.play('click'); DC.UI.render(); break;
         case 'sound':
           DC.Audio.setMuted(!DC.Audio.isMuted());
           try { localStorage.setItem(SET_KEY, JSON.stringify({ muted: DC.Audio.isMuted() })); } catch (e) {}

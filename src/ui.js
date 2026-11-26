@@ -805,8 +805,11 @@
       '</div>';
     }).join('');
     const achs = DC.Meta.achList().map(function (a) {
+      const pct = a.prog ? Math.min(100, Math.round(a.prog[0] / Math.max(1, a.prog[1]) * 100)) : 0;
       return '<div class="cx-ach' + (a.done ? ' done' : '') + '">' + icon(a.done ? 'check' : 'lock') +
-        '<div><b>' + esc(a.name) + '</b><span>' + esc(a.desc) + '</span></div></div>';
+        '<div><b>' + esc(a.name) + '</b><span>' + esc(a.desc) + '</span>' +
+        (a.prog ? '<span class="ach-prog"><i style="width:' + pct + '%"></i></span><u>' + a.prog[0] + ' / ' + a.prog[1] + '</u>' : '') +
+        '</div></div>';
     }).join('');
     return '<div class="overlay" data-act="closecodex"><div class="panel codex-panel" data-stop="1">' +
       '<div class="panel-head"><h3>' + icon('book') + ' 도감 · 업적</h3><button class="iconbtn" data-act="closecodex">' + icon('close') + '</button></div>' +
@@ -958,6 +961,7 @@
         return '<div class="help-row"><span class="hn">' + r[0] + '</span><div><b>' + r[1] + '</b><p>' + r[2] + '</p></div></div>';
       }).join('') +
       '<p class="help-foot">' + icon('eye') + '완전 정보 전투 — 적의 다음 행동은 항상 화면에 보입니다.</p>' +
+      '<button class="help-tut-btn" data-act="showtut">' + icon('book') + '첫 판 안내 다시 보기</button>' +
       '</div></div>';
   }
 

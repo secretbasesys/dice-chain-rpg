@@ -17,6 +17,7 @@
       ach: {},
       lastAsc: 0,
       bestDepth: 3,
+      bestCombo: 0, bestDmg: 0,
       daily: null,
       history: [],
       tut: 0,
@@ -63,6 +64,8 @@
 
     noteRunEnd: function (entry) {
       const m = load();
+      m.bestCombo = Math.max(m.bestCombo || 0, entry.maxCombo || 0);
+      m.bestDmg = Math.max(m.bestDmg || 0, entry.dmg || 0);
       m.history.unshift(entry);
       if (m.history.length > 30) m.history.length = 30;
       save();
@@ -121,8 +124,15 @@
 
     achList: function () {
       const m = load();
+      const prog = {
+        chain6: [m.bestCombo || 0, 6], chain8: [m.bestCombo || 0, 8],
+        dmg1000: [m.bestDmg || 0, 1000], codex: [(m.seen.dice || []).length, 12],
+        relicHunter: [(m.seen.relics || []).length, 18], asc10: [m.unlockedAsc || 0, 10],
+        asc3: [m.unlockedAsc || 0, 3],
+      };
       return DC.ACHIEVEMENTS.map(function (a) {
-        return { id: a.id, name: a.name, desc: a.desc, done: !!m.ach[a.id] };
+        const p = prog[a.id];
+        return { id: a.id, name: a.name, desc: a.desc, done: !!m.ach[a.id], prog: p && !m.ach[a.id] ? p : null };
       });
     },
 
