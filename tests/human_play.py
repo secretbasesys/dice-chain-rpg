@@ -19,7 +19,11 @@ with sync_playwright() as p:
     for i in range(8):
         scr = page.evaluate("() => DC.Game.state.screen")
         log.append(scr)
-        if scr == 'map':
+        if scr == 'gift':
+            page.click('[data-act="gift"][data-i="0"]'); step(page, 450)
+            if page.locator('[data-act="closetut"]').count():
+                page.click('[data-act="closetut"]'); step(page, 250)
+        elif scr == 'map':
             nodes = page.query_selector_all('.node.avail')
             if not nodes: 
                 log.append('no-avail'); break

@@ -1299,6 +1299,12 @@
       if (state.ui.modal === 'tut') app.innerHTML += renderTut();
       if (state.ui.modal === 'challenge') app.innerHTML += renderChallenge(state);
       if (state.ui.modal === 'remove' && state.run) app.innerHTML += renderRemove(state);
+      if (!document.querySelector('.rotate-hint')) {
+        const rh = document.createElement('div');
+        rh.className = 'rotate-hint';
+        rh.innerHTML = icon('flip') + '<b>세로로 돌려 주세요</b><span>다이스 체인은 세로 화면에 맞춰 설계되었습니다</span>';
+        document.body.appendChild(rh);
+      }
       /* micro-interactions: gold pop + dice roll-in on new turn */
       if (state.run) {
         if (state.ui._lastGold != null && state.run.gold !== state.ui._lastGold) {
