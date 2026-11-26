@@ -84,6 +84,43 @@
 
     bind: function () {
       const self = this;
+
+      /* tooltips: hover on precise pointers, long-press on touch (v6.7) */
+      let tipTimer = null;
+      const clearTipTimer = function () { if (tipTimer) { clearTimeout(tipTimer); tipTimer = null; } };
+      document.addEventListener('pointerdown', function (e) {
+        const el = e.target.closest('[data-tip]');
+        if (!el) return;
+        if (e.pointerType === 'mouse') return;   // hover handles it
+        clearTipTimer();
+        tipTimer = setTimeout(function () {
+          tipTimer = null;
+          DC.UI.showTip(el);
+          DC.UI._suppressClick = Date.now() + 450;
+        }, 420);
+      }, true);
+      ['pointerup', 'pointercancel', 'pointermove'].forEach(function (evt) {
+        document.addEventListener(evt, function (e) {
+          if (evt === 'pointermove' && tipTimer) {
+            const el = e.target.closest('[data-tip]');
+            if (el) return;
+          }
+          clearTipTimer();
+        }, true);
+      });
+      document.addEventListener('pointerover', function (e) {
+        if (e.pointerType && e.pointerType !== 'mouse') return;
+        if (window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
+        const el = e.target.closest('[data-tip]');
+        if (el) { clearTipTimer(); tipTimer = setTimeout(function () { tipTimer = null; DC.UI.showTip(el); }, 380); }
+      }, true);
+      document.addEventListener('pointerout', function (e) {
+        if (e.pointerType && e.pointerType !== 'mouse') return;
+        clearTipTimer();
+        const el = e.target.closest('[data-tip]');
+        if (el && DC.UI._tipEl === el) DC.UI.hideTip();
+      }, true);
+
       document.addEventListener('click', function (e) {
         const tipEl = e.target.closest('[data-tip]');
         const actEl = e.target.closest('[data-act]');
@@ -208,6 +245,8 @@
         case 'deck': s.ui.modal = s.ui.modal === 'deck' ? null : 'deck'; DC.Audio.play('click'); DC.UI.render(); break;
         case 'closedeck': s.ui.modal = null; DC.UI.render(); break;
         case 'help': s.ui.modal = s.ui.modal === 'help' ? null : 'help'; DC.UI.render(); break;
+        case 'patchnotes': s.ui.modal = 'patch'; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'closepatch': s.ui.modal = 'settings'; DC.UI.render(); break;
         case 'closehelp': s.ui.modal = null; DC.UI.render(); break;
         case 'settings': s.ui.modal = s.ui.modal === 'settings' ? null : 'settings'; DC.Audio.play('click'); DC.UI.render(); break;
         case 'closesettings': s.ui.modal = null; this.saveSettings(); DC.UI.render(); break;

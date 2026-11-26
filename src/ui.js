@@ -837,6 +837,7 @@
           }).join('') +
         '</div></div>' +
       '<button class="set-toggle" data-act="help">' + icon('book') + '게임 방법 <b>열기</b></button>' +
+      '<button class="set-toggle" data-act="patchnotes">' + icon('star') + '업데이트 노트 <b>v' + DC.VERSION + '</b></button>' +
       '<div class="set-data">' +
         '<div class="sd-head">' + icon('lock') + ' 게임 데이터</div>' +
         (state.ui.confirmReset
@@ -886,6 +887,17 @@
       '<p class="sub"><b style="color:#e9d5ff">' + esc(d.pick.name) + '</b> — ' + esc(d.pick.desc) + '</p>' +
       '<div class="ds-list">' + cur + '</div>' +
       '</div></div>';
+  }
+
+  function renderPatchNotes() {
+    const rows = (DC.CHANGELOG || []).map(function (v) {
+      return '<div class="pn-row"><div class="pn-v">v' + esc(v.v) + '</div><div><b>' + esc(v.t) + '</b>' +
+        v.items.map(function (it) { return '<span>' + esc(it) + '</span>'; }).join('') + '</div></div>';
+    }).join('');
+    return '<div class="overlay" data-act="closepatch"><div class="panel pn-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('star') + ' 업데이트 노트</h3><button class="iconbtn" data-act="closepatch">' + icon('close') + '</button></div>' +
+      '<p class="sub">최근 변경 사항만 모았습니다 · 현재 v' + esc(DC.VERSION) + '</p>' +
+      '<div class="pn-list">' + rows + '</div></div></div>';
   }
 
   function renderRemove(state) {
@@ -1585,6 +1597,7 @@
       if (state.ui.modal === 'remove' && state.run) app.innerHTML += renderRemove(state);
       if (state.ui.modal === 'settings') app.innerHTML += renderSettings(state);
       if (state.ui.modal === 'draft' && state.ui.draft) app.innerHTML += renderDraft(state);
+      if (state.ui.modal === 'patch') app.innerHTML += renderPatchNotes();
       if (!document.querySelector('.rotate-hint')) {
         const rh = document.createElement('div');
         rh.className = 'rotate-hint';
