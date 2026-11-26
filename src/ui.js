@@ -388,7 +388,8 @@
         '</div>' +
         (boss && !bossDone ? '<div class="boss-preview" style="--c:' + boss.c + '">' +
           '<div class="bp-art">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(boss.art, boss) + '</svg>' + '</div>' +
-          '<div class="bp-txt"><span>' + icon('crown') + '다가오는 보스</span><b>' + esc(boss.name) + '</b></div>' +
+          '<div class="bp-txt"><span>' + icon('crown') + '다가오는 보스</span><b>' + esc(boss.name) + '</b>' +
+            (boss.gimmick && DC.GIMMICK_TXT[boss.gimmick.kind] ? '<i>' + esc(DC.GIMMICK_TXT[boss.gimmick.kind]) + '</i>' : '') + '</div>' +
           '<div class="bp-hp"><b>' + boss.hp + '</b><i>HP</i></div>' +
         '</div>' : '') +
         '<div class="map-wrap" id="map-wrap"><div class="map-canvas" id="map-canvas" style="--rows:' + rows + '">' +
@@ -688,6 +689,7 @@
     return hud(state) + '' +
       '<main class="event-screen">' + head +
         '<div class="ev-choices">' + choices + '</div>' +
+        '<button class="ev-skip" data-act="leave">' + icon('right') + '그냥 지나간다</button>' +
       '</main>';
   }
 
@@ -873,6 +875,15 @@
         '<p class="sub">' + (kind === 'win' ? '주사위 군주를 쓰러뜨렸습니다.' : '여정은 여기서 끝났습니다.') + '</p>' +
         (kind === 'win' && winInfo && winInfo.unlocked ? '<div class="unlock-chip">' + icon('up') + ' 승천 ' + winInfo.level + ' 해금!</div>' : '') +
         (newAch.length ? '<div class="end-achs">' + newAch.map(function (a) { return '<span>' + icon('check') + esc(a.name) + '</span>'; }).join('') + '</div>' : '') +
+        (function () {
+          const su = r.stats && r.stats.skillUse;
+          if (!su) return '';
+          const top = Object.keys(su).map(function (k) { return [k, su[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 3);
+          if (!top.length) return '';
+          return '<div class="end-skills">' + top.map(function (t) {
+            return '<span><b>' + esc(t[0]) + '</b><i>' + t[1] + '회</i></span>';
+          }).join('') + '</div>';
+        })() +
         '<div class="end-stats">' +
           '<div><b>ACT ' + r.act + '</b><span>도달</span></div>' +
           '<div><b>' + (r.stats.kills || 0) + '</b><span>처치</span></div>' +

@@ -491,6 +491,8 @@
       s.handIdx = handIdx;
       s.resolved = true;
       c.chainLog = (c.chainLog || []).concat([{ k: h.k, v: h.v, skill: skill.name }]);
+      c.skillUse = c.skillUse || {};
+      c.skillUse[skill.name] = (c.skillUse[skill.name] || 0) + 1;
       s.anim = Date.now();
       ev.push({ t: 'combo', n: c.combo, mult: mult(c), face: h.k, value: h.v, skill: skill.name });
       const before = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);

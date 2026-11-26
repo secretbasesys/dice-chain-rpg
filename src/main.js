@@ -562,6 +562,10 @@
       r.stats.kills += c.enemies.filter(function (e) { return e.hp <= 0; }).length;
       r.stats.dmg += c.totalDamage;
       r.stats.turns = (r.stats.turns || 0) + (c.turn || 0);
+      if (c.skillUse) {
+        r.stats.skillUse = r.stats.skillUse || {};
+        Object.keys(c.skillUse).forEach(function (k) { r.stats.skillUse[k] = (r.stats.skillUse[k] || 0) + c.skillUse[k]; });
+      }
       r.maxCombo = Math.max(r.maxCombo || 0, c.maxCombo || 0);
       let gold = c.kind === 'boss' ? 95 + r.act * 12 : c.kind === 'elite' ? 45 + ri(15) : 16 + ri(9);
       gold += r.act * 4;
@@ -1207,8 +1211,14 @@
         if (s.screen === 'shop') { Game.leaveNode(); continue; }
         if (s.screen === 'rest') { Game.rest(0); continue; }
         if (s.screen === 'event') {
-          if (s.ui.event && s.ui.event.result) Game.leaveNode();
-          else Game.choice(0);
+          if (s.ui.event && s.ui.event.result) { Game.leaveNode(); continue; }
+          const def = s.ui.event && s.ui.event.def;
+          let idx = 0;
+          if (def) {
+            const i = def.choices.findIndex(function (c) { return !c.need || !c.need.gold || s.run.gold >= c.need.gold; });
+            if (i >= 0) idx = i;
+          }
+          Game.choice(idx);
           continue;
         }
         break;

@@ -1,0 +1,18 @@
+import sys, json; sys.path.insert(0,'/workspace/work/dice-rpg/tests')
+from harness import *
+serve()
+with sync_playwright() as p:
+    b,ctx,page,errors=launch(p,390,844,True)
+    page.goto(BASE); page.wait_for_timeout(300)
+    page.evaluate("() => localStorage.clear()"); page.reload(); page.wait_for_timeout(300)
+    r = page.evaluate("() => { const res = DC.test.autoRun('warrior', 900); return res; }")
+    print("run:", json.dumps(r))
+    page.wait_for_timeout(300)
+    print("screen:", page.evaluate("() => DC.Game.state.screen"))
+    print("skillUse:", page.evaluate("() => JSON.stringify((DC.Game.state.run.stats||{}).skillUse)"))
+    page.screenshot(path=OUT + "/v36_end.png")
+    page.evaluate("() => { DC.Game.state.screen='map'; DC.Game.state.run.act=2; DC.UI.render(); }")
+    page.wait_for_timeout(250)
+    print("boss gimmick line:", page.evaluate("() => { const e=document.querySelector('.bp-txt i'); return e?e.textContent:null; }"))
+    print("ERRORS", json.dumps(errors, ensure_ascii=False))
+    b.close()

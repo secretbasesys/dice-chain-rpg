@@ -1659,3 +1659,21 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 .gc-desc { font-size: 11px; color: #a9b8d1; }
 .gift-foot { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #7d8ea9; }
 .gift-foot .ic { width: 11px; height: 11px; }
+
+/* v3.6 end stats + boss gimmick line */
+.end-skills { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 2px 0 8px; }
+.end-skills span {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10px;
+  background: rgba(30, 42, 66, .7); border: 1px solid #26324c; border-radius: 8px; padding: 3px 8px;
+}
+.end-skills b { color: #dbe6f8; font-weight: 800; }
+.end-skills i { font-style: normal; color: #fbbf24; font-weight: 800; }
+.bp-txt i { font-style: normal; font-size: 8px; color: #8f7fbf; }
+
+.ev-skip {
+  margin: 10px auto 2px; display: inline-flex; align-items: center; gap: 4px; min-height: 40px;
+  background: transparent; border: 1px dashed #2f3f5c; border-radius: 10px; padding: 0 14px;
+  color: #8ea3c4; font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.ev-skip .ic { width: 12px; height: 12px; }
+.ev-skip:active { transform: scale(.97); }
