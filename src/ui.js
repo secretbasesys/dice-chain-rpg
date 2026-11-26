@@ -769,10 +769,17 @@
     enemyList.push(DC.BOSSES[1], DC.BOSSES[2], DC.BOSSES[3]);
     const enemies = enemyList.map(function (e) {
       const got = seenEnemy.indexOf(e.id) >= 0;
+      const gtxt = e.gimmick && DC.GIMMICK_TXT[e.gimmick.kind];
+      const intents = got ? (e.intents || []).map(function (it) {
+        return '<i title="' + esc(DC.Combat.intentText(it)) + '">' + icon(DC.Combat.intentIcon(it)) + '</i>';
+      }).join('') : '';
       return '<div class="cx-enemy' + (got ? '' : ' locked') + '" style="--c:' + e.c + '">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + (got ? DC.monsterArt(e.art, { key: e.id }) : '<circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/>') + '</svg>' +
         '<b>' + esc(got ? e.name : '???') + '</b>' +
-        '<span>' + (got ? e.hp + ' HP' : '미발견') + '</span></div>';
+        '<span>' + (got ? e.hp + ' HP' : '미발견') + '</span>' +
+        (got && intents ? '<div class="cx-intents">' + intents + '</div>' : '') +
+        (got && gtxt ? '<div class="cx-gimmick">' + esc(gtxt) + '</div>' : '') +
+      '</div>';
     }).join('');
     const achs = DC.Meta.achList().map(function (a) {
       return '<div class="cx-ach' + (a.done ? ' done' : '') + '">' + icon(a.done ? 'check' : 'lock') +

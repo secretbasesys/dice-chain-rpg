@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '2.7.0';
+  DC.VERSION = '2.8.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -583,6 +583,11 @@
       asc: (n % 3),
       day: Number(t.slice(10, 12)) + '/' + Number(t.slice(12, 14)),
     };
+  };
+
+  DC.GIMMICK_TXT = {
+    split: '체력 50%에서 분열', revive: '한 번 부활', seal: '3턴마다 주사위 봉인',
+    enrage: '체력 50%에서 격노', fortify: '매 턴 방어도 7', dive: '3턴마다 급강하',
   };
 
   DC.challengeById = function (id) {
