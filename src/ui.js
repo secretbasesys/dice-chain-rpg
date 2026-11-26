@@ -171,6 +171,19 @@
     '</div>';
   }
 
+  function flaskUi(c) {
+    const f = c.flask || { fire: 0, poison: 0, bolt: 0 };
+    const n = (f.fire || 0) + (f.poison || 0) + (f.bolt || 0);
+    const COL = { fire: '#ff9f43', poison: '#9ae66e', bolt: '#ffe066' };
+    let pips = '';
+    ['fire', 'poison', 'bolt'].forEach(function (e) {
+      for (let i = 0; i < (f[e] || 0); i++) pips += '<i style="--c:' + COL[e] + '"></i>';
+    });
+    for (let i = n; i < 3; i++) pips += '<i class="empty"></i>';
+    return '<span class="strip-item flask-chip' + (n >= 3 ? ' full' : '') + '" data-tip="' + esc(DC.KEYWORDS.flask.t) + '" data-tip-title="플라스크">' +
+      icon('flask') + '<span class="flask-pips">' + pips + '</span><b>' + n + '</b>/3</span>';
+  }
+
   function renderCombat(state) {
     const c = state.combat;
     const sel = state.ui.sel;
@@ -211,6 +224,7 @@
             (chain ? '<span class="chain">' + chain + '</span>' : '') +
             '<span class="strip-item">' + icon('dice') + '남은 <b id="left-dice">' + unused + '</b></span>' +
             '<span class="strip-item spark" data-tip="' + esc(DC.KEYWORDS.spark.t) + '" data-tip-title="기세">' + icon('spark') + '기세 <b id="spark-num">' + c.sparks + '</b></span>' +
+            (c.cls === 'alchemist' ? flaskUi(c) : '') +
             '<span class="strip-item">' + icon('clock') + '턴 <b>' + c.turn + '</b></span>' +
             statusChips(c.statuses) +
           '</div>' +
@@ -431,7 +445,7 @@
       }).join('');
       return '' +
         '<div class="class-card" data-act="pickclass" data-id="' + id + '" style="--c:' + C.c + '" role="button" tabindex="0">' +
-          '<div class="class-badge">' + icon(id === 'warrior' ? 'shield' : id === 'mage' ? 'flame' : 'star') + '</div>' +
+          '<div class="class-badge">' + icon(C.ic || (id === 'warrior' ? 'shield' : id === 'mage' ? 'flame' : id === 'gambler' ? 'star' : 'flask')) + '</div>' +
           '<div class="class-name">' + C.name + '</div>' +
           '<div class="class-en">' + C.en + '</div>' +
           '<p class="class-desc">' + C.desc + '</p>' +
@@ -442,7 +456,7 @@
     }).join('');
     return '' +
       '<main class="class-screen">' +
-        '<h2>전사를 선택하세요</h2>' +
+        '<h2>클래스를 선택하세요</h2>' +
         '<p class="sub">각 클래스는 다른 주사위와 스킬 슬롯을 가집니다' + ((state.ui.asc || 0) ? ' · 승천 ' + state.ui.asc : '') + '</p>' +
         '<div class="class-list">' + cards + '</div>' +
       '</main>';
@@ -792,6 +806,21 @@
             const el = targetEl(ev.eid);
             if (el) DC.FX.floatAt(el, '+' + ev.amount, 'block');
             DC.Audio.play('block');
+            break;
+          }
+          case 'flask': {
+            const el = q('.flask-chip');
+            if (el) {
+              if (ev.e === 'clear') {
+                DC.FX.floatAt(el, '비약 완성!', 'heal', { size: 16 });
+                el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+                DC.Audio.play('combo', 4);
+              } else {
+                DC.FX.floatAt(el, '정수 +1', 'status', { size: 13 });
+                DC.Audio.play('clack', 1);
+              }
+            }
+            delay = ev.e === 'clear' ? 220 : 80;
             break;
           }
           case 'status': {

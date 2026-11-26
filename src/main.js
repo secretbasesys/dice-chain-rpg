@@ -866,6 +866,11 @@
       else if (fx.type === 'mult') s = 22 + c.hand.filter(function (x) { return !x.used; }).length * 4;
       else if (fx.type === 'spark') s = 12;
       else if (fx.type === 'buff') s = 16;
+      else if (fx.type === 'mix') {
+        const f = c.flask || { fire: 0, poison: 0, bolt: 0 };
+        const n = (f.fire || 0) + (f.poison || 0) + (f.bolt || 0);
+        s = n ? h.v * 1.1 * n * nm + 6 + n * 4 : 2;
+      }
       if (h.k === 'fire' || h.k === 'venom') s *= 1.15;
       if (h.k === 'leech' && c.hp < c.maxHp * 0.55) s *= 1.3;
       if (h.k === 'curse') s *= 0.35;

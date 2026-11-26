@@ -510,9 +510,9 @@ body[data-act="3"] .map-screen { --act-glow: rgba(167, 139, 250, .22); --scene-c
 /* class select */
 .class-screen h2 { font-size: 22px; text-align: center; margin-bottom: 2px; }
 .class-screen .sub, .sub { font-size: 12px; color: var(--dim); text-align: center; margin-bottom: 10px; }
-.class-list { display: flex; flex-direction: column; gap: 10px; }
+.class-list { display: flex; flex-direction: column; gap: 8px; }
 .class-card {
-  position: relative; border-radius: 16px; padding: 12px 14px;
+  position: relative; border-radius: 16px; padding: 10px 14px;
   background: linear-gradient(140deg, color-mix(in srgb, var(--c) 12%, #141c2c), #101725 70%);
   border: 1px solid color-mix(in srgb, var(--c) 35%, #26314a);
   cursor: pointer; transition: transform .12s, box-shadow .15s;
@@ -527,17 +527,18 @@ body[data-act="3"] .map-screen { --act-glow: rgba(167, 139, 250, .22); --scene-c
 .class-badge .ic { width: 20px; height: 20px; }
 .class-name { font-size: 18px; font-weight: 900; color: var(--c); }
 .class-en { font-size: 9px; letter-spacing: .28em; color: var(--dim); font-weight: 700; }
-.class-desc { font-size: 12px; color: #c2cee5; margin: 6px 0 8px; max-width: 82%; }
-.class-stats { display: flex; gap: 10px; font-size: 12px; font-weight: 800; color: #dfe7f7; margin-bottom: 8px; }
+.class-desc { font-size: 11.5px; color: #c2cee5; margin: 4px 0 6px; max-width: 82%; line-height: 1.35; }
+.class-stats { display: flex; gap: 10px; font-size: 11.5px; font-weight: 800; color: #dfe7f7; margin-bottom: 6px; }
 .class-stats span { display: inline-flex; align-items: center; gap: 3px; }
 .class-stats .ic { width: 14px; height: 14px; color: var(--dim); }
-.class-dice { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+.class-dice { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px; }
 .dchip {
   font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px;
   color: var(--c); background: color-mix(in srgb, var(--c) 14%, #0e1522);
   border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
 }
-.class-passive { font-size: 10.5px; color: var(--dim); display: flex; gap: 4px; align-items: flex-start; }
+.class-passive b { white-space: nowrap; color: #dbe6fa; }
+.class-passive { font-size: 10px; color: var(--dim); display: flex; gap: 4px; align-items: flex-start; line-height: 1.4; }
 .class-passive .ic { width: 13px; height: 13px; color: var(--gold); margin-top: 1px; }
 .class-passive b { color: #e7edfa; }
 
@@ -1250,3 +1251,19 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 .strip-sub .speedbtn { min-height: 30px; }
 .slots { align-content: stretch; grid-auto-rows: minmax(58px, 1fr); row-gap: 7px; }
 .enemy-row { min-height: 198px; }
+
+/* ---------------- alchemist flask (v1.5) ---------------- */
+.strip-item.flask-chip { gap: 4px; }
+.flask-chip .ic { width: 13px; height: 13px; color: #34d399; }
+.flask-pips { display: inline-flex; gap: 2px; align-items: center; }
+.flask-pips i {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--c, #34d399);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--c, #34d399) 60%, transparent);
+  transition: transform .15s;
+}
+.flask-pips i.empty { background: #22304a; box-shadow: none; }
+.flask-chip.full { color: #6ee7b7; animation: flaskFull 1.6s ease-in-out infinite; }
+.flask-chip .pop { animation: none; }
+@keyframes flaskFull { 0%, 100% { text-shadow: 0 0 0 rgba(110, 231, 183, 0); } 50% { text-shadow: 0 0 10px rgba(110, 231, 183, .8); } }
+.flask-chip.pop { animation: flaskPop .45s ease-out; }
+@keyframes flaskPop { 0% { transform: scale(1); } 40% { transform: scale(1.16); } 100% { transform: scale(1); } }

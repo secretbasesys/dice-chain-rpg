@@ -163,6 +163,44 @@
 
   function faceColor(k) { return (DC.KINDS[k] || DC.KINDS.blank).c; }
 
+  /* ---------- alchemist flask ---------- */
+  const ESS = { fire: 'fire', venom: 'poison', bolt: 'bolt' };
+  function flaskTotal(f) { return f ? (f.fire || 0) + (f.poison || 0) + (f.bolt || 0) : 0; }
+  DC.flaskTotal = flaskTotal;
+
+  function brew(c, k, v, ev) {
+    const e = ESS[k];
+    const f = c.flask;
+    if (!e || !f) return;
+    if (flaskTotal(f) >= 3) return;
+    f[e] += 1;
+    ev.push({ t: 'flask', e: e, n: flaskTotal(f) });
+    if (flaskTotal(f) < 3) return;
+    /* three essences -> a potion */
+    const all = alive(c);
+    if (f.fire === 3) {
+      all.forEach(function (en) { hitEnemy(c, en, Math.round(7 + v * 1.6), { kind: 'fire' }, ev); });
+      ev.push({ t: 'msg', text: '폭발 비약! 모든 적 피해' });
+    } else if (f.poison === 3) {
+      all.forEach(function (en) { en.st.poison += 2; ev.push({ t: 'status', eid: en.id, s: 'poison', amount: 2 }); });
+      const b = gainBlock(c, 6); ev.push({ t: 'pblock', amount: b });
+      ev.push({ t: 'msg', text: '부식 비약! 맹독 + 방어' });
+    } else if (f.bolt === 3) {
+      pickTargets(c, 2).forEach(function (en) { hitEnemy(c, en, Math.round(6 + v * 1.4), { kind: 'bolt' }, ev); });
+      c.sparks += 1; ev.push({ t: 'spark', amount: 1 });
+      ev.push({ t: 'msg', text: '감전 비약! 연쇄 감전' });
+    } else {
+      healPlayer(c, 4, ev);
+      const b = gainBlock(c, 6); ev.push({ t: 'pblock', amount: b });
+      const t = target(c);
+      if (t) { t.st.vuln += 1; ev.push({ t: 'status', eid: t.id, s: 'vuln', amount: 1 }); }
+      ev.push({ t: 'msg', text: '균형 비약! 회복 + 취약' });
+    }
+    c.flask = { fire: 0, poison: 0, bolt: 0 };
+    ev.push({ t: 'flask', e: 'clear', n: 0 });
+  }
+  DC.brew = brew;
+
   /* ---------- the effect resolver ---------- */
   function resolve(c, hand, skill, ev) {
     const v = hand.v, k = hand.k, fx = skill.fx;
@@ -245,6 +283,18 @@
         mainDone = true;
         break;
       }
+      case 'mix': {
+        const f = c.flask || { fire: 0, poison: 0, bolt: 0 };
+        const n = flaskTotal(f);
+        if (who && n > 0) atk(who, (fx.ratio || 1.0) * n, 0, { fire: f.fire > 0 });
+        const b = gainBlock(c, (fx.block || 2) * n);
+        if (b) ev.push({ t: 'pblock', amount: b });
+        c.flask = { fire: 0, poison: 0, bolt: 0 };
+        ev.push({ t: 'flask', e: 'clear', n: 0 });
+        ev.push({ t: 'msg', text: n ? '촉매! 정수 ' + n + ' 소모' : '촉매 — 플라스크가 비었다' });
+        mainDone = true;
+        break;
+      }
       case 'multi': {
         const hits = Math.max(1, Math.min(8, c.combo));
         for (let i = 0; i < hits; i++) {
@@ -280,6 +330,7 @@
       ev.push({ t: 'msg', text: '공허 — 효과 없음' });
     }
 
+    if (c.cls === 'alchemist') brew(c, k, v, ev);
     if (c.cls === 'mage' && (k === 'fire' || k === 'bolt')) healPlayer(c, 2, ev);
 
     /* relic: spark on 6 / even */
@@ -290,7 +341,7 @@
 
   /* ---------- state snapshots (undo) ---------- */
   const SNAP_KEYS = ['enemies', 'hand', 'slots', 'combo', 'multBonus', 'sparks', 'block', 'hp',
-    'statuses', 'phase', 'totalDamage', 'rerollsThisTurn', 'luckyCoinUsed', 'turn', 'chainLog'];
+    'statuses', 'phase', 'totalDamage', 'rerollsThisTurn', 'luckyCoinUsed', 'turn', 'chainLog', 'flask'];
 
   /* ---------- public API ---------- */
   const Combat = {
@@ -333,6 +384,7 @@
         maxCombo: 0,
         chainLog: [],
         skillLv: (run.skills || []).slice(),
+        flask: { fire: 0, poison: 0, bolt: 0 },
         seedNote: null,
       };
       const cls = DC.CLASSES[run.cls];
@@ -629,6 +681,10 @@
         out.text = '기세 +' + fx.amount;
       } else if (fx.type === 'buff') {
         out.text = '힘 +' + fx.str + ' · 방어 ' + Math.round((fx.block || 0) * (has(c, 'wrist') ? 1.25 : 1));
+      } else if (fx.type === 'mix') {
+        const n = DC.flaskTotal(c.flask);
+        out.dmg = n ? dmg((fx.ratio || 1.0) * n) : 0;
+        out.text = n ? '정수 ' + n + ' · ≈' + out.dmg + ' 피해' : '플라스크 비어 있음';
       }
       return out;
     },
@@ -657,6 +713,10 @@
       if (fx.type === 'mult') return '배율 +' + fx.add.toFixed(1);
       if (fx.type === 'spark') return '기세 +' + fx.amount;
       if (fx.type === 'buff') return '힘 +' + fx.str;
+      if (fx.type === 'mix') {
+        const n = DC.flaskTotal(c.flask);
+        return n ? '정수 ' + n + ' → ≈' + dmg((fx.ratio || 1.0) * n) + ' 피해' : '플라스크 비어 있음';
+      }
       return '';
     },
 

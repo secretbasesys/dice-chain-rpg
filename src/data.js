@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '1.4.0';
+  DC.VERSION = '1.5.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -59,6 +59,7 @@
     trash: '<path d="M4.5 6.5h15M9 6.5V4h6v2.5M6.5 6.5l1 13.5h9l1-13.5"/>',
     spark: '<path d="M12 2.5l1.8 6.2 6.2 1.8-6.2 1.8L12 18.5l-1.8-6.2L4 10.5l6.2-1.8L12 2.5z"/>',
     right: '<path d="M9 5l7 7-7 7"/>',
+    flask: '<path d="M9.5 3h5"/><path d="M10.5 3v5.2L5.8 17a2.6 2.6 0 0 0 2.3 3.9h7.8a2.6 2.6 0 0 0 2.3-3.9L13.5 8.2V3"/><path d="M7.6 15.4h8.8"/><circle cx="11" cy="18" r=".9" fill="currentColor" stroke="none"/><circle cx="14" cy="17" r=".6" fill="currentColor" stroke="none"/>',
   };
   DC.ICONS = P;
   DC.icon = function (name, cls) {
@@ -104,10 +105,11 @@
     req: { n: '슬롯 조건', t: '슬롯에 올릴 주사위가 맞춰야 하는 눈입니다. 조건이 다르면 올릴 수 없습니다.' },
     forge: { n: '단조', t: '주사위의 면 하나를 영구히 교체합니다. 면이 곧 빌드입니다.' },
     block: { n: '방어도', t: '이번 턴 피해를 먼저 흡수합니다. 내 턴이 시작되면 사라집니다.' },
+    flask: { n: '플라스크', t: '연금술사 전용. 화염(불)·독(독)·번개(번개) 면을 쓸 때마다 정수가 1 담기고, 3개가 차면 조합에 따라 비약이 터집니다. 촉매 스킬로 원할 때 터뜨릴 수도 있습니다.' },
     ascension: { n: '승천', t: '승리할 때마다 단계가 오르는 더 어려운 모드입니다. 적 체력·공격이 강해지고 보상이 줄어듭니다.' },
   };
 
-  DC.classesShort = { warrior: '전사', mage: '마도사', gambler: '도박사' };
+  DC.classesShort = { warrior: '전사', mage: '마도사', gambler: '도박사', alchemist: '연금술사' };
 
   /* act flavour */
   DC.ACTS = {
@@ -138,6 +140,9 @@
     loaded: { name: '조작 주사위', tier: 1, price: 0, c: '#fbbf24', faces: [f('slash', 3), f('slash', 4), f('slash', 5), f('slash', 6), f('mult', 1), f('curse', 1)], tag: '도박' },
     wild: { name: '야생 주사위', tier: 1, price: 0, c: '#f472b6', faces: [f('slash', 1), f('guard', 1), f('fire', 1), f('bolt', 1), f('venom', 1), f('leech', 1)], tag: '만능' },
     lucky: { name: '행운 주사위', tier: 1, price: 0, c: '#34d399', faces: [f('slash', 2), f('mult', 1), f('slash', 4), f('leech', 2), f('mult', 2), f('slash', 6)], tag: '행운' },
+    reagent: { name: '시약 주사위', tier: 1, price: 0, c: '#34d399', faces: [f('fire', 2), f('venom', 2), f('bolt', 2), f('fire', 3), f('venom', 3), f('bolt', 3)], tag: '시약' },
+    cauldron: { name: '가마솥 주사위', tier: 1, price: 0, c: '#fb923c', faces: [f('fire', 4), f('venom', 4), f('guard', 3), f('bolt', 4), f('leech', 2), f('slash', 4)], tag: '가마솥' },
+    elixir: { name: '엘릭서 주사위', tier: 2, price: 90, c: '#5eead4', faces: [f('fire', 5), f('venom', 5), f('bolt', 5), f('mult', 2), f('leech', 4), f('guard', 4)], tag: '비약' },
     vampire: { name: '흡혈 주사위', tier: 2, price: 75, c: '#f472b6', faces: [f('leech', 3), f('slash', 2), f('leech', 4), f('slash', 3), f('venom', 2), f('leech', 5)], tag: '흡혈' },
     storm: { name: '폭풍 주사위', tier: 2, price: 80, c: '#ffe066', faces: [f('bolt', 3), f('bolt', 4), f('slash', 2), f('bolt', 5), f('mult', 1), f('bolt', 6)], tag: '번개' },
     venomd: { name: '독니 주사위', tier: 2, price: 70, c: '#9ae66e', faces: [f('venom', 3), f('venom', 4), f('slash', 2), f('venom', 5), f('leech', 2), f('venom', 6)], tag: '맹독' },
@@ -193,20 +198,34 @@
     },
     gambler: {
       id: 'gambler', name: '운명의 도박사', short: '도박사', en: 'GAMBLER',
-      hp: 76, sparks: 4, c: '#fbbf24',
+      hp: 80, sparks: 4, c: '#fbbf24',
       desc: '기세가 넘친다. 재굴림과 복제로 판을 뒤집고 콤보로 승부한다.',
       startDice: ['loaded', 'lucky', 'wild'],
       passive: { n: '행운의 손', tip: '콤보가 3 이상이면 공격마다 +3 피해.' },
       skills: [
-        { id: 'dagger', name: '단검', req: 'any', ic: 'sword', fx: { type: 'attack', ratio: 1.3, comboBonus: 2.0 }, desc: '눈 × 1.3 + 콤보 보너스' },
+        { id: 'dagger', name: '단검', req: 'any', ic: 'sword', fx: { type: 'attack', ratio: 1.3, comboBonus: 2.4 }, desc: '눈 × 1.3 + 콤보 보너스' },
         { id: 'coin', name: '동전 던지기', req: 'even', ic: 'coin', fx: { type: 'attack', ratio: 2.8 }, desc: '눈 × 2.8 피해' },
         { id: 'lucky', name: '행운', req: 'any', ic: 'spark', fx: { type: 'spark', amount: 2, block: 3 }, desc: '기세 +2 · 방어도 3' },
         { id: 'allin', name: '올인', req: 'six', ic: 'flame', fx: { type: 'attack', ratio: 6, selfDmg: 3 }, desc: '눈 × 5 피해 · 자신 3 피해' },
-        { id: 'jackpot', name: '잭팟', req: 'prime', ic: 'star', fx: { type: 'multi', ratio: 1.2 }, desc: '눈 × 1.2 피해를 콤보 수만큼' },
+        { id: 'jackpot', name: '잭팟', req: 'prime', ic: 'star', fx: { type: 'multi', ratio: 1.3 }, desc: '눈 × 1.2 피해를 콤보 수만큼' },
+      ],
+    },
+    alchemist: {
+      id: 'alchemist', name: '독의 연금술사', short: '연금술사', en: 'ALCHEMIST',
+      hp: 74, sparks: 3, c: '#34d399', ic: 'flask',
+      desc: '화염·독·번개 정수를 플라스크에 모아 세 가지 비약으로 터뜨린다.',
+      startDice: ['reagent', 'reagent', 'cauldron'],
+      passive: { n: '연금 플라스크', tip: '화염·독·번개 면을 쓸 때마다 정수가 담깁니다. 3개가 차면 조합에 따라 비약이 자동 완성됩니다.' },
+      skills: [
+        { id: 'acid', name: '산성 플라스크', req: 'any', ic: 'venom', fx: { type: 'attack', ratio: 1.7, status: { poison: 2 } }, desc: '눈 × 1.7 피해 · 중독 2' },
+        { id: 'distill', name: '증류', req: 'odd', ic: 'flame', fx: { type: 'attack', ratio: 2.4, burn: true }, desc: '눈 × 2.4 피해 · 화상' },
+        { id: 'solidify', name: '응고', req: 'even', ic: 'shield', fx: { type: 'block', ratio: 2.8, heal: 1 }, desc: '눈 × 2.8 방어도 · 1 회복' },
+        { id: 'catalyze', name: '촉매', req: 'any', ic: 'flask', fx: { type: 'mix' }, desc: '정수 1개당 눈×1.0 피해·방어 2' },
+        { id: 'elixir', name: '대비약', req: 'gte4', ic: 'star', fx: { type: 'aoe', ratio: 1.7, burn: 2 }, desc: '모든 적에게 눈 × 1.7 · 화상 2' },
       ],
     },
   };
-  DC.CLASS_IDS = ['warrior', 'mage', 'gambler'];
+  DC.CLASS_IDS = ['warrior', 'mage', 'gambler', 'alchemist'];
 
   /* ---------------- relics ---------------- */
   DC.RELICS = {
@@ -461,6 +480,13 @@
       { fx: { ratio: 6.5, selfDmg: 3 }, desc: '눈 × 6.5 피해 · 자신 3 피해' },
       { fx: { ratio: 1.5 }, desc: '눈 × 1.5 피해를 콤보 수만큼' },
     ],
+    alchemist: [
+      { fx: { ratio: 1.9, status: { poison: 3 } }, desc: '눈 × 1.9 피해 · 중독 3' },
+      { fx: { ratio: 2.7, burn: true }, desc: '눈 × 2.7 피해 · 화상' },
+      { fx: { ratio: 3.3, heal: 3 }, desc: '눈 × 3.3 방어도 · 3 회복' },
+      { fx: { ratio: 1.3, block: 3 }, desc: '정수 1개당 눈×1.3 피해·방어 3' },
+      { fx: { ratio: 1.9, burn: 3 }, desc: '모든 적에게 눈 × 1.9 · 화상 3' },
+    ],
   };
   DC.getSkill = function (cls, idx, lv) {
     const base = DC.CLASSES[cls].skills[idx];
@@ -494,6 +520,7 @@
     { id: 'winWarrior', name: '강철의 의지', desc: '전사로 승리한다', test: function (c) { return c.win && c.cls === 'warrior'; } },
     { id: 'winMage', name: '원소의 주인', desc: '마도사로 승리한다', test: function (c) { return c.win && c.cls === 'mage'; } },
     { id: 'winGambler', name: '운명을 걸다', desc: '도박사로 승리한다', test: function (c) { return c.win && c.cls === 'gambler'; } },
+    { id: 'winAlchemist', name: '비약의 대가', desc: '연금술사로 승리한다', test: function (c) { return c.win && c.cls === 'alchemist'; } },
     { id: 'chain6', name: '끊이지 않는 사슬', desc: '한 턴에 콤보 6 달성', test: function (c) { return (c.maxCombo || 0) >= 6; } },
     { id: 'dmg1000', name: '분쇄자', desc: '한 런에서 누적 1000 피해', test: function (c) { return (c.dmg || 0) >= 1000; } },
     { id: 'asc3', name: '승천자', desc: '승천 3 이상에서 승리', test: function (c) { return c.win && (c.asc || 0) >= 3; } },
