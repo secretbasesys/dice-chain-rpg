@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '3.2.0';
+  DC.VERSION = '3.3.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -218,7 +218,7 @@
         { id: 'coin', name: '동전 던지기', req: 'even', ic: 'coin', fx: { type: 'attack', ratio: 2.8 }, desc: '눈 × 2.8 피해' },
         { id: 'lucky', name: '행운', req: 'any', ic: 'spark', fx: { type: 'spark', amount: 2, block: 3 }, desc: '기세 +2 · 방어도 3' },
         { id: 'allin', name: '올인', req: 'six', ic: 'flame', fx: { type: 'attack', ratio: 6, selfDmg: 3 }, desc: '눈 × 5 피해 · 자신 3 피해' },
-        { id: 'jackpot', name: '잭팟', req: 'prime', ic: 'star', fx: { type: 'multi', ratio: 1.3 }, desc: '눈 × 1.2 피해를 콤보 수만큼' },
+        { id: 'jackpot', name: '잭팟', req: 'prime', ic: 'star', fx: { type: 'multi', ratio: 1.3 }, desc: '눈 × 1.3 피해를 콤보 수만큼' },
       ],
     },
     alchemist: {
