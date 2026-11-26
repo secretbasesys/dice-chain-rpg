@@ -430,7 +430,7 @@
     const hasSave = DC.Game.hasSave();
     const meta = DC.Meta.get();
     const asc = state.ui.asc || 0;
-    const maxAsc = Math.min(5, meta.unlockedAsc || 0);
+    const maxAsc = Math.min(10, meta.unlockedAsc || 0);
     const step = DC.ASC_STEPS[asc] || DC.ASC_STEPS[0];
     const prog = DC.Meta.progress();
     return '' +
@@ -588,7 +588,10 @@
     }).join('');
     return hud(state) + '' +
       '<main class="shop-screen">' +
-        '<h2>' + icon('shop') + ' 상점</h2>' +
+        '<div class="shop-head"><h2>' + icon('shop') + ' 상점</h2>' +
+          '<button class="reroll-btn sm" data-act="rerollshop" ' + ((sh.rerolls || 0) >= 2 ? 'disabled' : '') + '>' +
+            icon('reroll') + '재고 20G' + ((sh.rerolls || 0) ? ' · ' + (2 - (sh.rerolls || 0)) : '') + '</button>' +
+        '</div>' +
         '<p class="sub">골드로 주사위·유물·단조를 삽니다' + (r.relics.indexOf('merchant') >= 0 ? ' (상인의 인장 -30%)' : '') + '</p>' +
         '<div class="shop-list">' + items + '</div>' +
         '<div class="bottom-bar"><button class="bigbtn" data-act="leave">떠난다</button></div>' +
@@ -782,7 +785,16 @@
           '<div><b>' + (r.stats.dmg || 0) + '</b><span>누적 피해</span></div>' +
         '</div>' +
         (kind === 'win' && r.asc ? '<p class="asc-clear">승천 ' + r.asc + ' 클리어</p>' : '') +
-        '<div class="title-btns"><button class="bigbtn primary" data-act="newrun">새 게임</button><button class="bigbtn ghost" data-act="title">타이틀</button></div>' +
+        '<div class="end-tags">' +
+          (r.seed ? '<span class="end-tag">' + icon('copy') + esc(DC.seedDisplay(r.seed)) + '</span>' : '') +
+          (r.challenge && r.challenge !== 'none' ? '<span class="end-tag ch">' + icon('crown') + esc(DC.challengeById(r.challenge).short) + '</span>' : '') +
+          (r.asc ? '<span class="end-tag">' + icon('up') + '승천 ' + r.asc + '</span>' : '') +
+        '</div>' +
+        '<div class="title-btns">' +
+          '<button class="bigbtn primary" data-act="newrun">새 게임</button>' +
+          (r.seed ? '<button class="bigbtn ghost" data-act="retryseed">같은 시드로 다시</button>' : '') +
+          '<button class="bigbtn ghost" data-act="title">타이틀</button>' +
+        '</div>' +
       '</main>';
   }
 

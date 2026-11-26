@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '1.9.0';
+  DC.VERSION = '2.0.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -540,10 +540,15 @@
     { n: 3, name: '승천 3', desc: '시작 골드 -20', hp: .06, atk: .05, gold: -20, bossHp: 0, price: 0 },
     { n: 4, name: '승천 4', desc: '정예·보스 체력 +15%', hp: .06, atk: .05, gold: -20, bossHp: .15, price: 0 },
     { n: 5, name: '승천 5', desc: '상점 가격 +20%', hp: .06, atk: .05, gold: -20, bossHp: .15, price: .20 },
+    { n: 6, name: '승천 6', desc: '적 공격 +5% · 정예 체력 +10%', hp: .08, atk: .10, gold: -20, bossHp: .25, price: .20 },
+    { n: 7, name: '승천 7', desc: '상점 가격 +10% · 시작 골드 -10', hp: .08, atk: .10, gold: -30, bossHp: .25, price: .30 },
+    { n: 8, name: '승천 8', desc: '적 체력 +8% · 보스 체력 +10%', hp: .16, atk: .10, gold: -30, bossHp: .35, price: .30 },
+    { n: 9, name: '승천 9', desc: '적 공격 +10%', hp: .16, atk: .20, gold: -30, bossHp: .35, price: .30 },
+    { n: 10, name: '승천 10', desc: '적 체력 +10% · 공격 +10% (최종)', hp: .26, atk: .30, gold: -30, bossHp: .35, price: .30 },
   ];
   DC.ascMod = function (n) {
     const out = { hp: 0, atk: 0, gold: 0, bossHp: 0, price: 0 };
-    for (let i = 1; i <= Math.min(5, n || 0); i++) {
+    for (let i = 1; i <= Math.min(10, n || 0); i++) {
       const s = DC.ASC_STEPS[i];
       out.hp += s.hp; out.atk += s.atk; out.gold += s.gold; out.bossHp += s.bossHp; out.price += s.price;
     }

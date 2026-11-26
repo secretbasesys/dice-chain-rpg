@@ -76,7 +76,7 @@
       const m = load();
       m.wins += 1;
       m.classes[cls] = (m.classes[cls] || 0) + 1;
-      const next = Math.min(5, (asc || 0) + 1);
+      const next = Math.min(10, (asc || 0) + 1);
       const unlocked = next > m.unlockedAsc;
       if (unlocked) m.unlockedAsc = next;
       save();

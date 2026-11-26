@@ -110,6 +110,7 @@
         case 'newrun': this.newRun(); break;
         case 'resume': this.resume(); break;
         case 'title': s.screen = 'title'; s.ui.modal = null; DC.UI.render(); break;
+        case 'retryseed': s.ui.seed = (s.run && s.run.seed) || s.ui.seed || ''; s.ui.challenge = (s.run && s.run.challenge) || 'none'; this.newRun(); break;
         case 'pickclass': this.pickClass(d.id); break;
         case 'asc': this.cycleAsc(parseInt(d.dir, 10)); break;
         case 'codex': this.state.ui.modal = 'codex'; DC.Audio.play('click'); DC.UI.render(); break;
@@ -144,6 +145,7 @@
         case 'fopt': this.forgeApply(parseInt(d.i, 10)); break;
         case 'forgeexit': this.forgeExit(); break;
         case 'buy': this.buy(parseInt(d.i, 10)); break;
+        case 'rerollshop': this.rerollShop(); break;
         case 'rest': this.rest(parseInt(d.i, 10)); break;
         case 'choice': this.choice(parseInt(d.i, 10)); break;
         case 'upskill': this.upSkill(parseInt(d.i, 10)); break;
@@ -656,8 +658,10 @@
     },
 
     /* ---------------- shop ---------------- */
-    openShop: function (node) {
+    openShop: function (node, keep) {
       const r = this.state.run;
+      const prev = this.state.ui.shop;
+      const rerolls = keep && prev ? (prev.rerolls || 0) : 0;
       const ascPrice = 1 + (DC.ascMod(r.asc || 0).price || 0);
       const disc = (r.relics.indexOf('merchant') >= 0 ? 0.7 : 1) * ascPrice * (1 + ((r.cmod || {}).price || 0));
       const tierMax = r.act >= 3 ? 3 : r.act >= 2 ? 2 : 1;
@@ -678,9 +682,22 @@
       items.push({ kind: 'heal', name: '회복 물약', desc: '체력 25 회복', price: Math.round(32 * disc), ic: 'heart', c: '#f472b6' });
       const canSkill = (r.skills || []).some(function (v) { return v < 1; });
       if (canSkill) items.push({ kind: 'skill', name: '각성의 서', desc: '스킬 하나를 영구히 각성시킵니다', price: Math.round(78 * disc), ic: 'book', c: '#fbbf24' });
-      this.state.ui.shop = { items: items, node: node };
+      this.state.ui.shop = { items: items, node: node, rerolls: rerolls };
       this.state.screen = 'shop';
       DC.UI.render();
+    },
+
+    rerollShop: function () {
+      const s = this.state;
+      const sh = s.ui.shop;
+      if (!sh) return;
+      const cost = 20;
+      if ((sh.rerolls || 0) >= 2) { DC.UI.toast('재고 변경은 2회까지'); return; }
+      if (s.run.gold < cost) { DC.UI.toast('골드 부족'); DC.Audio.play('error'); return; }
+      s.run.gold -= cost;
+      sh.rerolls = (sh.rerolls || 0) + 1;
+      DC.Audio.play('coin');
+      this.openShop(sh.node, true);
     },
 
     buy: function (i) {
