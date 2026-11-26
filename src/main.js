@@ -432,6 +432,12 @@
         setTimeout(function () { DC.FX.banner(lines.appear, 'boss'); }, 1500);
         DC.UI.toast('보스 등장!');
       } else if (kind === 'elite') DC.UI.toast('정예 조우!');
+      const syns = DC.synergiesFor ? DC.synergiesFor(r.relics) : [];
+      if (syns.length) {
+        setTimeout(function () {
+          DC.FX.banner('시너지 · ' + syns.map(function (x) { return x.name; }).join(' · '), 'small');
+        }, kind === 'boss' ? 2600 : 420);
+      }
     },
 
     pushHist: function () {

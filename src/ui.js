@@ -226,6 +226,10 @@
           '<span>' + icon('coin') + '<b>' + r.gold + '</b></span>' +
           '<span>' + icon('dice') + '<b>' + c.hand.length + '</b></span>' +
         '</div>' +
+        ((DC.synergiesFor ? DC.synergiesFor(r.relics) : []).length ? '<div class="bf-syns">' +
+          DC.synergiesFor(r.relics).map(function (sy) {
+            return '<span class="eb-chip" style="--c:' + sy.c + '" data-tip="' + esc(sy.desc) + '" data-tip-title="' + esc(sy.name) + '">' + icon('spark') + esc(sy.name) + '</span>';
+          }).join('') + '</div>' : '') +
         (r.relics.length ? '<div class="bf-relics">' + r.relics.map(function (id) {
           const R = DC.RELICS[id];
           return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc) + '" data-tip-title="' + esc(R.name) + '">' + relicIcon(id) + '</span>';
