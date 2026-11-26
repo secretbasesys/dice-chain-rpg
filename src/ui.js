@@ -361,7 +361,7 @@
           '<div class="map-scene-wrap">' + actScene(r.act) + '</div></div>' +
         '<div class="map-head">' +
           '<div class="mh-left"><span class="act-chip">ACT ' + r.act + '</span>' +
-            '<span class="act-title">' + ACT_NAMES[r.act] + '</span></div>' +
+            '<span class="act-title">' + esc(DC.actName ? DC.actName(r.act) : (ACT_NAMES[r.act] || '심연')) + '</span></div>' +
           '<div class="map-prog">' +
             (r.challenge && r.challenge !== 'none' ? '<span class="map-ch-chip" style="--c:' + DC.challengeById(r.challenge).c + '">' + esc(DC.challengeById(r.challenge).short) + '</span>' : '') +
             (r.seed ? '<button class="seed-chip" data-act="copyseed" title="시드 복사">' + icon('copy') + esc(DC.seedDisplay(r.seed)) + '</button>' : '') +
@@ -767,6 +767,30 @@
       '</div></div>';
   }
 
+  function renderDeep(state) {
+    const r = state.run;
+    const nextAct = (r.act || 3) + 1;
+    const name = DC.actName ? DC.actName(nextAct) : '심연';
+    const depth = (r.depth || 3);
+    return hud(state) +
+      '<main class="deep-screen">' +
+        '<div class="deep-glow"></div>' +
+        '<div class="deep-ic">' + icon('crown') + '</div>' +
+        '<h1>ACT ' + (r.act || 3) + ' 클리어</h1>' +
+        '<p class="sub">주사위 군주가 무너졌습니다. 그러나 굴림은 끝나지 않았습니다.</p>' +
+        '<div class="deep-card">' +
+          '<div class="deep-row"><span>다음</span><b>ACT ' + nextAct + ' · ' + esc(name) + '</b></div>' +
+          '<div class="deep-row"><span>적</span><b>체력·공격이 더 강해집니다</b></div>' +
+          '<div class="deep-row"><span>회복</span><b>최대 체력의 일부를 회복하고 시작</b></div>' +
+          '<div class="deep-row"><span>기록</span><b>깊이 ' + depth + ' · 승리로 기록됩니다</b></div>' +
+        '</div>' +
+        '<div class="deep-btns">' +
+          '<button class="bigbtn primary" data-act="deeper">더 깊이 들어간다</button>' +
+          '<button class="bigbtn ghost" data-act="finishrun">여기서 마무리 (승리)</button>' +
+        '</div>' +
+      '</main>';
+  }
+
   function renderEnd(state, kind) {
     const r = state.run;
     const winInfo = state.ui.winInfo;
@@ -785,6 +809,7 @@
           '<div><b>' + (r.stats.dmg || 0) + '</b><span>누적 피해</span></div>' +
         '</div>' +
         (kind === 'win' && r.asc ? '<p class="asc-clear">승천 ' + r.asc + ' 클리어</p>' : '') +
+        (kind === 'win' && r.act > 3 ? '<p class="asc-clear">심연 깊이 ' + r.act + ' 도달</p>' : '') +
         '<div class="end-tags">' +
           (r.seed ? '<span class="end-tag">' + icon('copy') + esc(DC.seedDisplay(r.seed)) + '</span>' : '') +
           (r.challenge && r.challenge !== 'none' ? '<span class="end-tag ch">' + icon('crown') + esc(DC.challengeById(r.challenge).short) + '</span>' : '') +
@@ -1161,6 +1186,7 @@
         case 'shop': html = renderShop(state); break;
         case 'rest': html = renderRest(state); break;
         case 'event': html = renderEvent(state); break;
+        case 'deep': html = renderDeep(state); break;
         case 'win': html = renderEnd(state, 'win'); break;
         case 'gameover': html = renderEnd(state, 'lose'); break;
         default: html = '<main class="title-screen"><h1>...</h1></main>';

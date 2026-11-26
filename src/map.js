@@ -5,7 +5,7 @@
 
   const MapGen = {
     gen: function (rng, act) {
-      const rows = 7 + act;          // 8 / 9 / 10 rows incl. boss row
+      const rows = Math.min(10, 7 + act);   // 8/9/10 rows incl. boss row
       const nodes = {};
       const grid = [];
       let idn = 0;

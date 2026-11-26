@@ -136,6 +136,8 @@
           } else DC.UI.toast('시드가 없는 런입니다');
           break;
         case 'closetut': DC.Meta.setTut(); s.ui.modal = null; DC.UI.render(); break;
+        case 'deeper': s.ui.deep = null; this.continueDeep(); break;
+        case 'finishrun': s.ui.deep = null; this.finishRun(); break;
         case 'endturn': this.endTurn(); break;
         case 'target': this.setTarget(parseInt(d.i, 10)); break;
         case 'reward': this.takeReward(parseInt(d.i, 10)); break;
@@ -263,9 +265,10 @@
 
     spawnsFor: function (kind) {
       const r = this.state.run;
-      if (kind === 'boss') return [DC.BOSSES[r.act]];
-      if (kind === 'elite') return [DC.ELITES[r.act][0]];
-      const pool = DC.ENEMIES[r.act];
+      const actK = Math.min(3, r.act);
+      if (kind === 'boss') return [DC.BOSSES[actK]];
+      if (kind === 'elite') return [DC.ELITES[actK][0]];
+      const pool = DC.ENEMIES[actK];
       const n = r.act === 1 ? (DC.rng() < 0.3 ? 2 : 1) : (DC.rng() < 0.55 ? 2 : 1);
       const out = [];
       const used = [];
@@ -296,7 +299,8 @@
       DC.UI.render();
       DC.Audio.play('turn');
       if (kind === 'boss') {
-        const lines = DC.BOSSES[r.act].lines;
+        const bossDef = DC.BOSSES[Math.min(3, r.act)];
+        const lines = (bossDef && bossDef.lines) || { appear: '보스 등장!' };
         DC.Audio.play('boss');
         setTimeout(function () { DC.FX.banner(lines.appear, 'boss'); }, 350);
         DC.UI.toast('보스 등장!');
@@ -567,28 +571,51 @@
       else this.goMap();
     },
 
+    continueDeep: function () {
+      const r = this.state.run;
+      this.state.screen = 'map';
+      r.act += 1;
+      r.depth = (r.depth || 3) + 1;
+      r.hp = Math.min(r.maxHp, r.hp + 12);
+      r.map = DC.MapGen.gen(DC.rng, r.act);
+      r.current = null;
+      DC.Audio.play('boss');
+      DC.UI.toast('ACT ' + r.act + ' — ' + DC.actName(r.act));
+      this.goMap();
+    },
+
+    finishRun: function () {
+      const r = this.state.run;
+      this.state.screen = 'win';
+      const res = DC.Meta.noteWin(r.cls, r.asc || 0);
+      this.state.ui.winInfo = res;
+      const gained = DC.Meta.check({ win: true, cls: r.cls, asc: r.asc || 0, maxCombo: r.maxCombo || 0, dmg: r.stats.dmg || 0, challenge: r.challenge, relics: r.relics.length, seed: r.seed });
+      this.state.ui.newAch = gained;
+      this.recordRun(true);
+      if (r.act > 3) DC.Meta.noteDepth(r.act);
+      r.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });
+      this.clearSave();
+      DC.UI.render();
+    },
+
     advanceAct: function () {
       const r = this.state.run;
       if (r.act >= 3) {
-        this.state.screen = 'win';
-        const res = DC.Meta.noteWin(r.cls, r.asc || 0);
-        this.state.ui.winInfo = res;
-        const gained = DC.Meta.check({ win: true, cls: r.cls, asc: r.asc || 0, maxCombo: r.maxCombo || 0, dmg: r.stats.dmg || 0, challenge: r.challenge, relics: r.relics.length, seed: r.seed });
-        this.state.ui.newAch = gained;
-        this.recordRun(true);
-        r.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });
-        this.clearSave();
+        this.state.ui.deep = { act: r.act };
+        this.state.screen = 'deep';
+        this.save();
         DC.UI.render();
         return;
       }
       r.act += 1;
       r.hp = Math.min(r.maxHp, r.hp + 18);
+      if (r.act > 3) r.hp = Math.min(r.maxHp, r.hp + 10);
       const tier = r.act >= 3 ? 3 : 2;
       const pool = DC.DICE_IDS.filter(function (id) { return DC.DICE[id].tier <= tier; });
       r.dice.push(DC.Dice.make(pool[Math.floor(DC.rng() * pool.length)]));
       r.map = DC.MapGen.gen(DC.rng, r.act);
       r.current = null;
-      DC.UI.toast('ACT ' + r.act + ' — ' + ['', '', '가라앉은 성소', '운명의 정점'][r.act]);
+      DC.UI.toast('ACT ' + r.act + ' — ' + DC.actName(r.act));
       this.goMap();
     },
 
@@ -1075,6 +1102,7 @@
           continue;
         }
         if (s.screen === 'reward') { Game.takeReward(0); continue; }
+        if (s.screen === 'deep') { Game.finishRun(); continue; }
         if (s.screen === 'map') {
           const avail = DC.MapGen.available(s.run.map);
           if (!avail.length) break;

@@ -1494,3 +1494,28 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 }
 .help-tab.on { color: #0b1220; background: linear-gradient(180deg, #ffd166, #fbbf24); border-color: #fbbf24; }
 .help-tab:active { transform: scale(.97); }
+
+/* ---------------- deep / endless (v2.3) ---------------- */
+.deep-screen {
+  position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; gap: 8px; padding: 20px; overflow-y: auto;
+}
+.deep-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(58% 44% at 50% 34%, rgba(167, 139, 250, .22), transparent 72%);
+  animation: deepPulse 4.5s ease-in-out infinite;
+}
+@keyframes deepPulse { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
+.deep-ic { color: #c4b5fd; filter: drop-shadow(0 0 26px rgba(167, 139, 250, .6)); }
+.deep-ic .ic { width: 54px; height: 54px; }
+.deep-screen h1 { font-size: 27px; color: #efe9ff; letter-spacing: -.01em; }
+.deep-card {
+  width: min(360px, 94%); display: flex; flex-direction: column; gap: 6px;
+  background: rgba(24, 20, 40, .8); border: 1px solid rgba(167, 139, 250, .35);
+  border-radius: 14px; padding: 12px 14px; margin: 6px 0 4px;
+}
+.deep-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11.5px; }
+.deep-row span { color: #9c8fd0; font-weight: 800; }
+.deep-row b { color: #e6e0ff; font-weight: 700; text-align: right; }
+.deep-btns { display: flex; flex-direction: column; gap: 8px; width: min(360px, 94%); margin-top: 6px; }
+.deep-btns .bigbtn { width: 100%; }

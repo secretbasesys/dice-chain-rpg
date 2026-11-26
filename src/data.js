@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '2.2.0';
+  DC.VERSION = '2.3.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -118,6 +118,13 @@
     1: { name: '잿빛 폐허', sub: '무너진 탑과 재가 날리는 들판', sky: '#1b2540', ground: '#141a28', tint: '#6b7fa8', ember: '#ff9f43' },
     2: { name: '가라앉은 성소', sub: '물에 잠긴 성소, 푸른 불빛', sky: '#0f2436', ground: '#0c1a26', tint: '#3fb0c9', ember: '#67e8f9' },
     3: { name: '운명의 정점', sub: '주사위 신전의 끝, 황금빛 파멸', sky: '#2a1c12', ground: '#1a120c', tint: '#d99a3c', ember: '#fbbf24' },
+    4: { name: '심연의 나락', sub: '빛이 닿지 않는 주사위 굴림', sky: '#1a1024', ground: '#120a1a', tint: '#a78bfa', ember: '#c084fc' },
+    5: { name: '뒤틀린 성좌', sub: '운명이 접힌 별의 바다', sky: '#101a2c', ground: '#0b1220', tint: '#67e8f9', ember: '#93c5fd' },
+    6: { name: '끝없는 주사위', sub: '굴림이 멈추지 않는 곳', sky: '#241217', ground: '#170b10', tint: '#f87171', ember: '#fca5a5' },
+  };
+  DC.actName = function (act) {
+    if (DC.ACTS[act]) return DC.ACTS[act].name;
+    return '심연 ' + (act - 3);
   };
 
   /* ---------------- requirements ---------------- */

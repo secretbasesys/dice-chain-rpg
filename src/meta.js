@@ -16,6 +16,7 @@
       classes: { warrior: 0, mage: 0, gambler: 0 },
       ach: {},
       lastAsc: 0,
+      bestDepth: 3,
       history: [],
       tut: 0,
     };
@@ -71,6 +72,12 @@
     tutSeen: function () { return !!load().tut; },
 
     setTut: function () { const m = load(); m.tut = 1; save(); },
+
+    noteDepth: function (act) {
+      const m = load();
+      m.bestDepth = Math.max(m.bestDepth || 3, act || 3);
+      save();
+    },
 
     noteWin: function (cls, asc) {
       const m = load();
