@@ -45,7 +45,8 @@
   function relicIcon(id, cls) {
     const R = DC.RELICS[id];
     if (!R) return '';
-    return DC.relicArt ? DC.relicArt(id, cls || 'relic-art') : icon(R.ic);
+    if (DC.RELIC_ART && DC.RELIC_ART[id]) return DC.relicArt(id, cls || 'relic-art');
+    return icon(R.ic);
   }
 
   function statusChips(st, opts) {

@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '1.7.0';
+  DC.VERSION = '1.8.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -59,6 +59,7 @@
     trash: '<path d="M4.5 6.5h15M9 6.5V4h6v2.5M6.5 6.5l1 13.5h9l1-13.5"/>',
     spark: '<path d="M12 2.5l1.8 6.2 6.2 1.8-6.2 1.8L12 18.5l-1.8-6.2L4 10.5l6.2-1.8L12 2.5z"/>',
     right: '<path d="M9 5l7 7-7 7"/>',
+    flag: '<path d="M6 21V3.6M6 4.4h12l-2.6 3.6L18 11.6H6" /><path d="M4 21h6"/>',
     flask: '<path d="M9.5 3h5"/><path d="M10.5 3v5.2L5.8 17a2.6 2.6 0 0 0 2.3 3.9h7.8a2.6 2.6 0 0 0 2.3-3.9L13.5 8.2V3"/><path d="M7.6 15.4h8.8"/><circle cx="11" cy="18" r=".9" fill="currentColor" stroke="none"/><circle cx="14" cy="17" r=".6" fill="currentColor" stroke="none"/>',
   };
   DC.ICONS = P;
@@ -148,6 +149,8 @@
     venomd: { name: '독니 주사위', tier: 2, price: 70, c: '#9ae66e', faces: [f('venom', 3), f('venom', 4), f('slash', 2), f('venom', 5), f('leech', 2), f('venom', 6)], tag: '맹독' },
     chrono: { name: '시간 주사위', tier: 2, price: 85, c: '#67e8f9', faces: [f('mult', 2), f('slash', 3), f('guard', 3), f('mult', 2), f('bolt', 4), f('leech', 3)], tag: '증폭' },
     cursed: { name: '저주받은 주사위', tier: 2, price: 60, c: '#a78bfa', faces: [f('slash', 6), f('curse', 2), f('slash', 5), f('curse', 1), f('mult', 2), f('slash', 6)], tag: '저주' },
+    moon: { name: '달 주사위', tier: 2, price: 85, c: '#c7d2fe', faces: [f('leech', 3), f('mult', 2), f('slash', 4), f('leech', 4), f('guard', 4), f('mult', 1)], tag: '달빛' },
+    gear: { name: '톱니 주사위', tier: 2, price: 95, c: '#94a3b8', faces: [f('guard', 5), f('slash', 5), f('guard', 4), f('slash', 4), f('leech', 2), f('guard', 6)], tag: '수호' },
     prism: { name: '무지개 주사위', tier: 3, price: 120, c: '#f0abfc', faces: [f('fire', 4), f('bolt', 4), f('venom', 4), f('leech', 4), f('mult', 2), f('slash', 5)], tag: '전설' },
     titan: { name: '거인의 주사위', tier: 3, price: 130, c: '#fca5a5', faces: [f('slash', 6), f('slash', 6), f('guard', 6), f('slash', 5), f('guard', 5), f('slash', 6)], tag: '전설' },
   };
@@ -246,6 +249,10 @@
     sixBless: { name: '6의 축복', ic: 'star', c: '#fbbf24', desc: '6이 나올 때마다 기세 +1.', price: 90 },
     merchant: { name: '상인의 인장', ic: 'coin', c: '#34d399', desc: '상점 가격 30% 할인.', price: 75 },
     vampireFang: { name: '흡혈귀의 송곳니', ic: 'blood', c: '#f472b6', desc: '가한 피해의 8%를 회복한다.', price: 100 },
+    vanguard: { name: '선봉의 깃발', ic: 'flag', c: '#ff7b72', desc: '전투 첫 턴에 주는 피해가 50% 증가한다.', price: 100 },
+    thornMail: { name: '가시 갑옷', ic: 'shield', c: '#94a3b8', desc: '적 턴이 끝나면 적 전체에 4 피해를 준다.', price: 95 },
+    duelist: { name: '결투가의 장갑', ic: 'sword', c: '#fbbf24', desc: '살아 있는 적이 하나뿐이면 피해가 25% 증가한다.', price: 90 },
+    miser: { name: '수전노의 지갑', ic: 'coin', c: '#fde68a', desc: '골드 획득이 25% 증가한다.', price: 80 },
     karma: { name: '업보의 사슬', ic: 'mult', c: '#f472b6', desc: '콤보 4 이상에서 모든 공격이 2번 적중한다.', price: 130 },
   };
   DC.RELIC_IDS = Object.keys(DC.RELICS);
@@ -261,6 +268,7 @@
       E('goblin', '고블린 약탈자', 34, 'humanoid', '#84cc16', [{ k: 'attack', v: 9 }, { k: 'debuff', s: 'vuln', v: 2 }, { k: 'attack', v: 7 }]),
       E('bat', '동굴 박쥐', 20, 'flyer', '#c084fc', [{ k: 'attack', v: 3, hits: 3 }, { k: 'curse', n: 1 }, { k: 'attack', v: 5 }]),
       E('wolf', '굶주린 늑대', 34, 'beast', '#fca5a5', [{ k: 'attack', v: 11 }, { k: 'buff', s: 'str', v: 2 }, { k: 'attack', v: 9 }]),
+      E('mushroom', '폭발 버섯', 26, 'mushroom', '#a3e635', [{ k: 'attack', v: 5, apply: 'poison' }, { k: 'defend', v: 6 }, { k: 'attack', v: 3, hits: 2 }]),
     ],
     2: [
       E('skeleton', '해골 병사', 34, 'humanoid', '#e2e8f0', [{ k: 'attack', v: 12 }, { k: 'defend', v: 10 }, { k: 'attack', v: 8, hits: 2 }]),
@@ -268,12 +276,15 @@
       E('gargoyle', '가고일', 46, 'construct', '#94a3b8', [{ k: 'defend', v: 12 }, { k: 'attack', v: 15 }, { k: 'attack', v: 7, hits: 2 }]),
       E('shaman', '주술사', 36, 'humanoid', '#a78bfa', [{ k: 'debuff', s: 'vuln', v: 2 }, { k: 'attack', v: 12 }, { k: 'curse', n: 2 }, { k: 'buff', s: 'str', v: 3 }]),
       E('wraith', '망령', 33, 'flyer', '#67e8f9', [{ k: 'attack', v: 10 }, { k: 'drain', v: 6 }, { k: 'debuff', s: 'weak', v: 1 }]),
+      E('cultist', '심연 광신도', 40, 'cultist', '#a78bfa', [{ k: 'buff', s: 'str', v: 2 }, { k: 'attack', v: 9 }, { k: 'curse', n: 1 }]),
     ],
     3: [
       E('knight', '심연 기사', 58, 'humanoid', '#f87171', [{ k: 'attack', v: 21 }, { k: 'defend', v: 14 }, { k: 'attack', v: 10, hits: 3 }]),
       E('imp', '화염 임프', 46, 'flyer', '#fb923c', [{ k: 'attack', v: 10, apply: 'burn' }, { k: 'attack', v: 6, hits: 3 }, { k: 'buff', s: 'str', v: 3 }]),
       E('shadow', '심연의 그림자', 62, 'blob', '#8b5cf6', [{ k: 'curse', n: 2 }, { k: 'attack', v: 24 }, { k: 'drain', v: 12 }]),
       E('serpent', '독니 뱀', 52, 'beast', '#9ae66e', [{ k: 'attack', v: 12, apply: 'poison' }, { k: 'attack', v: 7, hits: 2 }, { k: 'debuff', s: 'vuln', v: 3 }]),
+      E('berserker', '광전사', 72, 'berserker', '#f87171', [{ k: 'attack', v: 18 }, { k: 'buff', s: 'str', v: 4 }, { k: 'attack', v: 8, hits: 3 }]),
+      E('voidmaw', '공허의 아귀', 66, 'voidmaw', '#8b5cf6', [{ k: 'drain', v: 10 }, { k: 'curse', n: 2 }, { k: 'attack', v: 14 }]),
     ],
   };
   DC.ELITES = {
@@ -457,6 +468,26 @@
       choices: [
         { label: '파헤친다', desc: '유물 + 최대 체력 5 감소', eff: { relic: 'random', maxHp: -5 }, result: '뼈가 부서지는 소리와 함께 유물을 꺼냈다.' },
         { label: '기도한다', desc: '체력 20% 회복 · 최대 기세 +1', eff: { healPct: 0.2, sparkMax: 1 }, result: '잠시 마음이 가벼워졌다.' },
+      ],
+    },
+    {
+      id: 'lighthouse', name: '마른 등대', ic: 'star', tag: '성소',
+      text: '바다가 마른 자리에 등대가 서 있다. 렌즈가 아직 희미하게 깜빡이며 길을 비춘다.',
+      choices: [
+        { label: '등불을 밝힌다', desc: '체력 35% 회복 · 20 골드', need: { gold: 20 }, eff: { healPct: 0.35, gold: -20 }, result: '따뜻한 빛이 몸을 감싼다. 상처가 아문다.' },
+        { label: '렌즈를 떼어낸다', desc: '유물 획득 · 최대 체력 6 감소', eff: { relic: 'random', maxHp: -6 }, result: '렌즈를 품에 넣자 등대가 꺼졌다. 등 뒤가 서늘하다.' },
+        { label: '지나간다', result: '빛을 뒤로하고 길을 재촉했다.' },
+      ],
+    },
+    {
+      id: 'auction', name: '주사위 경매', ic: 'coin', tag: '거래',
+      text: '후드를 쓴 경매인이 낡은 상자 위에 주사위 하나를 올려놓는다. "값을 불러 보시지."',
+      choices: [
+        { label: '50 골드에 낙찰받는다', desc: '주사위 획득', need: { gold: 50 }, eff: { dice: 1, gold: -50 }, result: '경매인이 고개를 끄덕이고 주사위를 건넨다.' },
+        { label: '30 골드로 눈속임을 한다', desc: '60% 확률로 주사위 획득 · 실패 시 30 골드만 잃음', need: { gold: 30 },
+          chance: [ { p: 0.6, eff: { dice: 1, gold: -30 }, result: '손기술이 통했다. 주사위를 챙겼다.' },
+                    { p: 0.4, eff: { gold: -30 }, result: '경매인이 손목을 붙잡았다. 30 골드만 사라졌다.' } ] },
+        { label: '거절한다', result: '경매인은 어깨를 으쓱였다.' },
       ],
     },
   ];

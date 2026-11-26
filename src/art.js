@@ -214,6 +214,43 @@
       '<circle cx="14.6" cy="14.4" r=".9" fill="currentColor" stroke="none"/>' +
       '<path d="M6.2 17.2L3.4 21.2M17.8 17.2l2.8 4M8.6 19.6L7 22.4M15.4 19.6l1.6 2.8"/>' +
       '<path d="M3.4 21.2h3M17.6 21.2h3" opacity=".6"/>',
+    /* ---------------- act 1-3 additions (v1.8) ---------------- */
+    mushroom:
+      '<path d="M4 12.4c0-4.6 3.6-8 8-8s8 3.4 8 8c0 1.6-1.2 2.6-2.8 2.6H6.8C5.2 15 4 14 4 12.4z" fill="currentColor" opacity=".26"/>' +
+      '<path d="M4 12.4c0-4.6 3.6-8 8-8s8 3.4 8 8c0 1.6-1.2 2.6-2.8 2.6H6.8C5.2 15 4 14 4 12.4z"/>' +
+      '<path d="M9.6 15v4.2c0 1.6 1 2.8 2.4 2.8s2.4-1.2 2.4-2.8V15" fill="currentColor" opacity=".18"/>' +
+      '<path d="M9.6 15v4.2c0 1.6 1 2.8 2.4 2.8s2.4-1.2 2.4-2.8V15"/>' +
+      '<circle cx="8.6" cy="10.4" r="1.3" fill="currentColor" stroke="none" opacity=".55"/>' +
+      '<circle cx="14.8" cy="8.6" r=".9" fill="currentColor" stroke="none" opacity=".45"/>' +
+      '<path d="M10.4 16.4v3M13.6 16.4v3" opacity=".6"/>' +
+      eyes(10.6, 13.4, 18.4, .9),
+
+    cultist:
+      '<path d="M12 3.4c3.2 0 5.4 2.6 5.4 5.8 0 2-.8 3.4-2 4.6 3.2 2.2 5 5.8 5 9.8H5.6c0-4 1.8-7.6 5-9.8-1.2-1.2-2-2.6-2-4.6 0-3.2 2.4-5.8 5.4-5.8z" fill="currentColor" opacity=".22"/>' +
+      '<path d="M12 3.4c3.2 0 5.4 2.6 5.4 5.8 0 2-.8 3.4-2 4.6 3.2 2.2 5 5.8 5 9.8H5.6c0-4 1.8-7.6 5-9.8-1.2-1.2-2-2.6-2-4.6 0-3.2 2.4-5.8 5.4-5.8z"/>' +
+      '<path d="M12 3.4V7" stroke-width="1.4" opacity=".7"/>' +
+      '<circle cx="10.4" cy="9.8" r="1.1" fill="currentColor" stroke="none"/><circle cx="13.6" cy="9.8" r="1.1" fill="currentColor" stroke="none"/>' +
+      '<path d="M20.4 6.2v14M18.2 6.2h4.4" stroke-width="1.8"/>' +
+      '<circle cx="20.4" cy="5" r="1.6" fill="currentColor" stroke="none" opacity=".8"/>' +
+      '<path d="M6.4 22.4h11.2" stroke-width="1.4" opacity=".5"/>',
+
+    berserker:
+      '<path d="M7.4 8.2L5 5.6l3.6-.6M16.6 8.2L19 5.6l-3.6-.6" stroke-width="2"/>' +
+      '<path d="M6.6 12c0-3 2.4-5.2 5.4-5.2s5.4 2.2 5.4 5.2v3.4c0 1.4-1 2.4-2.4 2.4H9c-1.4 0-2.4-1-2.4-2.4z" fill="currentColor" opacity=".24"/>' +
+      '<path d="M6.6 12c0-3 2.4-5.2 5.4-5.2s5.4 2.2 5.4 5.2v3.4c0 1.4-1 2.4-2.4 2.4H9c-1.4 0-2.4-1-2.4-2.4z"/>' +
+      eyes(9.8, 14.2, 11.2, 1.1) +
+      '<path d="M9 15.6h6M10 18.4v4M14 18.4v4" opacity=".8"/>' +
+      '<path d="M20.6 7.2l2.6 6-2 2.6M3.4 7.2l-2.6 6 2 2.6" stroke-width="1.8"/>' +
+      '<path d="M5.2 21.4h13.6" stroke-width="1.6" opacity=".55"/>',
+
+    voidmaw:
+      '<path d="M12 3.2c4.8 0 8.6 4 8.6 9s-3.8 9-8.6 9-8.6-4-8.6-9 3.8-9 8.6-9z" fill="currentColor" opacity=".16"/>' +
+      '<path d="M4.6 12.4c2.4-3.6 5-5.4 7.4-5.4s5 1.8 7.4 5.4c-2.4 3.6-5 5.4-7.4 5.4s-5-1.8-7.4-5.4z"/>' +
+      '<path d="M6 12.4l1.8 2.2 1.6-2.2 1.6 2.2 1.6-2.2 1.6 2.2 1.6-2.2 1.6 2.2 1.6-2.2" stroke-width="1.2"/>' +
+      '<circle cx="12" cy="12.4" r="6.4" fill="none" stroke-dasharray="1.6 2.4" opacity=".45"/>' +
+      '<path d="M2.6 6.4c1.6 1.4 2 3.2 1.6 5M21.4 6.4c-1.6 1.4-2 3.2-1.6 5M4 19.6c1.4-.8 2.8-.6 4 .4M20 19.6c-1.4-.8-2.8-.6-4 .4" opacity=".55"/>' +
+      '<circle cx="12" cy="12.4" r="1.4" fill="currentColor" stroke="none" opacity=".8"/>',
+
   };
 
   /* act scenes: wide silhouettes behind the arena (viewBox 400x120) */

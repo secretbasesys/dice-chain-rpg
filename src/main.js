@@ -469,6 +469,7 @@
       let gold = c.kind === 'boss' ? 95 + r.act * 12 : c.kind === 'elite' ? 45 + ri(15) : 16 + ri(9);
       gold += r.act * 4;
       if (r.relics.indexOf('contract') >= 0) gold = Math.round(gold * 1.4);
+      if (r.relics.indexOf('miser') >= 0) gold = Math.round(gold * 1.25);
       r.gold += gold;
       const bossClear = c.kind === 'boss';
       s.combat = null;

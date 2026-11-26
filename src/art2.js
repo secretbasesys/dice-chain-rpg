@@ -223,6 +223,36 @@
       '<path d="M10.6 23.8L9 25.4l2.2 2.2 1.8-1.8" opacity=".7"/>' +
       '<path d="M13.4 12.2l5.2 3-5.2 3z" fill="currentColor" stroke="none" opacity=".8"/>' +
       '<circle cx="16" cy="15.2" r="4.6" opacity=".4" stroke-dasharray="1.6 2"/>',
+    vanguard:
+      '<path d="M8.4 27.4V3.6" stroke-width="2.4"/>' +
+      '<path d="M9 5.2h15l-3.4 4.8L24 14.8H9z" fill="currentColor" opacity=".3"/>' +
+      '<path d="M9 5.2h15l-3.4 4.8L24 14.8H9z"/>' +
+      '<path d="M9 14.8c3 1.4 4 3.6 3.2 6.4" opacity=".5"/>' +
+      '<circle cx="8.4" cy="3.4" r="1.6" fill="currentColor" stroke="none"/>' +
+      '<path d="M4.6 27.4h7.6" stroke-width="2.2"/>',
+
+    thornMail:
+      '<path d="M16 3.4l9 3.4v7.4c0 5.6-3.8 9.8-9 12-5.2-2.2-9-6.4-9-12V6.8z" fill="currentColor" opacity=".2"/>' +
+      '<path d="M16 3.4l9 3.4v7.4c0 5.6-3.8 9.8-9 12-5.2-2.2-9-6.4-9-12V6.8z"/>' +
+      '<path d="M16 8.4l1.6 4 4.2.4-3.2 2.8 1 4.2-3.6-2.2-3.6 2.2 1-4.2-3.2-2.8 4.2-.4z" fill="currentColor" stroke="none" opacity=".8"/>' +
+      '<path d="M3.4 9.4l-1.6-1.6M28.6 9.4l1.6-1.6M16 .8v2" opacity=".55"/>',
+
+    duelist:
+      '<path d="M10.4 10.4V6.8a1.8 1.8 0 0 1 3.6 0v3.2M14 9.6V5.8a1.8 1.8 0 0 1 3.6 0v4M17.6 10V7.2a1.8 1.8 0 0 1 3.6 0v6.4" stroke-width="1.8"/>' +
+      '<path d="M10.4 10.4c-1.2 0-2 .8-2 2v4.4c0 4 2.8 7 6.6 7s6.4-2.8 6.4-6.6v-3.4" fill="currentColor" opacity=".16"/>' +
+      '<path d="M10.4 10.4c-1.2 0-2 .8-2 2v4.4c0 4 2.8 7 6.6 7s6.4-2.8 6.4-6.6v-3.4"/>' +
+      '<path d="M12.4 15.4h7.2M12.4 18.6h7.2" opacity=".5"/>' +
+      '<path d="M6.4 12.4l-2.4-1.2M6.6 16.4H4M7.4 20.4l-2.2 1" opacity=".35"/>',
+
+    miser:
+      '<path d="M8.4 12.4h15.2l1.6 10.4c.2 2.2-1.4 4-3.6 4H10.4c-2.2 0-3.8-1.8-3.6-4z" fill="currentColor" opacity=".2"/>' +
+      '<path d="M8.4 12.4h15.2l1.6 10.4c.2 2.2-1.4 4-3.6 4H10.4c-2.2 0-3.8-1.8-3.6-4z"/>' +
+      '<path d="M11.4 12.4c0-2.8 2-5 4.6-5s4.6 2.2 4.6 5" stroke-width="1.8"/>' +
+      '<circle cx="16" cy="19" r="3.2" fill="currentColor" opacity=".35"/>' +
+      '<path d="M16 16.4v5.2M14.8 17.6h2.6M14.8 20.4h2.6" stroke-width="1.3"/>' +
+      '<circle cx="9.2" cy="8.4" r="2" fill="currentColor" stroke="none" opacity=".7"/>' +
+      '<circle cx="23.4" cy="7.4" r="1.5" fill="currentColor" stroke="none" opacity=".55"/>',
+
   };
 
   /* ---------------- event illustrations (14) ---------------- */
@@ -373,6 +403,32 @@
       '<path d="M11.8 15.4h4M12.6 17.4h2.4" opacity=".6"/>' +
       '<path d="M23.4 4.4v4.2M22.2 8.6h2.4" opacity=".6"/>' +
       '<path d="M7.4 5.4l2 2M20.4 3.2l-1.4 1.8" opacity=".4"/>',
+    lighthouse:
+      glow(16, 10, 13, 0.12) +
+      '<path d="M11.4 27.4l1.4-14h6.4l1.4 14z" fill="currentColor" opacity=".18"/>' +
+      '<path d="M11.4 27.4l1.4-14h6.4l1.4 14z"/>' +
+      '<path d="M10.4 13.4h11.2l-1.4-3.6h-8.4z" fill="currentColor" opacity=".3"/>' +
+      '<path d="M10.4 13.4h11.2l-1.4-3.6h-8.4z"/>' +
+      '<path d="M12 9.8V7.2h8v2.6" />' +
+      '<path d="M13.4 7.2V4.6h5.2v2.6" fill="currentColor" opacity=".35"/>' +
+      '<path d="M16 4.6V2.4" />' +
+      '<path d="M13.2 13.6l-6.6 2M18.8 13.6l6.6 2M13 11.4L7.6 8.6M19 11.4l5.4-2.8" opacity=".55" stroke-width="1.2"/>' +
+      '<circle cx="16" cy="10.4" r="1.6" fill="currentColor" stroke="none"/>' +
+      '<path d="M6.4 27.4h19.2" stroke-width="2"/>' +
+      '<path d="M8.4 24.6c2 1.2 4.4 1.8 7.6 1.8s5.6-.6 7.6-1.8" opacity=".35"/>',
+
+    auction:
+      '<path d="M4.4 27.4h23.2" stroke-width="2"/>' +
+      '<path d="M7.4 27.4V19h17.2v8.4" fill="currentColor" opacity=".14"/>' +
+      '<path d="M7.4 27.4V19h17.2v8.4"/>' +
+      '<rect x="11.6" y="9.4" width="8.8" height="8.8" rx="2" fill="currentColor" opacity=".3" transform="rotate(-12 16 13.8)"/>' +
+      '<rect x="11.6" y="9.4" width="8.8" height="8.8" rx="2" transform="rotate(-12 16 13.8)"/>' +
+      pip(14.4, 12.2, 1) + pip(17.6, 14.8, 1) +
+      '<path d="M24.4 4.2l3.2 3.2-1.6 1.6-3.2-3.2z" fill="currentColor" opacity=".5"/>' +
+      '<path d="M24.4 4.2l3.2 3.2-1.6 1.6-3.2-3.2z"/>' +
+      '<path d="M21.4 7.2l3.2 3.2" stroke-width="2"/>' +
+      '<path d="M9.4 21.4h12.4M9.4 24.2h8.4" opacity=".45"/>',
+
   };
 
   /* helper: returns a full <svg> wrapper for a given art group + key */

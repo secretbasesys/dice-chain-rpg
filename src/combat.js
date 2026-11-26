@@ -224,6 +224,8 @@
       if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 3;
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
       if (c.prevV != null && c.prevV === v) d *= 1.25;
+      if (has(c, 'vanguard') && c.turn === 1) d *= 1.5;
+      if (has(c, 'duelist') && alive(c).length === 1) d *= 1.25;
       let dmg = Math.max(1, Math.round(d));
       const hits = (has(c, 'karma') && c.combo >= 4 && !(opts && opts.noDouble)) ? 2 : 1;
       for (let i = 0; i < hits; i++) {
@@ -568,6 +570,10 @@
           e.st.burn = Math.max(0, e.st.burn - 1);
         }
       });
+      if (has(c, 'thornMail') && alive(c).length) {
+        alive(c).forEach(function (e) { hitEnemy(c, e, 4, { kind: 'guard' }, ev); });
+        ev.push({ t: 'msg', text: '가시 갑옷 — 적 전체 4 피해' });
+      }
       if (!alive(c).length) { c.phase = 'won'; ev.push({ t: 'won' }); return { ok: true, events: ev }; }
 
       c.enemies.forEach(function (e) {
@@ -634,6 +640,10 @@
       });
 
       if (c.phase === 'lost') { ev.push({ t: 'lost' }); return { ok: true, events: ev }; }
+      if (has(c, 'thornMail') && alive(c).length) {
+        alive(c).forEach(function (e) { hitEnemy(c, e, 4, { kind: 'guard' }, ev); });
+        ev.push({ t: 'msg', text: '가시 갑옷 — 적 전체 4 피해' });
+      }
       if (!alive(c).length) { c.phase = 'won'; ev.push({ t: 'won' }); return { ok: true, events: ev }; }
 
       /* player poison/burn taken on their own turn start (kept simple: tick here) */
@@ -651,7 +661,11 @@
         if (t) {
           hitEnemy(c, t, 2, { kind: 'slash' }, ev);
           ev.push({ t: 'msg', text: '강철 의지 — 2 피해' });
-          if (!alive(c).length) { c.phase = 'won'; ev.push({ t: 'won' }); return { ok: true, events: ev }; }
+          if (has(c, 'thornMail') && alive(c).length) {
+        alive(c).forEach(function (e) { hitEnemy(c, e, 4, { kind: 'guard' }, ev); });
+        ev.push({ t: 'msg', text: '가시 갑옷 — 적 전체 4 피해' });
+      }
+      if (!alive(c).length) { c.phase = 'won'; ev.push({ t: 'won' }); return { ok: true, events: ev }; }
         }
       }
       Combat.newTurn(c, false);
