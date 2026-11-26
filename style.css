@@ -1519,3 +1519,6 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 .deep-row b { color: #e6e0ff; font-weight: 700; text-align: right; }
 .deep-btns { display: flex; flex-direction: column; gap: 8px; width: min(360px, 94%); margin-top: 6px; }
 .deep-btns .bigbtn { width: 100%; }
+
+.map-deadend { display: flex; gap: 6px; margin: 2px 0; }
+.map-deadend .bigbtn { flex: 1; height: 42px; font-size: 12px; }

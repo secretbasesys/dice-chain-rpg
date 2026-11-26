@@ -76,11 +76,18 @@
 
     banner: function (text, cls) {
       const L = layer(); if (!L) return;
+      const scr = document.body.getAttribute('data-screen');
+      if (scr === 'win' || scr === 'gameover') return;
       const d = document.createElement('div');
       d.className = 'fx-banner ' + (cls || '');
       d.innerHTML = text;
       L.appendChild(d);
       setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 1350);
+    },
+
+    clearBanners: function () {
+      const L = layer();
+      if (L) Array.prototype.forEach.call(L.querySelectorAll('.fx-banner'), function (n) { n.remove(); });
     },
 
     flash: function (color) {

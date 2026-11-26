@@ -224,7 +224,7 @@
       this.state.combat = null;
       this.goMap();
       DC.UI.toast(C.name + ' — 행운을 빈다');
-      if (!DC.Meta.tutSeen()) { this.state.ui.modal = 'tut'; DC.UI.render(); }
+      if (!DC.Meta.tutSeen()) { this.state.ui.modal = 'tut'; DC.Meta.setTut(); DC.UI.render(); }
     },
 
     goMap: function () {
@@ -482,6 +482,7 @@
       r.hp = c.hp;
       r.stats.kills += c.enemies.filter(function (e) { return e.hp <= 0; }).length;
       r.stats.dmg += c.totalDamage;
+      r.stats.turns = (r.stats.turns || 0) + (c.turn || 0);
       r.maxCombo = Math.max(r.maxCombo || 0, c.maxCombo || 0);
       let gold = c.kind === 'boss' ? 95 + r.act * 12 : c.kind === 'elite' ? 45 + ri(15) : 16 + ri(9);
       gold += r.act * 4;
@@ -508,6 +509,8 @@
         DC.Meta.check({ win: false, cls: s.run.cls, asc: s.run.asc || 0, maxCombo: s.run.maxCombo || 0, dmg: s.run.stats.dmg || 0, challenge: s.run.challenge, relics: s.run.relics.length, seed: s.run.seed });
         this.recordRun(false);
       }
+      s.ui.modal = null;
+      if (DC.FX.clearBanners) DC.FX.clearBanners();
       s.screen = 'gameover';
       s.combat = null;
       s.ui.busy = false;
@@ -586,6 +589,8 @@
 
     finishRun: function () {
       const r = this.state.run;
+      this.state.ui.modal = null;
+      if (DC.FX.clearBanners) DC.FX.clearBanners();
       this.state.screen = 'win';
       const res = DC.Meta.noteWin(r.cls, r.asc || 0);
       this.state.ui.winInfo = res;
@@ -602,6 +607,8 @@
       const r = this.state.run;
       if (r.act >= 3) {
         this.state.ui.deep = { act: r.act };
+        this.state.ui.modal = null;
+        if (DC.FX.clearBanners) DC.FX.clearBanners();
         this.state.screen = 'deep';
         this.save();
         DC.UI.render();
@@ -944,6 +951,10 @@
             dice: s.run.dice, relics: s.run.relics, map: s.run.map, current: s.run.current,
             cleared: s.run.cleared, extraSpark: s.run.extraSpark, stats: s.run.stats, startedAt: s.run.startedAt,
             skills: s.run.skills, seenEvents: s.run.seenEvents, asc: s.run.asc,
+            seed: s.run.seed || null, challenge: s.run.challenge || 'none',
+            cmod: s.run.cmod || {}, depth: s.run.depth || 3,
+            atDeep: s.screen === 'deep',
+            maxCombo: s.run.maxCombo || 0, nodeSeq: s.run.nodeSeq || 0,
           },
           savedAt: Date.now(),
         };
@@ -971,7 +982,8 @@
       if (rr.seed) DC.setSeed(rr.seed);
       this.state.run = rr;
       this.state.combat = null;
-      this.state.screen = 'map';
+      if (rr.atDeep) { this.state.screen = 'deep'; this.state.ui.deep = { act: rr.act }; delete rr.atDeep; }
+      else this.state.screen = 'map';
       this.state.ui.busy = false;
       this.state.ui.sel = null;
       DC.UI.toast('이어서 진행합니다');

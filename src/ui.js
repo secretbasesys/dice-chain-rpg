@@ -375,6 +375,9 @@
         '<div class="map-wrap" id="map-wrap"><div class="map-canvas" id="map-canvas" style="--rows:' + rows + '">' +
           '<svg class="map-edges" id="map-edges"></svg>' + html +
         '</div></div>' +
+        (!avail.length && map.current && map.nodes[map.current] && map.nodes[map.current].type === 'boss' ?
+          '<div class="map-deadend"><button class="bigbtn primary" data-act="deeper">심연으로 계속</button>' +
+          '<button class="bigbtn ghost" data-act="finishrun">여기서 마무리</button></div>' : '') +
         '<div class="map-legend">' +
           ['combat', 'elite', 'forge', 'shop', 'mystery', 'rest', 'boss'].map(function (t) {
             const m = DC.NODES[t];
