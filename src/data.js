@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '4.8.0';
+  DC.VERSION = '4.9.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -324,6 +324,8 @@
       E('bat', '동굴 박쥐', 20, 'flyer', '#c084fc', [{ k: 'attack', v: 3, hits: 3 }, { k: 'curse', n: 1 }, { k: 'attack', v: 5 }]),
       E('wolf', '굶주린 늑대', 34, 'beast', '#fca5a5', [{ k: 'attack', v: 11 }, { k: 'buff', s: 'str', v: 2 }, { k: 'attack', v: 9 }]),
       E('mushroom', '폭발 버섯', 26, 'mushroom', '#a3e635', [{ k: 'attack', v: 5, apply: 'poison' }, { k: 'defend', v: 6 }, { k: 'attack', v: 3, hits: 2 }]),
+      E('beetle', '갑옷 딱정벌레', 40, 'construct', '#fcd34d', [{ k: 'defend', v: 8 }, { k: 'attack', v: 8 }, { k: 'attack', v: 4, hits: 2 }]),
+      E('moth', '독나방', 24, 'flyer', '#c4b5fd', [{ k: 'debuff', s: 'weak', v: 1 }, { k: 'attack', v: 3, hits: 3 }, { k: 'attack', v: 6, apply: 'poison' }]),
     ],
     2: [
       E('skeleton', '해골 병사', 34, 'humanoid', '#e2e8f0', [{ k: 'attack', v: 12 }, { k: 'defend', v: 10 }, { k: 'attack', v: 8, hits: 2 }]),
@@ -332,6 +334,7 @@
       E('shaman', '주술사', 36, 'humanoid', '#a78bfa', [{ k: 'debuff', s: 'vuln', v: 2 }, { k: 'attack', v: 12 }, { k: 'curse', n: 2 }, { k: 'buff', s: 'str', v: 3 }]),
       E('wraith', '망령', 33, 'flyer', '#67e8f9', [{ k: 'attack', v: 10 }, { k: 'drain', v: 6 }, { k: 'debuff', s: 'weak', v: 1 }]),
       E('cultist', '심연 광신도', 40, 'cultist', '#a78bfa', [{ k: 'buff', s: 'str', v: 2 }, { k: 'attack', v: 9 }, { k: 'curse', n: 1 }]),
+      E('sentry', '석상 파수꾼', 48, 'construct', '#cbd5e1', [{ k: 'defend', v: 10 }, { k: 'attack', v: 11 }, { k: 'debuff', s: 'vuln', v: 2 }]),
     ],
     3: [
       E('knight', '심연 기사', 58, 'humanoid', '#f87171', [{ k: 'attack', v: 21 }, { k: 'defend', v: 14 }, { k: 'attack', v: 10, hits: 3 }]),
@@ -340,6 +343,7 @@
       E('serpent', '독니 뱀', 52, 'beast', '#9ae66e', [{ k: 'attack', v: 12, apply: 'poison' }, { k: 'attack', v: 7, hits: 2 }, { k: 'debuff', s: 'vuln', v: 3 }]),
       E('berserker', '광전사', 72, 'berserker', '#f87171', [{ k: 'attack', v: 18 }, { k: 'buff', s: 'str', v: 4 }, { k: 'attack', v: 8, hits: 3 }]),
       E('voidmaw', '공허의 아귀', 66, 'voidmaw', '#8b5cf6', [{ k: 'drain', v: 10 }, { k: 'curse', n: 2 }, { k: 'attack', v: 14 }]),
+      E('hound', '심연 사냥개', 56, 'beast', '#fb7185', [{ k: 'attack', v: 9, hits: 2 }, { k: 'buff', s: 'str', v: 3 }, { k: 'attack', v: 16 }]),
     ],
   };
   DC.ELITES = {

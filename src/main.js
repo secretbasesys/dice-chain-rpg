@@ -879,6 +879,12 @@
       r.act += 1;
       r.depth = (r.depth || 3) + 1;
       r.hp = Math.min(r.maxHp, r.hp + 12);
+      /* every abyss boss pays out one relic (v4.9) */
+      const pool = DC.POOL_RELIC_IDS.filter(function (id) { return r.relics.indexOf(id) < 0; });
+      if (pool.length) {
+        const id = pool[Math.floor(DC.rng() * pool.length)];
+        this.addRelic(id);
+      } else { r.gold += 70; }
       r.map = DC.MapGen.gen(DC.rng, r.act);
       r.current = null;
       DC.Audio.play('boss');
