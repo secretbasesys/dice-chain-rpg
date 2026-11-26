@@ -397,7 +397,9 @@
           '<div class="map-scene-wrap">' + actScene(r.act) + '</div></div>' +
         '<div class="map-head">' +
           '<div class="mh-left"><span class="act-chip">ACT ' + r.act + '</span>' +
-            '<span class="act-title">' + esc(DC.actName ? DC.actName(r.act) : (ACT_NAMES[r.act] || '심연')) + '</span></div>' +
+            '<span class="act-title">' + esc(DC.actName ? DC.actName(r.act) : (ACT_NAMES[r.act] || '심연')) + '</span>' +
+            (r.abyss ? '<span class="abyss-chip" style="--c:' + (r.abyss.c || '#c084fc') + '" data-tip="' + esc(r.abyss.desc) + '" data-tip-title="심연 변칙 · ' + esc(r.abyss.name) + '">' + icon(r.abyss.ic || 'void') + esc(r.abyss.name) + '</span>' : '') +
+            '</div>' +
           '<div class="map-prog">' +
             (r.challenge && r.challenge !== 'none' ? '<span class="map-ch-chip" style="--c:' + DC.challengeById(r.challenge).c + '">' + esc(DC.challengeById(r.challenge).short) + '</span>' : '') +
             (r.seed ? '<button class="seed-chip" data-act="copyseed" title="시드 복사">' + icon('copy') + esc(DC.seedDisplay(r.seed)) + '</button>' : '') +
@@ -906,8 +908,29 @@
         '</div>' +
       '</div>';
     }).join('');
+    const m = DC.Meta.get();
+    const total = list.length;
+    const wins = list.filter(function (h) { return h.win; }).length;
+    const rate = total ? Math.round((wins / total) * 100) : 0;
+    const bestDepth = m.bestDepth || 3;
+    const bestCombo = m.bestCombo || 0;
+    const streak = (function () {
+      let n = 0;
+      for (let i = 0; i < list.length; i++) { if (list[i].win) n++; else break; }
+      return n;
+    })();
+    const byCls = DC.CLASS_IDS.map(function (id) {
+      const w = list.filter(function (h) { return h.cls === id && h.win; }).length;
+      const t = list.filter(function (h) { return h.cls === id; }).length;
+      return '<span class="hs-cls"><b>' + esc((DC.classesShort || {})[id] || id) + '</b> ' + w + '/' + t + '</span>';
+    }).join('');
+    const summary = '<div class="hist-sum">' +
+      '<div class="hs-row"><span>런</span><b>' + total + '</b><span>승리</span><b>' + wins + '</b><span>승률</span><b>' + rate + '%</b></div>' +
+      '<div class="hs-row"><span>최고 깊이</span><b>' + bestDepth + '</b><span>최고 콤보</span><b>' + bestCombo + '</b><span>연속 승리</span><b>' + streak + '</b></div>' +
+      '<div class="hs-classes">' + byCls + '</div></div>';
     return '<div class="overlay" data-act="closehistory"><div class="panel hist-panel" data-stop="1">' +
       '<div class="panel-head"><h3>' + icon('clock') + ' 런 기록</h3><button class="iconbtn" data-act="closehistory">' + icon('close') + '</button></div>' +
+      summary +
       '<div class="hist-list">' + (rows || '<div class="hist-empty">아직 기록이 없습니다.<br/>첫 런을 시작해 보세요.</div>') + '</div>' +
       '</div></div>';
   }
@@ -992,6 +1015,7 @@
         '<div class="deep-card">' +
           '<div class="deep-row"><span>다음</span><b>ACT ' + nextAct + ' · ' + esc(name) + '</b></div>' +
           '<div class="deep-row"><span>적</span><b>체력·공격이 더 강해집니다</b></div>' +
+          '<div class="deep-row"><span>변칙</span><b>' + esc((DC.ABYSS_RULES && DC.ABYSS_RULES.length) ? '매 막마다 무작위 심연 변칙' : '없음') + '</b></div>' +
           '<div class="deep-row"><span>회복</span><b>최대 체력의 일부를 회복하고 시작</b></div>' +
           '<div class="deep-row"><span>기록</span><b>깊이 ' + depth + ' · 승리로 기록됩니다</b></div>' +
         '</div>' +

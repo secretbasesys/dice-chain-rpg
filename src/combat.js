@@ -9,6 +9,9 @@
 
   function has(c, id) { return c.relics && c.relics.indexOf(id) >= 0; }
 
+  /* abyss anomaly modifiers (v5.0) */
+  function abyss(c) { return (c.abyss && c.abyss.mod) || null; }
+
   function alive(c) { return c.enemies.filter(function (e) { return e.hp > 0; }); }
 
   function mult(c) {
@@ -143,6 +146,7 @@
   function hitPlayer(c, amount, ev, opts) {
     let dmg = Math.round(amount);
     if (opts && opts.raw !== true && has(c, 'glassCannon')) dmg = Math.round(dmg * 1.5);
+    if (opts && opts.raw !== true && abyss(c) && abyss(c).taken) dmg = Math.round(dmg * (1 + abyss(c).taken));
     if (c.statuses.vuln > 0) dmg = Math.round(dmg * DC.BAL.vulnMult);
     const absorbed = Math.min(c.block, dmg);
     c.block -= absorbed;
@@ -237,6 +241,7 @@
       if (has(c, 'bloodPact')) d *= 1.35;
       if (has(c, 'glassCannon')) d *= 1.5;
       if (has(c, 'executioner') && targetEnemy && targetEnemy.hp > 0 && targetEnemy.hp <= targetEnemy.maxHp * 0.3) d *= 1.4;
+      if (abyss(c) && abyss(c).dmg) d *= 1 + abyss(c).dmg;
       let dmg = Math.max(1, Math.round(d));
       const hits = (has(c, 'karma') && c.combo >= 4 && !(opts && opts.noDouble)) ? 2 : 1;
       for (let i = 0; i < hits; i++) {
@@ -420,6 +425,7 @@
         relics: (run.relics || []).slice(),
         cls: run.cls,
         cmod: run.cmod || null,
+        abyss: run.abyss || null,
         hp: run.hp,
         maxHp: run.maxHp,
         block: 0,
@@ -452,6 +458,7 @@
       if (has(c, 'pact')) c.maxSparks += 2;
       if (has(c, 'rupture')) c.maxSparks = Math.max(0, c.maxSparks - 1);
       if (has(c, 'doubleRoll') || has(c, 'timeLoop')) c.freeRerolls = has(c, 'timeLoop') ? 2 : 1;
+      if (abyss(c) && abyss(c).freeReroll) c.freeRerolls = Math.max(c.freeRerolls || 0, abyss(c).freeReroll);
       if (run.extraSpark) c.maxSparks += run.extraSpark;
       const scale = spawns.length > 1 ? 0.78 : 1;
       const mod = DC.ascMod(run.asc || 0);
@@ -459,9 +466,10 @@
       c.enemies = spawns.map(function (s) {
         const e = mkEnemy(s, scale, c.act);
         const cm = run.cmod || {};
-        const mult = (1 + (mod.hp || 0) + ((s.gimmick && mod.bossHp) ? mod.bossHp : 0)) * (1 + (cm.ehp || 0));
+        const ab = (run.abyss && run.abyss.mod) || {};
+        const mult = (1 + (mod.hp || 0) + ((s.gimmick && mod.bossHp) ? mod.bossHp : 0)) * (1 + (cm.ehp || 0)) * (1 + (ab.hp || 0));
         if (mult !== 1) { e.maxHp = Math.max(1, Math.round(e.maxHp * mult)); e.hp = e.maxHp; }
-        e.ascAtk = (1 + (mod.atk || 0)) * (1 + ((run.cmod || {}).eatk || 0));
+        e.ascAtk = (1 + (mod.atk || 0)) * (1 + ((run.cmod || {}).eatk || 0)) * (1 + (ab.atk || 0));
         return e;
       });
       c.slots = cls.skills.map(function (s) { return { id: s.id, handIdx: null }; });
@@ -480,7 +488,7 @@
       c.rerollsThisTurn = 0;
       c.luckyCoinUsed = 0;
       c.engineUsed = false;
-      c.sparks = c.maxSparks;
+      c.sparks = c.maxSparks + ((abyss(c) && abyss(c).spark) || 0);
       c.slots.forEach(function (s) { s.handIdx = null; s.resolved = false; });
       c.chainLog = [];
 
@@ -643,10 +651,6 @@
           e.st.burn = Math.max(0, e.st.burn - 1);
         }
       });
-      if (has(c, 'thornMail') && alive(c).length) {
-        alive(c).forEach(function (e) { hitEnemy(c, e, 4, { kind: 'guard' }, ev); });
-        ev.push({ t: 'msg', text: '가시 갑옷 — 적 전체 4 피해' });
-      }
       if (!alive(c).length) { c.phase = 'won'; ev.push({ t: 'won' }); return { ok: true, events: ev }; }
 
       c.enemies.forEach(function (e) {
@@ -703,6 +707,9 @@
       });
 
       if (c.phase === 'lost') { ev.push({ t: 'lost' }); return { ok: true, events: ev }; }
+      if (abyss(c) && abyss(c).eblock) {
+        alive(c).forEach(function (e) { e.block += abyss(c).eblock; ev.push({ t: 'eblock', eid: e.id, amount: abyss(c).eblock }); });
+      }
       if (has(c, 'thornMail') && alive(c).length) {
         alive(c).forEach(function (e) { hitEnemy(c, e, 4, { kind: 'guard' }, ev); });
         ev.push({ t: 'msg', text: '가시 갑옷 — 적 전체 4 피해' });

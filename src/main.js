@@ -654,6 +654,7 @@
       if (r.relics.indexOf('gildedIdol') >= 0) gold = Math.round(gold * 0.7);
       if (r.relics.indexOf('soulHarvest') >= 0) gold = Math.round(gold * 0.75);
       if (r.cmod && r.cmod.gold) gold = Math.round(gold * r.cmod.gold);
+      if (r.abyss && r.abyss.mod && r.abyss.mod.gold) gold = Math.round(gold * r.abyss.mod.gold);
       r.gold += gold;
       if (r.relics.indexOf('soulHarvest') >= 0) {
         r.maxHp += 4;
@@ -879,6 +880,14 @@
       r.act += 1;
       r.depth = (r.depth || 3) + 1;
       r.hp = Math.min(r.maxHp, r.hp + 12);
+      /* new abyss anomaly each depth (v5.0) */
+      const rules = DC.ABYSS_RULES || [];
+      if (rules.length) {
+        const prev = r.abyss && r.abyss.id;
+        const cand = rules.filter(function (x) { return x.id !== prev; });
+        r.abyss = cand[Math.floor(DC.rng() * cand.length)] || rules[0];
+        DC.UI.toast('심연 변칙 — ' + r.abyss.name);
+      }
       /* every abyss boss pays out one relic (v4.9) */
       const pool = DC.POOL_RELIC_IDS.filter(function (id) { return r.relics.indexOf(id) < 0; });
       if (pool.length) {
@@ -1269,7 +1278,7 @@
             cleared: s.run.cleared, extraSpark: s.run.extraSpark, stats: s.run.stats, startedAt: s.run.startedAt,
             skills: s.run.skills, customSkills: s.run.customSkills || {}, seenEvents: s.run.seenEvents, asc: s.run.asc,
             seed: s.run.seed || null, challenge: s.run.challenge || 'none',
-            cmod: s.run.cmod || {}, depth: s.run.depth || 3,
+            cmod: s.run.cmod || {}, depth: s.run.depth || 3, abyss: s.run.abyss || null,
             atDeep: s.screen === 'deep',
             atBossRelic: s.screen === 'bossrelic' && !!s.ui.bossRelic,
             maxCombo: s.run.maxCombo || 0, nodeSeq: s.run.nodeSeq || 0,

@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '4.9.0';
+  DC.VERSION = '5.0.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -125,6 +125,20 @@
     5: { name: '뒤틀린 성좌', sub: '운명이 접힌 별의 바다', sky: '#101a2c', ground: '#0b1220', tint: '#67e8f9', ember: '#93c5fd' },
     6: { name: '끝없는 주사위', sub: '굴림이 멈추지 않는 곳', sky: '#241217', ground: '#170b10', tint: '#f87171', ember: '#fca5a5' },
   };
+  /* ---------------- abyss anomalies (v5.0) ---------------- */
+  DC.ABYSS_RULES = [
+    { id: 'gluttony', name: '탐식의 심연', ic: 'coin', c: '#fbbf24',
+      desc: '전투 골드 +50% · 적 체력 +10%', mod: { gold: 1.5, hp: 0.10 } },
+    { id: 'silence', name: '고요한 심연', ic: 'void', c: '#93c5fd',
+      desc: '적 체력 -12% · 적 공격 +15%', mod: { hp: -0.12, atk: 0.15 } },
+    { id: 'rift', name: '균열의 심연', ic: 'bolt', c: '#c084fc',
+      desc: '매 턴 기세 +1 · 받는 피해 +20%', mod: { spark: 1, taken: 0.20 } },
+    { id: 'echo', name: '메아리치는 심연', ic: 'copy', c: '#67e8f9',
+      desc: '매 턴 무료 재굴림 1회 · 적이 매 턴 방어도 5를 얻음', mod: { freeReroll: 1, eblock: 5 } },
+    { id: 'famine', name: '굶주린 심연', ic: 'skull', c: '#f87171',
+      desc: '주는 피해 +20% · 받는 피해 +10%', mod: { dmg: 0.20, taken: 0.10 } },
+  ];
+
   DC.actName = function (act) {
     if (DC.ACTS[act]) return DC.ACTS[act].name;
     return '심연 ' + (act - 3);
