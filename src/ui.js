@@ -555,6 +555,8 @@
         '<div class="gold-gain">' + icon('coin') + '+' + rw.gold + ' 골드</div>' +
         '<h3>보상을 선택하세요</h3>' +
         '<div class="rw-list">' + cards + '</div>' +
+        '<button class="reroll-btn" data-act="rerollreward" ' + (rw.rerolled ? 'disabled' : '') + '>' +
+          icon('reroll') + (rw.rerolled ? '보상 변경 완료' : '보상 다시 뽑기 (15G)') + '</button>' +
         '<button class="bigbtn ghost skipbtn" data-act="skipreward">건너뛰기 (+20 골드)</button>' +
       '</main>';
   }

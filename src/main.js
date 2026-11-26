@@ -154,6 +154,7 @@
         case 'endturn': this.endTurn(); break;
         case 'target': this.setTarget(parseInt(d.i, 10)); break;
         case 'reward': this.takeReward(parseInt(d.i, 10)); break;
+        case 'rerollreward': this.rerollReward(); break;
         case 'skipreward': this.skipReward(); break;
         case 'fdiedie': this.forgeSelectDie(parseInt(d.i, 10)); break;
         case 'fface': this.forgeSelectFace(parseInt(d.i, 10)); break;
@@ -629,6 +630,21 @@
         }
       }
       return out;
+    },
+
+    rerollReward: function () {
+      const s = this.state;
+      const rw = s.ui.reward;
+      if (!rw) return;
+      if (rw.rerolled) { DC.UI.toast('이미 한 번 바꿨습니다'); return; }
+      const cost = 15;
+      if (s.run.gold < cost) { DC.UI.toast('골드 부족'); DC.Audio.play('error'); return; }
+      s.run.gold -= cost;
+      rw.options = this.makeRewardOptions(rw.options.length);
+      rw.rerolled = true;
+      DC.Audio.play('coin');
+      this.save();
+      DC.UI.render();
     },
 
     takeReward: function (i) {
