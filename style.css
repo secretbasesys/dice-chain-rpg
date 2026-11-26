@@ -1604,3 +1604,13 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
   background: var(--c); border-radius: 5px; padding: 0 4px;
 }
 .forge-hint.small { margin-top: 4px; }
+
+/* deck face composition (v3.0) */
+.deck-comp { display: flex; flex-direction: column; gap: 3px; margin: 2px 0 8px; }
+.dc-row { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #a9b8d1; }
+.dc-row i { color: var(--c); display: inline-flex; }
+.dc-row .ic { width: 11px; height: 11px; }
+.dc-row b { font-weight: 800; color: #dce6f7; min-width: 30px; }
+.dc-bar { flex: 1; height: 6px; border-radius: 3px; background: #1a2338; overflow: hidden; }
+.dc-bar em { display: block; height: 100%; background: var(--c); border-radius: 3px; }
+.dc-row u { text-decoration: none; font-size: 9.5px; color: #7d8ea9; min-width: 14px; text-align: right; }

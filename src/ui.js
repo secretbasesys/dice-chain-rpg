@@ -868,13 +868,27 @@
         '<div class="dd-faces">' + d.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' +
       '</div>';
     }).join('');
+    // face composition summary
+    const comp = {};
+    r.dice.forEach(function (d) { d.faces.forEach(function (f) { comp[f.k] = (comp[f.k] || 0) + 1; }); });
+    const compKeys = Object.keys(comp).sort(function (a, b) { return comp[b] - comp[a]; });
+    const totalFaces = r.dice.length * 6 || 1;
+    const compHtml = '<div class="deck-comp">' + compKeys.map(function (k) {
+      const kd = DC.KINDS[k] || DC.KINDS.blank;
+      const w = Math.round(comp[k] / totalFaces * 100);
+      return '<div class="dc-row" style="--c:' + kd.c + '">' +
+        '<i>' + icon(kd.ic) + '</i><b>' + kd.n + '</b>' +
+        '<span class="dc-bar"><em style="width:' + w + '%"></em></span>' +
+        '<u>' + comp[k] + '</u></div>';
+    }).join('') + '</div>';
     const relics = r.relics.length ? r.relics.map(function (id) {
       const R = DC.RELICS[id];
       return '<div class="deck-relic" style="--c:' + R.c + '">' + relicIcon(id) + '<div><b>' + esc(R.name) + '</b><span>' + esc(R.desc) + '</span></div></div>';
     }).join('') : '<p class="empty">아직 유물이 없습니다.</p>';
     return '<div class="overlay" data-act="closedeck"><div class="panel deck-panel" data-stop="1">' +
       '<div class="panel-head"><h3>덱 & 유물</h3><button class="iconbtn" data-act="closedeck">' + icon('close') + '</button></div>' +
-      '<h4>' + icon('dice') + ' 주사위 ' + r.dice.length + '개</h4><div class="deck-dice">' + dice + '</div>' +
+      '<h4>' + icon('dice') + ' 주사위 ' + r.dice.length + '개 · 면 ' + (r.dice.length * 6) + '</h4>' + compHtml +
+      '<div class="deck-dice">' + dice + '</div>' +
       '<h4>' + icon('spark') + ' 스킬 ' + (r.skills || []).filter(function (v) { return v; }).length + '/5 각성</h4><div class="deck-skills">' +
       DC.CLASSES[r.cls].skills.map(function (sk, i) {
         const lv = (r.skills || [])[i] || 0;
