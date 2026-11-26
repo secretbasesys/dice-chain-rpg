@@ -159,6 +159,15 @@
         case 'fopt': this.forgeApply(parseInt(d.i, 10)); break;
         case 'forgeexit': this.forgeExit(); break;
         case 'buy': this.buy(parseInt(d.i, 10)); break;
+        case 'removedie': {
+          const r0 = s.run, idx = parseInt(d.i, 10);
+          if (!r0 || !r0.dice[idx] || r0.dice.length <= 3) { DC.UI.toast('주사위는 3개 미만으로 줄일 수 없습니다'); break; }
+          const gone = r0.dice.splice(idx, 1)[0];
+          DC.Audio.play('shatter');
+          DC.UI.toast('주사위 버림: ' + gone.name);
+          s.ui.modal = null; DC.UI.render(); break;
+        }
+        case 'closeremove': s.ui.modal = null; DC.UI.render(); break;
         case 'rerollshop': this.rerollShop(); break;
         case 'rest': this.rest(parseInt(d.i, 10)); break;
         case 'choice': this.choice(parseInt(d.i, 10)); break;
@@ -733,6 +742,7 @@
       }
       items.push({ kind: 'forge', name: '단조 도구', desc: '주사위 면을 1회 바꿉니다 (무료)', price: Math.round(40 * disc), ic: 'anvil', c: '#fb923c' });
       items.push({ kind: 'heal', name: '회복 물약', desc: '체력 25 회복', price: Math.round(32 * disc), ic: 'heart', c: '#f472b6' });
+      if (r.dice.length > 3) items.push({ kind: 'remove', name: '주사위 정리', desc: '주사위 하나를 버립니다 (최소 3개 유지)', price: Math.round(55 * disc), ic: 'trash', c: '#94a3b8' });
       const canSkill = (r.skills || []).some(function (v) { return v < 1; });
       if (canSkill) items.push({ kind: 'skill', name: '각성의 서', desc: '스킬 하나를 영구히 각성시킵니다', price: Math.round(78 * disc), ic: 'book', c: '#fbbf24' });
       this.state.ui.shop = { items: items, node: node, rerolls: rerolls };
@@ -766,6 +776,7 @@
       else if (it.kind === 'heal') { s.run.hp = Math.min(s.run.maxHp, s.run.hp + 25); }
       else if (it.kind === 'forge') { DC.Audio.play('coin'); this.openForge(1, sh.node); return; }
       else if (it.kind === 'skill') { DC.Audio.play('coin'); this.openSkills(true); return; }
+      else if (it.kind === 'remove') { DC.Audio.play('click'); s.ui.modal = 'remove'; DC.UI.render(); return; }
       DC.Audio.play('coin');
       DC.UI.render();
     },

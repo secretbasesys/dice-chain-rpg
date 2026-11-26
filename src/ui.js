@@ -710,6 +710,21 @@
       '</div></div>';
   }
 
+  function renderRemove(state) {
+    const r = state.run;
+    const cards = r.dice.map(function (d, i) {
+      return '<button class="rm-die" data-act="removedie" data-i="' + i + '" style="--c:' + d.c + '">' +
+        '<b>' + esc(d.name) + '</b>' +
+        '<span class="rm-faces">' + d.faces.map(function (f) { return faceMini(f); }).join('') + '</span>' +
+      '</button>';
+    }).join('');
+    return '<div class="overlay" data-act="closeremove"><div class="panel rm-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('trash') + ' 주사위 정리</h3><button class="iconbtn" data-act="closeremove">' + icon('close') + '</button></div>' +
+      '<p class="sub">버릴 주사위를 고르세요. 주사위는 최소 3개가 남아야 합니다.</p>' +
+      '<div class="rm-list">' + cards + '</div>' +
+      '</div></div>';
+  }
+
   function renderTut() {
     return '<div class="overlay tut-overlay" data-act="closetut"><div class="panel tut-panel" data-stop="1">' +
       '<div class="panel-head"><h3>' + icon('book') + ' 세 가지 규칙</h3></div>' +
@@ -1250,6 +1265,7 @@
       if (state.ui.modal === 'history') app.innerHTML += renderHistory(state);
       if (state.ui.modal === 'tut') app.innerHTML += renderTut();
       if (state.ui.modal === 'challenge') app.innerHTML += renderChallenge(state);
+      if (state.ui.modal === 'remove' && state.run) app.innerHTML += renderRemove(state);
       /* micro-interactions: gold pop + dice roll-in on new turn */
       if (state.run) {
         if (state.ui._lastGold != null && state.run.gold !== state.ui._lastGold) {
