@@ -429,6 +429,25 @@
       '<path d="M21.4 7.2l3.2 3.2" stroke-width="2"/>' +
       '<path d="M9.4 21.4h12.4M9.4 24.2h8.4" opacity=".45"/>',
 
+    starShard:
+      glow(16, 15, 14, 0.14) +
+      '<path d="M16 3.6l2.6 7.2 7.2 2.6-7.2 2.6L16 23.2l-2.6-7.2L6.2 13.4l7.2-2.6z" fill="currentColor" opacity=".22"/>' +
+      '<path d="M16 3.6l2.6 7.2 7.2 2.6-7.2 2.6L16 23.2l-2.6-7.2L6.2 13.4l7.2-2.6z"/>' +
+      '<path d="M16 9.4l1.2 3.4 3.4 1.2-3.4 1.2-1.2 3.4-1.2-3.4-3.4-1.2 3.4-1.2z" fill="currentColor" stroke="none"/>' +
+      '<path d="M4.4 5.4l2 1.6M27.6 5.4l-2 1.6M6.4 24.6l1.4-1.8M25.6 24.6l-1.4-1.8" opacity=".45"/>' +
+      '<path d="M16 26.4v2.4" opacity=".35"/>',
+
+    oldWell:
+      '<path d="M5.4 27.4h21.2" stroke-width="2"/>' +
+      '<path d="M8.4 27.4V15.4h15.2v12" fill="currentColor" opacity=".14"/>' +
+      '<path d="M8.4 27.4V15.4h15.2v12"/>' +
+      '<path d="M6.4 15.4h19.2" stroke-width="2"/>' +
+      '<ellipse cx="16" cy="15.4" rx="9.6" ry="2.6" fill="currentColor" opacity=".25"/>' +
+      '<path d="M10.4 15.8c0 3.2 2.6 5.6 5.6 5.6s5.6-2.4 5.6-5.6" opacity=".5"/>' +
+      '<path d="M16 4.2v5.4M11.4 6.6L16 9.6l4.6-3" stroke-width="1.8"/>' +
+      '<circle cx="16" cy="3.4" r="1.4" fill="currentColor" stroke="none"/>' +
+      '<path d="M11.4 21.4h9.2M13.4 24.4h5.2" opacity=".35"/>',
+
   };
 
   /* helper: returns a full <svg> wrapper for a given art group + key */

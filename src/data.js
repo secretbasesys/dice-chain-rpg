@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '3.6.0';
+  DC.VERSION = '3.7.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -159,6 +159,8 @@
     cursed: { name: '저주받은 주사위', tier: 2, price: 60, c: '#a78bfa', faces: [f('slash', 6), f('curse', 2), f('slash', 5), f('curse', 1), f('mult', 2), f('slash', 6)], tag: '저주' },
     moon: { name: '달 주사위', tier: 2, price: 85, c: '#c7d2fe', faces: [f('leech', 3), f('mult', 2), f('slash', 4), f('leech', 4), f('guard', 4), f('mult', 1)], tag: '달빛' },
     gear: { name: '톱니 주사위', tier: 2, price: 95, c: '#94a3b8', faces: [f('guard', 5), f('slash', 5), f('guard', 4), f('slash', 4), f('leech', 2), f('guard', 6)], tag: '수호' },
+    halo: { name: '성광 주사위', tier: 3, price: 125, c: '#fde68a', faces: [f('fire', 5), f('bolt', 5), f('guard', 5), f('leech', 4), f('mult', 2), f('slash', 6)], tag: '전설' },
+    gambit: { name: '모험 주사위', tier: 2, price: 80, c: '#fb7185', faces: [f('slash', 6), f('curse', 1), f('mult', 2), f('slash', 1), f('guard', 5), f('leech', 3)], tag: '도박' },
     prism: { name: '무지개 주사위', tier: 3, price: 120, c: '#f0abfc', faces: [f('fire', 4), f('bolt', 4), f('venom', 4), f('leech', 4), f('mult', 2), f('slash', 5)], tag: '전설' },
     titan: { name: '거인의 주사위', tier: 3, price: 130, c: '#fca5a5', faces: [f('slash', 6), f('slash', 6), f('guard', 6), f('slash', 5), f('guard', 5), f('slash', 6)], tag: '전설' },
   };
@@ -505,6 +507,26 @@
           chance: [ { p: 0.6, eff: { dice: 1, gold: -30 }, result: '손기술이 통했다. 주사위를 챙겼다.' },
                     { p: 0.4, eff: { gold: -30 }, result: '경매인이 손목을 붙잡았다. 30 골드만 사라졌다.' } ] },
         { label: '거절한다', result: '경매인은 어깨를 으쓱였다.' },
+      ],
+    },
+    {
+      id: 'starShard', name: '별의 파편', ic: 'star', tag: '성소',
+      text: '밤하늘에서 떨어진 파편이 아직 따뜻하다. 만지면 무언가가 몸속으로 스며들 것 같다.',
+      choices: [
+        { label: '파편을 삼킨다', desc: '최대 체력 +12 · 즉시 8 피해', eff: { maxHp: 12, selfDmgFlat: 8 }, result: '뜨거운 빛이 혈관을 타고 흐른다. 몸이 단단해졌다.' },
+        { label: '조각을 팔아버린다', desc: '골드 +70', eff: { gold: 70 }, result: '수집가가 눈을 반짝이며 값을 쳤다.' },
+        { label: '그냥 둔다', result: '파편은 천천히 식어갔다.' },
+      ],
+    },
+    {
+      id: 'oldWell', name: '마른 우물', ic: 'coin', tag: '탐색',
+      text: '돌로 된 우물이 말라 있다. 바닥에서 희미한 동전 소리가 들리는 듯하다.',
+      choices: [
+        { label: '동전을 던진다', desc: '15 골드 · 절반 확률로 주사위 획득', need: { gold: 15 },
+          chance: [ { p: 0.5, eff: { gold: -15, dice: 1 }, result: '우물이 반짝이며 주사위를 토해냈다.' },
+                    { p: 0.5, eff: { gold: -15 }, result: '동전은 떨어졌지만 아무 일도 없었다.' } ] },
+        { label: '물을 길어 마신다', desc: '체력 20% 회복', eff: { healPct: 0.2 }, result: '미지근한 물이 목을 적셨다.' },
+        { label: '지나간다', result: '우물을 뒤로했다.' },
       ],
     },
   ];
