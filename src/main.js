@@ -73,6 +73,7 @@
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.state.ui.set.motion = true;
         if (this.state.ui.set.motion) document.body.classList.add('no-motion');
         DC.FX.setReduced(this.state.ui.set.motion);
+        if (DC.VFX) DC.VFX.setReduced(this.state.ui.set.motion);
         this.applyDisplay();
         DC.Speed = this.state.ui.speed;
         const m = DC.Meta.get();
@@ -636,6 +637,7 @@
       document.body.classList.toggle('fs-l', set.fs === 1);
       document.body.classList.toggle('fs-xl', set.fs === 2);
       DC.FX.setReduced(!!set.motion);
+      if (DC.VFX) DC.VFX.setReduced(!!set.motion);
     },
 
     setDisplay: function (key, val) {
