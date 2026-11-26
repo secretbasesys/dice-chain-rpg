@@ -777,6 +777,7 @@
         '<div class="tut-step"><span class="tut-n" style="--c:#34d399">3</span>' +
           '<div><b>면을 바꾸는 것이 성장이다</b><p>단조 노드에서 주사위의 면 하나를 영구 교체합니다. 같은 눈 두 개를 연달아 쓰면 <b>페어</b> 보너스가 붙습니다.</p></div></div>' +
       '</div>' +
+      '<p class="tut-goal">' + icon('crown') + '<span>목표: <b>ACT 3의 주사위 군주</b>를 쓰러뜨리면 승리. 그 뒤에는 끝없는 심연이 기다립니다.</span></p>' +
       '<p class="tut-foot">' + icon('eye') + '모든 적의 다음 행동은 화면에 그대로 보입니다 — 완전 정보 전투.</p>' +
       '<button class="bigbtn primary tut-start" data-act="closetut">시작하기</button>' +
     '</div></div>';
@@ -1021,7 +1022,7 @@
       rows.map(function (r) {
         return '<div class="help-row"><span class="hn">' + r[0] + '</span><div><b>' + r[1] + '</b><p>' + r[2] + '</p></div></div>';
       }).join('') +
-      '<p class="help-foot">' + icon('eye') + '완전 정보 전투 — 적의 다음 행동은 항상 화면에 보입니다.</p>' +
+      '<p class="help-foot">' + icon('crown') + '목표: ACT 3의 주사위 군주를 쓰러뜨리면 승리, 그 뒤엔 심연 모드가 이어집니다.</p>' +
       '<button class="help-tut-btn" data-act="showtut">' + icon('book') + '첫 판 안내 다시 보기</button>' +
       '</div></div>';
   }

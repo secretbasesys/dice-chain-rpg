@@ -1733,3 +1733,7 @@ body.no-motion * { animation-duration: .001s !important; animation-iteration-cou
 .cx-ev-q { font-size: 18px; font-weight: 900; height: 30px; display: grid; place-items: center; }
 .cx-event b { font-size: 9px; color: #dbe4f6; }
 .cx-event span { font-size: 8px; color: var(--dim); }
+
+.tut-goal { font-size: 11px; color: #ffe6a7; background: rgba(251, 191, 36, .08); border: 1px solid rgba(251, 191, 36, .25); border-radius: 9px; padding: 6px 9px; margin: 2px 0 6px; line-height: 1.45; display: flex; gap: 5px; align-items: flex-start; }
+.tut-goal .ic { width: 13px; height: 13px; flex: none; margin-top: 1px; }
+.tut-goal b { color: #fff3c4; }
