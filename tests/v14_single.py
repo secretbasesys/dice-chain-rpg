@@ -16,6 +16,12 @@ with sync_playwright() as p:
     page.reload(); page.wait_for_timeout(300)
     new_game(page, "mage")
     page.wait_for_timeout(500)
+    try:
+        if page.locator('[data-act="closetut"]').count():
+            page.click('[data-act="closetut"]')
+            page.wait_for_timeout(200)
+    except Exception:
+        pass
     page.screenshot(path="/workspace/work/dice-rpg/screenshots/v14_singlefile_map.png")
     print("nodes:", page.evaluate("() => document.querySelectorAll('.node').length"))
     page.click('.node.avail')

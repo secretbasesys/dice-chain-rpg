@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '1.6.0';
+  DC.VERSION = '1.7.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -184,12 +184,12 @@
     },
     mage: {
       id: 'mage', name: '불꽃의 마도사', short: '마도사', en: 'ARCANIST',
-      hp: 80, sparks: 3, c: '#c084fc',
+      hp: 82, sparks: 3, c: '#c084fc',
       desc: '원소 주사위를 굴려 불태우고 연쇄시킨다. 눈을 바꿔 최적해를 만든다.',
       startDice: ['ember', 'arcane', 'frost'],
       passive: { n: '원소 친화', tip: '매 턴 기세 +1, 화염·번개 면을 쓰면 2 회복한다.' },
       skills: [
-        { id: 'ember', name: '불꽃 화살', req: 'any', ic: 'flame', fx: { type: 'attack', ratio: 2.2, burn: true }, desc: '눈 × 2.2 피해 · 화상' },
+        { id: 'ember', name: '불꽃 화살', req: 'any', ic: 'flame', fx: { type: 'attack', ratio: 2.3, burn: true }, desc: '눈 × 2.3 피해 · 화상' },
         { id: 'ward', name: '마나 방벽', req: 'even', ic: 'shield', fx: { type: 'block', ratio: 3.1, heal: 1 }, desc: '눈 × 3.1 방어도 · 1 회복' },
         { id: 'chain', name: '연쇄 번개', req: 'odd', ic: 'bolt', fx: { type: 'chain', ratio: 1.9 }, desc: '눈 × 1.9 + 다른 적에게 연쇄' },
         { id: 'amplify', name: '증폭', req: 'any', ic: 'mult', fx: { type: 'mult', add: 0.5, dmgRatio: 0.5 }, desc: '연쇄 배율 +0.5 · 눈 × 0.5 피해' },
@@ -281,6 +281,10 @@
     2: [E('golem', '고대 골렘', 84, 'construct', '#94a3b8', [{ k: 'defend', v: 16 }, { k: 'attack', v: 20 }, { k: 'attack', v: 8, hits: 3 }])],
     3: [E('wyvern', '와이번', 120, 'flyer', '#fb923c', [{ k: 'attack', v: 26 }, { k: 'attack', v: 11, hits: 3 }, { k: 'buff', s: 'str', v: 4 }])],
   };
+  DC.ELITES[1][0].gimmick = { kind: 'enrage', at: 0.5, str: 4, once: true };
+  DC.ELITES[2][0].gimmick = { kind: 'fortify', block: 7 };
+  DC.ELITES[3][0].gimmick = { kind: 'dive', every: 3, mult: 1.8 };
+
   DC.BOSSES = {
     1: E('queen', '슬라임 여왕', 92, 'boss', '#34d399', [{ k: 'attack', v: 13 }, { k: 'curse', n: 1 }, { k: 'attack', v: 7, hits: 2 }, { k: 'drain', v: 10 }]),
     2: E('lich', '심연의 리치', 150, 'boss', '#a78bfa', [{ k: 'curse', n: 2 }, { k: 'attack', v: 22 }, { k: 'debuff', s: 'vuln', v: 3 }, { k: 'attack', v: 10, hits: 3 }]),

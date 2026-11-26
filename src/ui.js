@@ -361,7 +361,9 @@
         '<div class="map-head">' +
           '<div class="mh-left"><span class="act-chip">ACT ' + r.act + '</span>' +
             '<span class="act-title">' + ACT_NAMES[r.act] + '</span></div>' +
-          '<div class="map-prog"><b>층 ' + (curRow + 1) + '</b><span>/' + rows + '</span></div>' +
+          '<div class="map-prog">' +
+            (r.seed ? '<button class="seed-chip" data-act="copyseed" title="시드 복사">' + icon('copy') + esc(DC.seedDisplay(r.seed)) + '</button>' : '') +
+            '<b>층 ' + (curRow + 1) + '</b><span>/' + rows + '</span></div>' +
         '</div>' +
         (boss && !bossDone ? '<div class="boss-preview" style="--c:' + boss.c + '">' +
           '<div class="bp-art">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(boss.art, boss) + '</svg>' + '</div>' +
@@ -447,10 +449,17 @@
           '</div>' +
           '<button class="asc-btn" data-act="asc" data-dir="1" ' + (asc >= maxAsc ? 'disabled' : '') + ' aria-label="승천 높이기">' + icon('plus') + '</button>' +
         '</div>' +
+        '<div class="seed-row">' +
+          '<span class="seed-ic">' + icon('dice') + '</span>' +
+          '<input id="seed-input" class="seed-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" maxlength="14"' +
+            ' placeholder="시드 입력 (비우면 무작위)" value="' + esc(state.ui.seed || '') + '" aria-label="시드" />' +
+          '<button class="seed-btn" data-act="daily">' + icon('clock') + '오늘의 시드</button>' +
+        '</div>' +
         '<div class="title-btns">' +
           (hasSave ? '<button class="bigbtn primary" data-act="resume">이어하기</button>' : '') +
           '<button class="bigbtn ' + (hasSave ? '' : 'primary') + '" data-act="newrun">새 게임</button>' +
           '<button class="bigbtn ghost" data-act="codex">도감 · 업적 <i class="badge-num">' + (prog.dice + prog.relics + prog.enemies) + '</i></button>' +
+          '<button class="bigbtn ghost" data-act="history">런 기록 <i class="badge-num">' + DC.Meta.history().length + '</i></button>' +
           '<button class="bigbtn ghost" data-act="help">게임 방법</button>' +
         '</div>' +
         '<p class="ver">v' + DC.VERSION + ' · 승리 ' + meta.wins + '회 · GitHub Pages</p>' +
@@ -646,6 +655,48 @@
       '<div class="panel-head"><h3>' + icon('book') + ' 스킬 각성</h3><button class="iconbtn" data-act="closeskills">' + icon('close') + '</button></div>' +
       '<p class="sub">스킬 하나를 영구히 강화합니다. 런이 끝나면 사라집니다.</p>' +
       '<div class="sk-list">' + rows + '</div>' +
+      '</div></div>';
+  }
+
+  function renderTut() {
+    return '<div class="overlay tut-overlay" data-act="closetut"><div class="panel tut-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('book') + ' 세 가지 규칙</h3></div>' +
+      '<div class="tut-steps">' +
+        '<div class="tut-step"><span class="tut-n" style="--c:#fbbf24">1</span>' +
+          '<div><b>굴리고, 조건에 맞춰 놓는다</b><p>매 턴 주사위가 전부 굴려집니다. 슬롯의 조건(짝수·홀수·4 이상…)에 맞는 주사위만 올릴 수 있습니다.</p></div></div>' +
+        '<div class="tut-step"><span class="tut-n" style="--c:#67e8f9">2</span>' +
+          '<div><b>이어 쓰면 배율이 오른다</b><p>한 턴에 스킬을 연달아 쓰면 콤보가 쌓이고 피해 배율이 최대 x3.5까지 상승합니다. 배율은 턴이 끝나면 초기화됩니다.</p></div></div>' +
+        '<div class="tut-step"><span class="tut-n" style="--c:#34d399">3</span>' +
+          '<div><b>면을 바꾸는 것이 성장이다</b><p>단조 노드에서 주사위의 면 하나를 영구 교체합니다. 같은 눈 두 개를 연달아 쓰면 <b>페어</b> 보너스가 붙습니다.</p></div></div>' +
+      '</div>' +
+      '<p class="tut-foot">' + icon('eye') + '모든 적의 다음 행동은 화면에 그대로 보입니다 — 완전 정보 전투.</p>' +
+      '<button class="bigbtn primary tut-start" data-act="closetut">시작하기</button>' +
+    '</div></div>';
+  }
+
+  function renderHistory(state) {
+    const list = DC.Meta.history();
+    const CLS = DC.classesShort || {};
+    const rows = list.map(function (h) {
+      const d = new Date(h.t);
+      const p2 = function (n) { return (n < 10 ? '0' : '') + n; };
+      const when = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+      return '<div class="hist-row ' + (h.win ? 'win' : 'lose') + '">' +
+        '<div class="hist-res">' + (h.win ? icon('crown') : icon('skull')) + '</div>' +
+        '<div class="hist-main">' +
+          '<div class="hist-top"><b>' + esc(CLS[h.cls] || h.cls) + '</b>' +
+            '<span class="hist-asc">승천 ' + (h.asc || 0) + '</span>' +
+            '<span class="hist-act">ACT ' + h.act + '</span>' +
+            '<i>' + (h.win ? '승리' : '패배') + '</i></div>' +
+          '<div class="hist-sub">' + when + ' · ' + (h.dmg || 0) + ' 피해 · 콤보 ' + (h.maxCombo || 0) +
+            ' · 주사위 ' + (h.dice ? h.dice.length : 0) + ' · 유물 ' + (h.relics ? h.relics.length : 0) + '</div>' +
+          (h.seed ? '<div class="hist-seed">' + icon('copy') + esc(DC.seedDisplay(h.seed)) + '</div>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+    return '<div class="overlay" data-act="closehistory"><div class="panel hist-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('clock') + ' 런 기록</h3><button class="iconbtn" data-act="closehistory">' + icon('close') + '</button></div>' +
+      '<div class="hist-list">' + (rows || '<div class="hist-empty">아직 기록이 없습니다.<br/>첫 런을 시작해 보세요.</div>') + '</div>' +
       '</div></div>';
   }
 
@@ -1060,6 +1111,8 @@
       if (state.ui.modal === 'help') app.innerHTML += renderHelp();
       if (state.ui.modal === 'skills' && state.run) app.innerHTML += renderSkills(state);
       if (state.ui.modal === 'codex') app.innerHTML += renderCodex(state);
+      if (state.ui.modal === 'history') app.innerHTML += renderHistory(state);
+      if (state.ui.modal === 'tut') app.innerHTML += renderTut();
       document.body.setAttribute('data-screen', state.screen);
       if (state.run) document.body.setAttribute('data-act', state.run.act);
       if (DC.AudioMusic) {

@@ -16,6 +16,8 @@
       classes: { warrior: 0, mage: 0, gambler: 0 },
       ach: {},
       lastAsc: 0,
+      history: [],
+      tut: 0,
     };
   };
 
@@ -28,6 +30,7 @@
       meta = Object.assign(blank(), raw || {});
       meta.seen = Object.assign(blank().seen, meta.seen || {});
       meta.classes = Object.assign(blank().classes, meta.classes || {});
+      meta.history = Array.isArray(meta.history) ? meta.history : [];
     } catch (e) { meta = blank(); }
     return meta;
   }
@@ -55,6 +58,19 @@
     noteDie: function (id) { const m = load(); if (once(m.seen.dice, id)) save(); },
     noteRelic: function (id) { const m = load(); if (once(m.seen.relics, id)) save(); },
     noteEnemy: function (key) { const m = load(); if (once(m.seen.enemies, key)) save(); },
+
+    noteRunEnd: function (entry) {
+      const m = load();
+      m.history.unshift(entry);
+      if (m.history.length > 30) m.history.length = 30;
+      save();
+    },
+
+    history: function () { return load().history || []; },
+
+    tutSeen: function () { return !!load().tut; },
+
+    setTut: function () { const m = load(); m.tut = 1; save(); },
 
     noteWin: function (cls, asc) {
       const m = load();

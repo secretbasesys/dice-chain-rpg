@@ -41,7 +41,7 @@
       st: { burn: 0, poison: 0, weak: 0, vuln: 0, str: 0 },
       intents: spawn.intents,
       actMul: 1 + 0.15 * ((act || 1) - 1),
-      intentIdx: Math.floor(Math.random() * spawn.intents.length),
+      intentIdx: Math.floor(DC.rng() * spawn.intents.length),
       gimmick: spawn.gimmick || null,
       lines: spawn.lines || null,
       title: spawn.title || null,
@@ -223,6 +223,7 @@
       if (has(c, 'pledge') && v % 2 === 0) d *= 1.4;
       if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 3;
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
+      if (c.prevV != null && c.prevV === v) d *= 1.25;
       let dmg = Math.max(1, Math.round(d));
       const hits = (has(c, 'karma') && c.combo >= 4 && !(opts && opts.noDouble)) ? 2 : 1;
       for (let i = 0; i < hits; i++) {
@@ -418,6 +419,7 @@
       c.block = first ? c.block : 0;
       c.combo = 0;
       c.multBonus = 0;
+      c.prevV = null;
       c.rerollsThisTurn = 0;
       c.luckyCoinUsed = 0;
       c.sparks = c.maxSparks;
@@ -427,17 +429,17 @@
       const bag = c._bag || [];
       const hand = [];
       bag.forEach(function (die, i) {
-        const r = DC.Dice.rollDie(die, Math.random);
+        const r = DC.Dice.rollDie(die, DC.rng);
         hand.push({ uid: DC.uid('h'), dieIdx: i, fi: r.fi, k: r.k, v: r.v, baseV: r.v, used: false, locked: false, phantom: false });
       });
       if (has(c, 'rune') && bag.length) {
-        const r = DC.Dice.rollDie(bag[Math.floor(Math.random() * bag.length)], Math.random);
+        const r = DC.Dice.rollDie(bag[Math.floor(DC.rng() * bag.length)], DC.rng);
         hand.push({ uid: DC.uid('h'), dieIdx: -1, fi: r.fi, k: r.k, v: r.v, baseV: r.v, used: false, locked: false, phantom: true });
       }
       // mage passive / hourglass
       if (c.cls === 'mage') c.sparks += 1;
       if (has(c, 'hourglass') && hand.length) {
-        const h = hand[Math.floor(Math.random() * hand.length)];
+        const h = hand[Math.floor(DC.rng() * hand.length)];
         if (h.v < 6) { h.v += 1; h.bonusV = true; }
       }
       c.hand = hand;
@@ -475,7 +477,10 @@
       s.anim = Date.now();
       ev.push({ t: 'combo', n: c.combo, mult: mult(c), face: h.k, value: h.v, skill: skill.name });
       const before = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);
+      const pair = (c.prevV != null && c.prevV === h.v);
       resolve(c, h, skill, ev);
+      c.prevV = h.v;
+      if (pair) ev.push({ t: 'msg', text: '페어! 피해 +25%' });
       const after = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);
       c.totalDamage += Math.max(0, before - after);
       (function () {
@@ -507,13 +512,13 @@
         c.rerollsThisTurn += 1;
         const die = c._bag[h.dieIdx];
         if (die) {
-          const r = DC.Dice.rollDie(die, Math.random);
+          const r = DC.Dice.rollDie(die, DC.rng);
           h.fi = r.fi;
           const keepBonus = h.v - h.baseV;
           h.k = r.k; h.v = DC.clamp(r.v + keepBonus, 1, 6); h.baseV = r.v;
         } else if (h.phantom) {
-          h.k = ['slash', 'guard', 'fire', 'bolt', 'venom', 'leech'][Math.floor(Math.random() * 6)];
-          h.v = 1 + Math.floor(Math.random() * 3);
+          h.k = ['slash', 'guard', 'fire', 'bolt', 'venom', 'leech'][Math.floor(DC.rng() * 6)];
+          h.v = 1 + Math.floor(DC.rng() * 3);
         }
         ev.push({ t: 'reroll', idx: handIdx, die: h });
         ev.push({ t: 'spark', amount: free ? 0 : -1 });
@@ -569,13 +574,22 @@
         if (e.hp <= 0) return;
         const it = intentOf(e);
         if (!it) return;
+        const egm = e.gimmick;
+        if (egm && egm.kind === 'enrage' && !e.gUsed && e.hp <= e.maxHp * (egm.at || 0.5)) {
+          e.st.str += (egm.str || 3); e.gUsed = true;
+          ev.push({ t: 'bossline', text: e.name + ' 격노! 힘 +' + (egm.str || 3) });
+        }
+        if (egm && egm.kind === 'fortify') {
+          e.block += (egm.block || 6);
+          ev.push({ t: 'eblock', eid: e.id, amount: (egm.block || 6) });
+        }
         /* boss: dicelord seals dice every N turns */
         const gm = e.gimmick;
         if (gm && gm.kind === 'seal' && c.turn % (gm.every || 2) === 0) {
           const pool = c.hand.filter(function (h) { return !h.used && !h.locked; });
           let locked = 0;
           for (let i = 0; i < (gm.n || 1) && pool.length; i++) {
-            const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+            const pick = pool.splice(Math.floor(DC.rng() * pool.length), 1)[0];
             pick.locked = true; locked++;
           }
           if (locked) {
@@ -585,7 +599,12 @@
         }
         if (it.k === 'attack') {
           const hits = it.hits || 1;
-          for (let i = 0; i < hits; i++) { if (c.hp > 0) hitPlayer(c, it.v, ev, { kind: 'enemy' }); }
+          let dmgV = it.v;
+          if (egm && egm.kind === 'dive' && c.turn % (egm.every || 3) === 0) {
+            dmgV = Math.round(dmgV * (egm.mult || 1.7));
+            ev.push({ t: 'bossline', text: e.name + ' 급강하!' });
+          }
+          for (let i = 0; i < hits; i++) { if (c.hp > 0) hitPlayer(c, dmgV, ev, { kind: 'enemy' }); }
           if (it.apply === 'burn') c.statuses.burnOnPlayer = (c.statuses.burnOnPlayer || 0) + 2;
           if (it.apply === 'poison') c.statuses.poisonOnPlayer = (c.statuses.poisonOnPlayer || 0) + 2;
           pushLog(c, { turn: c.turn, side: 'e', name: e.name, txt: intentText(it) });
@@ -599,7 +618,7 @@
           const pool = c.hand.filter(function (h) { return !h.used && !h.locked; });
           let n = 0;
           for (let i = 0; i < it.n && pool.length; i++) {
-            const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+            const pick = pool.splice(Math.floor(DC.rng() * pool.length), 1)[0];
             pick.locked = true; n++;
           }
           ev.push({ t: 'curse', n: n });

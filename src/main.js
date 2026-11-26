@@ -7,7 +7,45 @@
   const SAVE_KEY = 'dicechain.save.v2';
   const SET_KEY = 'dicechain.settings.v1';
 
-  function ri(n) { return Math.floor(Math.random() * n); }
+  /* ---------------- seeded RNG (v1.7) ---------------- */
+  function hashSeed(str) {
+    let h = 2166136261 >>> 0;
+    const s = String(str);
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h >>> 0;
+  }
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function todaySeed() {
+    const d = new Date();
+    const p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return 'DAILY-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate());
+  }
+  DC.rng = Math.random;
+  DC.setSeed = function (seed) {
+    if (!seed) { DC.rng = Math.random; DC.seedLabel = null; return null; }
+    const s = String(seed).trim();
+    if (!s) { DC.rng = Math.random; DC.seedLabel = null; return null; }
+    const real = s.toUpperCase() === 'DAILY' ? todaySeed() : s;
+    DC.rng = mulberry32(hashSeed(real));
+    DC.seedLabel = real;
+    return real;
+  };
+  DC.todaySeed = todaySeed;
+  DC.seedDisplay = function (seed) {
+    if (!seed) return '무작위';
+    const t = String(seed);
+    if (t.indexOf('DAILY-') === 0) return '일일 ' + Number(t.slice(10, 12)) + '/' + Number(t.slice(12, 14));
+    return t.toUpperCase().slice(0, 10);
+  };
+
+  function ri(n) { return Math.floor(DC.rng() * n); }
   function pick(arr) { return arr[ri(arr.length)]; }
   function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = ri(i + 1); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
@@ -52,6 +90,9 @@
           DC.UI.toast('오류: ' + (err && err.message));
         }
       });
+      document.addEventListener('input', function (e) {
+        if (e.target && e.target.id === 'seed-input') self.state.ui.seed = e.target.value;
+      });
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') { self.state.ui.modal = null; DC.UI.hideTip(); DC.UI.render(); }
         if (self.state.screen === 'combat' && !self.state.ui.busy) {
@@ -80,6 +121,17 @@
         case 'undo': this.undo(); break;
         case 'speed': this.toggleSpeed(); break;
         case 'log': s.ui.logOpen = !s.ui.logOpen; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'daily': s.ui.seed = DC.todaySeed(); DC.Audio.play('click'); DC.UI.render(); DC.UI.toast('오늘의 시드로 고정했습니다'); break;
+        case 'clearseed': s.ui.seed = ''; DC.UI.render(); break;
+        case 'history': s.ui.modal = s.ui.modal === 'history' ? null : 'history'; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'closehistory': s.ui.modal = null; DC.UI.render(); break;
+        case 'copyseed':
+          if (s.run && s.run.seed) {
+            try { navigator.clipboard.writeText(s.run.seed); DC.UI.toast('시드 복사: ' + s.run.seed); }
+            catch (e) { DC.UI.toast('시드: ' + s.run.seed); }
+          } else DC.UI.toast('시드가 없는 런입니다');
+          break;
+        case 'closetut': DC.Meta.setTut(); s.ui.modal = null; DC.UI.render(); break;
         case 'endturn': this.endTurn(); break;
         case 'target': this.setTarget(parseInt(d.i, 10)); break;
         case 'reward': this.takeReward(parseInt(d.i, 10)); break;
@@ -130,6 +182,7 @@
     pickClass: function (id) {
       const C = DC.CLASSES[id];
       const asc = this.state.ui.asc || 0;
+      const seed = DC.setSeed(this.state.ui.seed || '');
       const mod = DC.ascMod(asc);
       const run = {
         cls: id,
@@ -148,14 +201,16 @@
         stats: { kills: 0, turns: 0, dmg: 0 },
         startedAt: Date.now(),
         nodeSeq: 0,
+        seed: seed || null,
       };
-      run.map = DC.MapGen.gen(Math.random, 1);
+      run.map = DC.MapGen.gen(DC.rng, 1);
       DC.Meta.noteRunStart(asc);
       run.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });
       this.state.run = run;
       this.state.combat = null;
       this.goMap();
       DC.UI.toast(C.name + ' — 행운을 빈다');
+      if (!DC.Meta.tutSeen()) { this.state.ui.modal = 'tut'; DC.UI.render(); }
     },
 
     goMap: function () {
@@ -199,7 +254,7 @@
       if (kind === 'boss') return [DC.BOSSES[r.act]];
       if (kind === 'elite') return [DC.ELITES[r.act][0]];
       const pool = DC.ENEMIES[r.act];
-      const n = r.act === 1 ? (Math.random() < 0.3 ? 2 : 1) : (Math.random() < 0.55 ? 2 : 1);
+      const n = r.act === 1 ? (DC.rng() < 0.3 ? 2 : 1) : (DC.rng() < 0.55 ? 2 : 1);
       const out = [];
       const used = [];
       for (let i = 0; i < n; i++) {
@@ -384,6 +439,25 @@
     },
 
     /* ---------------- combat resolution ---------------- */
+    recordRun: function (win) {
+      const r = this.state.run;
+      if (!r) return;
+      DC.Meta.noteRunEnd({
+        t: Date.now(),
+        cls: r.cls,
+        asc: r.asc || 0,
+        seed: r.seed || null,
+        win: !!win,
+        act: r.act,
+        kills: (r.stats && r.stats.kills) || 0,
+        dmg: (r.stats && r.stats.dmg) || 0,
+        maxCombo: r.maxCombo || 0,
+        gold: r.gold,
+        dice: r.dice.map(function (d) { return d.name; }),
+        relics: r.relics.map(function (id) { return DC.RELICS[id] ? DC.RELICS[id].name : id; }),
+      });
+    },
+
     combatWon: function () {
       const s = this.state;
       const c = s.combat;
@@ -413,6 +487,7 @@
       if (s.run) {
         DC.Meta.noteBestAct(s.run.act);
         DC.Meta.check({ win: false, cls: s.run.cls, asc: s.run.asc || 0, maxCombo: s.run.maxCombo || 0, dmg: s.run.stats.dmg || 0 });
+        this.recordRun(false);
       }
       s.screen = 'gameover';
       s.combat = null;
@@ -485,6 +560,7 @@
         this.state.ui.winInfo = res;
         const gained = DC.Meta.check({ win: true, cls: r.cls, asc: r.asc || 0, maxCombo: r.maxCombo || 0, dmg: r.stats.dmg || 0 });
         this.state.ui.newAch = gained;
+        this.recordRun(true);
         r.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });
         this.clearSave();
         DC.UI.render();
@@ -494,8 +570,8 @@
       r.hp = Math.min(r.maxHp, r.hp + 18);
       const tier = r.act >= 3 ? 3 : 2;
       const pool = DC.DICE_IDS.filter(function (id) { return DC.DICE[id].tier <= tier; });
-      r.dice.push(DC.Dice.make(pool[Math.floor(Math.random() * pool.length)]));
-      r.map = DC.MapGen.gen(Math.random, r.act);
+      r.dice.push(DC.Dice.make(pool[Math.floor(DC.rng() * pool.length)]));
+      r.map = DC.MapGen.gen(DC.rng, r.act);
       r.current = null;
       DC.UI.toast('ACT ' + r.act + ' — ' + ['', '', '가라앉은 성소', '운명의 정점'][r.act]);
       this.goMap();
@@ -727,7 +803,7 @@
       let eff = ch.eff || {};
       let result = ch.result || '';
       if (ch.chance) {
-        const roll = Math.random();
+        const roll = DC.rng();
         let acc = 0, hit = ch.chance[ch.chance.length - 1];
         for (let k = 0; k < ch.chance.length; k++) {
           acc += ch.chance[k].p;
@@ -835,6 +911,7 @@
       rr.seenEvents = rr.seenEvents || [];
       rr.asc = rr.asc || 0;
       rr.maxCombo = rr.maxCombo || 0;
+      if (rr.seed) DC.setSeed(rr.seed);
       this.state.run = rr;
       this.state.combat = null;
       this.state.screen = 'map';
