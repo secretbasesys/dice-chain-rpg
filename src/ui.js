@@ -52,7 +52,9 @@
   function statusChips(st, opts) {
     let out = '';
     ['burn', 'poison', 'weak', 'vuln', 'str'].forEach(function (s) {
-      const v = st[s];
+      let v = st[s];
+      if (s === 'burn') v = Math.max(v || 0, st.burnOnPlayer || 0);
+      if (s === 'poison') v = Math.max(v || 0, st.poisonOnPlayer || 0);
       if (v > 0) {
         const d = DC.STATUS[s];
         out += '<span class="schip" style="--c:' + d.c + '" data-tip="' + esc(d.tip) + '" data-tip-title="' + esc(d.n) + '">' + icon(d.ic) + '<b>' + v + '</b></span>';

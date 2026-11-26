@@ -448,6 +448,17 @@
         const h = hand[Math.floor(DC.rng() * hand.length)];
         if (h.v < 6) { h.v += 1; h.bonusV = true; }
       }
+      let sealCount = c.pendingSeal || 0;
+      c.pendingSeal = 0;
+      const sealer = c.enemies.filter(function (e) { return e.hp > 0 && e.gimmick && e.gimmick.kind === 'seal'; })[0];
+      if (sealer && c.turn % (sealer.gimmick.every || 2) === 0) sealCount += (sealer.gimmick.n || 1);
+      if (sealCount && hand.length) {
+        const pool = hand.slice();
+        for (let i = 0; i < sealCount && pool.length; i++) {
+          const pick = pool.splice(Math.floor(DC.rng() * pool.length), 1)[0];
+          pick.locked = true;
+        }
+      }
       c.hand = hand;
       c.block = 0;
       if (c.statuses.weak > 0) c.statuses.weak -= 1;
@@ -593,20 +604,6 @@
           e.block += (egm.block || 6);
           ev.push({ t: 'eblock', eid: e.id, amount: (egm.block || 6) });
         }
-        /* boss: dicelord seals dice every N turns */
-        const gm = e.gimmick;
-        if (gm && gm.kind === 'seal' && c.turn % (gm.every || 2) === 0) {
-          const pool = c.hand.filter(function (h) { return !h.used && !h.locked; });
-          let locked = 0;
-          for (let i = 0; i < (gm.n || 1) && pool.length; i++) {
-            const pick = pool.splice(Math.floor(DC.rng() * pool.length), 1)[0];
-            pick.locked = true; locked++;
-          }
-          if (locked) {
-            ev.push({ t: 'bossline', text: e.lines && e.lines.half ? e.lines.half : '주사위 군주가 운명을 흔든다!' });
-            ev.push({ t: 'curse', n: locked });
-          }
-        }
         if (it.k === 'attack') {
           const hits = it.hits || 1;
           let dmgV = it.v;
@@ -625,13 +622,9 @@
         } else if (it.k === 'debuff') {
           c.statuses[it.s] += it.v; ev.push({ t: 'pstatus', s: it.s, amount: it.v });
         } else if (it.k === 'curse') {
-          const pool = c.hand.filter(function (h) { return !h.used && !h.locked; });
-          let n = 0;
-          for (let i = 0; i < it.n && pool.length; i++) {
-            const pick = pool.splice(Math.floor(DC.rng() * pool.length), 1)[0];
-            pick.locked = true; n++;
-          }
-          ev.push({ t: 'curse', n: n });
+          c.pendingSeal = (c.pendingSeal || 0) + (it.n || 1);
+          ev.push({ t: 'curse', n: it.n || 1 });
+          pushLog(c, { turn: c.turn, side: 'e', name: e.name, txt: '주사위 ' + (it.n || 1) + '개 봉인' });
         } else if (it.k === 'drain') {
           hitPlayer(c, it.v, ev, { kind: 'drain' });
           e.hp = Math.min(e.maxHp, e.hp + Math.round(it.v / 2));
@@ -665,15 +658,16 @@
         if (t) {
           hitEnemy(c, t, 2, { kind: 'slash' }, ev);
           ev.push({ t: 'msg', text: '강철 의지 — 2 피해' });
-          if (has(c, 'thornMail') && alive(c).length) {
-        alive(c).forEach(function (e) { hitEnemy(c, e, 4, { kind: 'guard' }, ev); });
-        ev.push({ t: 'msg', text: '가시 갑옷 — 적 전체 4 피해' });
-      }
-      if (!alive(c).length) { c.phase = 'won'; ev.push({ t: 'won' }); return { ok: true, events: ev }; }
+          if (!alive(c).length) { c.phase = 'won'; ev.push({ t: 'won' }); return { ok: true, events: ev }; }
         }
       }
       Combat.newTurn(c, false);
       ev.push({ t: 'newturn', turn: c.turn });
+      const lockN = c.hand.filter(function (h) { return h.locked; }).length;
+      if (lockN) {
+        ev.push({ t: 'curse', n: lockN });
+        ev.push({ t: 'msg', text: '운명이 묶였다 — 주사위 ' + lockN + '개 봉인' });
+      }
       return { ok: true, events: ev };
     },
 
