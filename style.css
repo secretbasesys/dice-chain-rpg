@@ -987,7 +987,7 @@ body[data-screen="combat"] #toast { top: 56px; bottom: auto; }
 }
 .phase-tag.enemy { background: rgba(255, 93, 93, .14); color: #ffb3b3; border-color: rgba(255, 93, 93, .35); animation: doom 1s infinite; }
 .speedbtn {
-  margin-left: auto; flex: none; cursor: pointer; min-width: 40px; min-height: 30px;
+  margin-left: auto; flex: none; cursor: pointer; min-width: 44px; min-height: 40px;
   font-size: 10.5px; font-weight: 900; padding: 4px 8px; border-radius: 9px;
   background: #1a2338; border: 1px solid var(--line2); color: #cbd7ef;
   display: inline-grid; place-items: center;
@@ -1243,12 +1243,12 @@ body[data-screen="combat"] #toast { top: 56px; bottom: auto; }
 .strip-main { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
 .strip-main::-webkit-scrollbar { display: none; }
 .strip-sub { display: flex; align-items: center; gap: 8px; min-height: 22px; }
-.strip-sub .speedbtn { margin-left: auto; min-height: 26px; }
+.strip-sub .speedbtn { margin-left: auto; min-height: 40px; }
 body[data-screen="combat"] #toast { top: auto; bottom: 72px; }
 body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; padding: 6px 12px; }
 .slot.can .slot-eff { display: none; }
 .slot.can .slot-prev { font-size: 13.5px; }
-.strip-sub .speedbtn { min-height: 30px; }
+.strip-sub .speedbtn { min-height: 40px; }
 .slots { align-content: stretch; grid-auto-rows: minmax(58px, 1fr); row-gap: 7px; }
 .enemy-row { min-height: 198px; }
 
@@ -1270,9 +1270,9 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 
 /* ---------------- battle log (v1.6) ---------------- */
 .log-toggle {
-  display: inline-flex; align-items: center; gap: 3px; margin-left: auto;
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px; margin-left: auto;
   background: #162034; border: 1px solid #26324c; border-radius: 8px;
-  color: #8fa2c2; padding: 3px 6px; min-height: 24px; cursor: pointer;
+  color: #8fa2c2; padding: 3px 8px; min-height: 40px; min-width: 40px; cursor: pointer;
 }
 .log-toggle .ic { width: 13px; height: 13px; }
 .log-toggle b { font-size: 9px; color: var(--gold); }
@@ -1447,4 +1447,40 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 
 .shop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .shop-head h2 { justify-content: flex-start; }
-.reroll-btn.sm { margin: 0; min-height: 36px; padding: 0 10px; font-size: 10px; }
+.reroll-btn.sm { margin: 0; min-height: 40px; padding: 0 10px; font-size: 10px; }
+
+/* ---------------- short screens (<= 720px height): compact combat ---------------- */
+@media (max-height: 720px) {
+  .combat { gap: 5px; padding: 6px 6px 6px; }
+  .arena { min-height: 0; }
+  .enemy-row { min-height: 128px; max-height: 148px; }
+  .enemy-art { width: 62px; height: 62px; }
+  .enemy-name { font-size: 11px; }
+  .enemy-title { display: none; }
+  .intent { font-size: 9.5px; padding: 1px 5px; }
+  .strip { font-size: 11px; min-height: 26px; padding: 2px 6px; gap: 6px; }
+  .strip-hint { display: none; }
+  .strip { flex-wrap: nowrap; }
+  .strip-main { flex-wrap: wrap; width: 100%; overflow-x: visible; gap: 6px; row-gap: 3px; }
+  .strip-sub { width: 100%; min-height: 0; }
+  .slots { grid-auto-rows: minmax(48px, 1fr); gap: 5px; }
+  .slot { padding: 4px 7px; border-radius: 10px; gap: 2px; }
+  .slot-name { font-size: 12px; }
+  .slot-eff { font-size: 9.5px; }
+  .slot-prev { font-size: 11px; }
+  .die { width: 54px; height: 62px; border-radius: 11px; }
+  .die-val { font-size: 20px; }
+  .tray-label { font-size: 9.5px; }
+  .mbtn { height: 46px; }
+  .manip { gap: 3px; }
+  .strip-sub { gap: 4px; }
+  .speedbtn { min-width: 40px; padding: 4px 6px; }
+  .mbtn .ic { width: 15px; height: 15px; }
+  .mbtn span { font-size: 9px; }
+  .endbtn { width: 80px; height: 46px; font-size: 12px; }
+  .actions { gap: 4px; }
+  .forecast { padding: 3px 7px; }
+  .shop-screen, .forge-screen, .rest-screen, .event-screen, .reward-screen { padding-bottom: 4px; }
+  .shop-screen .bottom-bar { position: sticky; bottom: 0; background: linear-gradient(180deg, transparent, #0a0f19 35%); margin-top: auto; }
+  .fc-list { display: none; }
+}
