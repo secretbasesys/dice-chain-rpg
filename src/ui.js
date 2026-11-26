@@ -279,7 +279,10 @@
         '</div>' +
         forecast(c) +
         logHtml +
-        '<div class="slots">' + slots + '</div>' +
+        '<div class="sr-only" role="status" aria-live="polite" id="sr-status">' +
+        (c.battleLog && c.battleLog.length ? esc((c.battleLog[c.battleLog.length - 1].skill || '적') + ' ' + (c.battleLog[c.battleLog.length - 1].txt || '')) : '전투 시작 — 턴 ' + c.turn) +
+      '</div>' +
+      '<div class="slots">' + slots + '</div>' +
         '<div class="tray-wrap">' +
           '<div class="tray-label">' + icon('dice') + '주사위 <b>' + c.hand.length + '</b>' + (sel != null ? ' · <span class="pick">' + esc(DC.KINDS[c.hand[sel].k].n + ' ' + c.hand[sel].v) + ' 선택됨 — 슬롯을 탭하세요</span>' : '') + '</div>' +
           '<div class="tray" id="tray">' + tray + '</div>' +
@@ -911,6 +914,11 @@
         '<div class="tut-step"><span class="tut-n" style="--c:#34d399">3</span>' +
           '<div><b>면을 바꾸는 것이 성장이다</b><p>단조 노드에서 주사위의 면 하나를 영구 교체합니다. 같은 눈 두 개를 연달아 쓰면 <b>페어</b> 보너스가 붙습니다.</p></div></div>' +
       '</div>' +
+      '<div class="tut-new">' +
+        '<div class="tn-row"><span style="--c:#fde68a">' + icon('crown') + '</span><div><b>보스 유물</b><p>1·2막 보스를 잡으면 굵은 힘과 대가가 함께 있는 유물 3장 중 하나를 고릅니다.</p></div></div>' +
+        '<div class="tn-row"><span style="--c:#c084fc">' + icon('book') + '</span><div><b>스킬 드래프트</b><p>보상에서 새 스킬을 골라 내 슬롯 하나와 바꿀 수 있습니다.</p></div></div>' +
+        '<div class="tn-row"><span style="--c:#67e8f9">' + icon('spark') + '</span><div><b>유물 시너지</b><p>정해진 유물 두 개를 모으면 추가 효과가 발동합니다(덱 화면에서 확인).</p></div></div>' +
+      '</div>' +
       '<p class="tut-goal">' + icon('crown') + '<span>목표: <b>ACT 3의 주사위 군주</b>를 쓰러뜨리면 승리. 그 뒤에는 끝없는 심연이 기다립니다.</span></p>' +
       '<p class="tut-foot">' + icon('eye') + '모든 적의 다음 행동은 화면에 그대로 보입니다 — 완전 정보 전투.</p>' +
       '<button class="bigbtn primary tut-start" data-act="closetut">시작하기</button>' +
@@ -1210,7 +1218,7 @@
         ['G', '상점', '주사위·유물·단조 도구·회복·각성의 서를 판매합니다. 20골드로 재고를 두 번까지 바꿀 수 있습니다.'],
         ['H', '휴식', '회복(40%)·단련(최대 체력 +8)·단조(면 1회) 중 하나를 고릅니다.'],
         ['I', '스킬 각성', '상점의 각성의 서나 보상으로 스킬 하나를 영구 강화합니다. 런이 끝나면 사라집니다.'],
-        ['J', '유물', '런 내내 유지되는 패시브입니다. 일반 22종 + 보스 유물 8종. 조합에 따라 빌드가 달라집니다.'],
+        ['J', '유물', '런 내내 유지되는 패시브입니다. 일반 ' + DC.POOL_RELIC_IDS.length + '종 + 보스 유물 ' + DC.BOSS_RELIC_IDS.length + '종. 조합에 따라 빌드가 달라집니다.'],
         ['J3', '유물 시너지', '정해진 유물 두 개를 모으면 추가 효과가 발동합니다(예: 화염 심장 + 번개 도체 = 폭풍의 심장). 덱 화면과 도감에서 확인할 수 있습니다.'],
         ['J4', '심연 변칙', '승리 후 더 깊이 들어가면 매 막 무작위 변칙이 걸립니다. 지도 상단의 칩을 눌러 확인하세요.'],
         ['J2', '보스 유물', '1막·2막 보스를 쓰러뜨리면 세 장 중 하나를 고릅니다. 강력하지만 반드시 대가(최대 체력·골드·방어 등)가 붙습니다.'],
@@ -1387,6 +1395,7 @@
             break;
           case 'msg':
             DC.FX.banner(ev.text, 'small');
+            (function () { const sr = q('#sr-status'); if (sr) sr.textContent = ev.text; })();
             break;
           case 'triple': {
             const badge = q('#combo-badge');
