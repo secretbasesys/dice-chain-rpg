@@ -235,6 +235,8 @@
       if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 3;
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
       if (c.prevV != null && c.prevV === v) d *= 1.25;
+      if ((c.sameVal || 1) >= 3) d *= 1.15;
+      if ((c.sameVal || 1) >= 4) d *= 1.15;
       if (c.cmod && c.cmod.dmg) d *= c.cmod.dmg;
       if (has(c, 'vanguard') && c.turn === 1) d *= 1.5;
       if (has(c, 'duelist') && alive(c).length === 1) d *= 1.25;
@@ -402,7 +404,7 @@
 
   /* ---------- state snapshots (undo) ---------- */
   const SNAP_KEYS = ['enemies', 'hand', 'slots', 'combo', 'multBonus', 'sparks', 'block', 'hp',
-    'statuses', 'phase', 'totalDamage', 'rerollsThisTurn', 'luckyCoinUsed', 'turn', 'chainLog', 'flask', 'verdict', 'engineUsed'];
+    'statuses', 'phase', 'totalDamage', 'rerollsThisTurn', 'luckyCoinUsed', 'turn', 'chainLog', 'flask', 'verdict', 'engineUsed', 'sameVal'];
 
   /* ---------- public API ---------- */
   const Combat = {
@@ -450,6 +452,7 @@
         customSkills: run.customSkills ? JSON.parse(JSON.stringify(run.customSkills)) : {},
         flask: { fire: 0, poison: 0, bolt: 0 },
         verdict: 0,
+        sameVal: 1,
         seedNote: null,
       };
       const cls = DC.CLASSES[run.cls];
@@ -485,6 +488,7 @@
       c.combo = 0;
       c.multBonus = 0;
       c.prevV = null;
+      c.sameVal = 1;
       c.rerollsThisTurn = 0;
       c.luckyCoinUsed = 0;
       c.engineUsed = false;
@@ -561,9 +565,12 @@
       ev.push({ t: 'combo', n: c.combo, mult: mult(c), face: h.k, value: h.v, skill: skill.name });
       const before = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);
       const pair = (c.prevV != null && c.prevV === h.v);
+      c.sameVal = pair ? (c.sameVal || 1) + 1 : 1;
       resolve(c, h, skill, ev);
       c.prevV = h.v;
       if (pair) ev.push({ t: 'msg', text: '페어! 피해 +25%' });
+      if (c.sameVal === 3) { c.sparks += 1; ev.push({ t: 'spark', amount: 1 }); ev.push({ t: 'triple', n: 3 }); }
+      else if (c.sameVal >= 4) { ev.push({ t: 'triple', n: c.sameVal }); }
       const after = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);
       c.totalDamage += Math.max(0, before - after);
       (function () {

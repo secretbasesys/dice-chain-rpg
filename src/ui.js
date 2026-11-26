@@ -474,11 +474,21 @@
     const doneToday = last && last.day === cfg.seed;
     const ch = DC.challengeById(cfg.challenge);
     const cls = DC.classesShort[cfg.cls] || cfg.cls;
+    const streak = DC.Meta.dailyStreak ? DC.Meta.dailyStreak() : 0;
+    const log = DC.Meta.dailyLog ? DC.Meta.dailyLog() : [];
+    const today = log.filter(function (d) { return d.day === cfg.seed; })[0];
+    const best = log.reduce(function (a, d) { return Math.max(a, d.score || 0); }, 0);
     return '<div class="daily-card' + (doneToday ? ' done' : '') + '">' +
       '<div class="dc-head"><span>' + icon('star') + '오늘의 도전</span><b>' + esc(cfg.day) + '</b></div>' +
       '<div class="dc-body">' + esc(cls) + ' · ' + esc(ch.short) + ' · 승천 ' + cfg.asc + '</div>' +
+      '<div class="dc-meta">' +
+        (streak ? '<span class="dc-streak">' + icon('flame') + streak + '일 연속 클리어</span>' : '<span>연속 클리어 없음</span>') +
+        (best ? '<span>최고 ' + best + '점</span>' : '') +
+      '</div>' +
       (doneToday
-        ? '<div class="dc-result">' + (last.win ? '오늘 클리어 · ACT ' + last.act : '오늘 기록 · ACT ' + last.act) + '</div>'
+        ? '<div class="dc-result">' + (last.win ? '오늘 클리어 · ACT ' + last.act : '오늘 기록 · ACT ' + last.act) +
+          (today ? ' · ' + today.score + '점' : '') + '</div>' +
+          '<button class="dc-btn ghost" data-act="dailyrun">다시 도전</button>'
         : '<button class="dc-btn" data-act="dailyrun">도전 시작</button>') +
     '</div>';
   }
@@ -1309,6 +1319,15 @@
           case 'msg':
             DC.FX.banner(ev.text, 'small');
             break;
+          case 'triple': {
+            const badge = q('#combo-badge');
+            if (ev.n >= 4) { DC.FX.banner('쿼드 연쇄!', 'good'); DC.FX.shake(9); }
+            else { DC.FX.banner('트리플!', 'small'); }
+            if (badge) { badge.classList.remove('burst'); void badge.offsetWidth; badge.classList.add('burst'); }
+            DC.Audio.play('combo', Math.min(7, ev.n + 2));
+            delay = 110;
+            break;
+          }
           case 'bossline':
             DC.FX.banner(ev.text, ev.soft ? 'boss soft' : 'boss');
             delay = 260;

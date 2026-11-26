@@ -19,6 +19,8 @@
       bestDepth: 3,
       bestCombo: 0, bestDmg: 0,
       daily: null,
+      dailyLog: [],
+      dailyStreak: 0,
       history: [],
       tut: 0,
     };
@@ -83,8 +85,30 @@
     noteDaily: function (rec) {
       const m = load();
       m.daily = rec;
+      m.dailyLog = Array.isArray(m.dailyLog) ? m.dailyLog : [];
+      const score = (rec.act || 0) * 120 + (rec.kills || 0) * 6 + Math.round((rec.dmg || 0) / 10) + (rec.win ? 300 : 0);
+      const entry = { day: rec.day, win: !!rec.win, act: rec.act || 0, score: score, cls: rec.cls, t: rec.t || Date.now() };
+      const i = m.dailyLog.findIndex(function (d) { return d.day === rec.day; });
+      if (i >= 0) { if (score > (m.dailyLog[i].score || 0) || (entry.win && !m.dailyLog[i].win)) m.dailyLog[i] = entry; }
+      else m.dailyLog.push(entry);
+      m.dailyLog = m.dailyLog.slice(-40);
+      /* streak: consecutive days cleared, counted back from the latest cleared day */
+      const days = {};
+      m.dailyLog.forEach(function (d) { if (d.win) days[d.day] = true; });
+      let streak = 0;
+      const now = new Date();
+      for (let k = 0; k < 40; k++) {
+        const dt = new Date(now.getTime() - k * 86400000);
+        const key = 'DAILY-' + dt.getFullYear() + ('0' + (dt.getMonth() + 1)).slice(-2) + ('0' + dt.getDate()).slice(-2);
+        if (days[key]) streak++;
+        else if (k > 0) break;
+      }
+      m.dailyStreak = streak;
       save();
     },
+
+    dailyLog: function () { return load().dailyLog || []; },
+    dailyStreak: function () { return load().dailyStreak || 0; },
 
     noteDepth: function (act) {
       const m = load();
