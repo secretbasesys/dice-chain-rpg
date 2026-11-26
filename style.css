@@ -2613,12 +2613,12 @@ body {
 /* --- dice tray --- */
 .tray-wrap { flex: none; position: relative; }
 .tray-wrap::after {
-  content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 22px; pointer-events: none;
+  content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 30px; pointer-events: none;
   background: linear-gradient(to left, rgba(7, 6, 10, .95), rgba(7, 6, 10, 0));
   opacity: .9;
 }
 .tray {
-  display: flex; gap: 5px; align-items: flex-end; justify-content: center;
+  display: flex; gap: 5px; align-items: flex-end; justify-content: safe center;
   overflow-x: auto; overflow-y: visible; padding: 4px 2px 2px; scrollbar-width: none;
   min-height: 74px;
 }
