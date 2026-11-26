@@ -904,6 +904,8 @@
       const pool = unseen.length ? unseen : DC.EVENTS.filter(function (e) { return e.id !== 'merchant'; });
       const ev = pick(pool);
       this.state.ui.event = { def: ev, text: ev.text, node: node, result: null, after: null };
+      DC.Meta.noteEvent(ev.id);
+      if (r.seenEvents && r.seenEvents.indexOf(ev.id) < 0) r.seenEvents.push(ev.id);
       this.state.screen = 'event';
       DC.UI.render();
     },

@@ -845,6 +845,16 @@
         (got && gtxt ? '<div class="cx-gimmick">' + esc(gtxt) + '</div>' : '') +
       '</div>';
     }).join('');
+    const seenEv = meta.seen.events || [];
+    const events = DC.EVENTS.map(function (ev) {
+      const got = seenEv.indexOf(ev.id) >= 0;
+      return '<div class="cx-event' + (got ? '' : ' locked') + '">' +
+        (got ? DC.eventArt(ev.id, 'cx-ev-art') : '<span class="cx-ev-q">?</span>') +
+        '<b>' + esc(got ? ev.name : '???') + '</b>' +
+        '<span>' + esc(got ? (ev.tag || '') : '미발견') + '</span>' +
+      '</div>';
+    }).join('');
+    const evSection = '<h4>' + icon('mystery') + ' 이벤트</h4><div class="cx-events">' + events + '</div>';
     const achs = DC.Meta.achList().map(function (a) {
       const pct = a.prog ? Math.min(100, Math.round(a.prog[0] / Math.max(1, a.prog[1]) * 100)) : 0;
       return '<div class="cx-ach' + (a.done ? ' done' : '') + '">' + icon(a.done ? 'check' : 'lock') +
@@ -854,10 +864,11 @@
     }).join('');
     return '<div class="overlay" data-act="closecodex"><div class="panel codex-panel" data-stop="1">' +
       '<div class="panel-head"><h3>' + icon('book') + ' 도감 · 업적</h3><button class="iconbtn" data-act="closecodex">' + icon('close') + '</button></div>' +
-      '<div class="cx-progress"><span>주사위 ' + pg.dice + '/' + pg.diceTotal + '</span><span>유물 ' + pg.relics + '/' + pg.relicTotal + '</span><span>적 ' + pg.enemies + '/' + pg.enemyTotal + '</span><span>업적 ' + pg.ach + '/' + pg.achTotal + '</span></div>' +
+      '<div class="cx-progress"><span>주사위 ' + pg.dice + '/' + pg.diceTotal + '</span><span>유물 ' + pg.relics + '/' + pg.relicTotal + '</span><span>적 ' + pg.enemies + '/' + pg.enemyTotal + '</span><span>이벤트 ' + pg.events + '/' + pg.eventTotal + '</span><span>업적 ' + pg.ach + '/' + pg.achTotal + '</span></div>' +
       '<h4>' + icon('dice') + ' 주사위</h4><div class="cx-dice-grid">' + dice + '</div>' +
       '<h4>' + icon('star') + ' 유물</h4><div class="cx-relics">' + relics + '</div>' +
       '<h4>' + icon('skull') + ' 적</h4><div class="cx-enemies">' + enemies + '</div>' +
+      evSection +
       '<h4>' + icon('crown') + ' 업적</h4><div class="cx-achs">' + achs + '</div>' +
       '</div></div>';
   }

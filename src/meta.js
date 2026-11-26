@@ -12,7 +12,7 @@
       v: 2,
       runs: 0, wins: 0, bestAct: 1,
       unlockedAsc: 0,          // highest ascension level selectable
-      seen: { dice: [], relics: [], enemies: [] },
+      seen: { dice: [], relics: [], enemies: [], events: [] },
       classes: { warrior: 0, mage: 0, gambler: 0 },
       ach: {},
       lastAsc: 0,
@@ -59,6 +59,7 @@
     },
 
     noteDie: function (id) { const m = load(); if (once(m.seen.dice, id)) save(); },
+    noteEvent: function (id) { const m = load(); if (once(m.seen.events, id)) save(); },
     noteRelic: function (id) { const m = load(); if (once(m.seen.relics, id)) save(); },
     noteEnemy: function (key) { const m = load(); if (once(m.seen.enemies, key)) save(); },
 
@@ -142,6 +143,7 @@
         dice: m.seen.dice.length, diceTotal: DC.DICE_IDS.length,
         relics: m.seen.relics.length, relicTotal: DC.RELIC_IDS.length,
         enemies: m.seen.enemies.length, enemyTotal: Meta.enemyTotal(),
+        events: (m.seen.events || []).length, eventTotal: DC.EVENTS.length,
         ach: Object.keys(m.ach || {}).length, achTotal: DC.ACHIEVEMENTS.length,
       };
     },
