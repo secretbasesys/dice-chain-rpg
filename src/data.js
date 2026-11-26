@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '6.3.0';
+  DC.VERSION = '6.4.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -181,6 +181,8 @@
     titan: { name: '거인의 주사위', tier: 3, price: 130, c: '#fca5a5', faces: [f('slash', 6), f('slash', 6), f('guard', 6), f('slash', 5), f('guard', 5), f('slash', 6)], tag: '전설' },
     aegis: { name: '성역 주사위', tier: 1, price: 0, c: '#fde68a', faces: [f('guard', 3), f('holy', 3), f('guard', 4), f('holy', 4), f('guard', 5), f('slash', 3)], tag: '신성' },
     mace: { name: '심판 망치', tier: 1, price: 0, c: '#fcd34d', faces: [f('slash', 3), f('holy', 2), f('slash', 4), f('guard', 4), f('holy', 5), f('slash', 5)], tag: '심판' },
+    solar: { name: '태양 주사위', tier: 3, price: 130, c: '#fde047', faces: [f('holy', 6), f('fire', 5), f('holy', 5), f('mult', 2), f('guard', 6), f('leech', 5)], tag: '태양' },
+    abyssal: { name: '심연 주사위', tier: 3, price: 135, c: '#a78bfa', faces: [f('slash', 6), f('venom', 5), f('curse', 1), f('mult', 2), f('bolt', 6), f('leech', 4)], tag: '심연' },
     tide: { name: '조수 주사위', tier: 2, price: 80, c: '#38bdf8', faces: [f('guard', 4), f('leech', 3), f('guard', 5), f('holy', 4), f('leech', 4), f('guard', 6)], tag: '조수' },
     cinder: { name: '잿불 주사위', tier: 2, price: 85, c: '#fb7185', faces: [f('fire', 5), f('curse', 1), f('fire', 6), f('slash', 4), f('bolt', 4), f('curse', 2)], tag: '잿불' },
     oracle: { name: '예언 주사위', tier: 3, price: 120, c: '#e9d5ff', faces: [f('mult', 2), f('holy', 5), f('mult', 2), f('bolt', 5), f('guard', 5), f('leech', 4)], tag: '전설' },
@@ -475,6 +477,18 @@
           result: '손바닥이 타들어간다. 힘이 솟구치고, 무언가가 조금 죽었다.' },
         { label: '뽑아서 부순다', desc: '+45 골드 (파편을 판다)', eff: { gold: 45 }, result: '검은 비명을 지르며 부서졌다. 파편이 팔렸다.' },
         { label: '지나간다', result: '검을 그냥 두고 왔다.' },
+      ],
+    },
+    {
+      id: 'starfall', name: '별똥별', ic: 'star', tag: '성소',
+      text: '밤하늘에서 별 하나가 떨어져 근처에 박혔다. 아직 뜨겁다. 소원을 빌면 뭔가 답이 올지도 모른다.',
+      choices: [
+        { label: '소원을 빈다', desc: '60% 최대 체력 +8 · 아니면 10 피해',
+          chance: [ { p: 0.6, eff: { maxHp: 8, healPct: 0.08 }, result: '별이 반짝이며 몸이 따뜻해졌다.' },
+                    { p: 0.4, eff: { selfDmgFlat: 10 }, result: '별이 타올라 손바닥을 태웠다.' } ] },
+        { label: '파편을 캔다', desc: '+30 골드 · 주사위 1개', eff: { gold: 30, dice: 1 },
+          result: '파편을 캐내자 안에서 작은 주사위가 굴러나왔다.' },
+        { label: '지나간다', result: '별은 천천히 식어갔다.' },
       ],
     },
     {

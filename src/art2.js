@@ -390,6 +390,15 @@
   /* ---------------- event illustrations (14) ---------------- */
   DC.EVENT_ART = {
     /* ---- v4.7 events ---- */
+    starfall:
+      glow(19, 11, 12, 0.18) +
+      '<path d="M19 3.8l1.5 4.7 4.7 1.5-4.7 1.5-1.5 4.7-1.5-4.7L12.8 10l4.7-1.5z" fill="currentColor" stroke="none" opacity=".9"/>' +
+      '<path d="M3.4 3.6l8 4M2.8 8.2l6.6 3.2M6 12.6l4.8 2.2" stroke-width="1.5" opacity=".5"/>' +
+      '<path d="M7.4 24.8c2.4-2.6 8.6-3 11.6-.6" stroke-width="1.6" opacity=".55"/>' +
+      '<path d="M9 27c1.8-1.6 5.6-1.8 7.6-.2" opacity=".35"/>' +
+      '<circle cx="5.6" cy="17.6" r="1.1" fill="currentColor" stroke="none" opacity=".6"/>' +
+      '<circle cx="24.4" cy="21.4" r=".8" fill="currentColor" stroke="none" opacity=".45"/>' +
+      '<circle cx="13.4" cy="21.4" r=".7" fill="currentColor" stroke="none" opacity=".5"/>',
     caravan:
       glow(16, 18, 14, 0.12) +
       '<path d="M3.4 24.6h25.2" stroke-width="2" opacity=".7"/>' +
