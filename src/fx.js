@@ -90,6 +90,19 @@
       if (L) Array.prototype.forEach.call(L.querySelectorAll('.fx-banner'), function (n) { n.remove(); });
     },
 
+    ring: function (el, color) {
+      if (reduced) return;
+      const L = layer(); if (!L) return;
+      const r = rectOf(el);
+      const d = document.createElement('div');
+      d.className = 'fx-ring';
+      d.style.left = (r.left + r.width / 2) + 'px';
+      d.style.top = (r.top + r.height * 0.42) + 'px';
+      if (color) d.style.borderColor = color;
+      L.appendChild(d);
+      setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 460);
+    },
+
     flash: function (color) {
       if (reduced) return;
       const L = layer(); if (!L) return;

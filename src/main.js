@@ -404,8 +404,14 @@
       if (kind === 'boss') {
         const bossDef = DC.BOSSES[r.act <= 3 ? Math.min(3, r.act) : 4 + (r.act % 2)];
         const lines = (bossDef && bossDef.lines) || { appear: '보스 등장!' };
+        const bossName = (c.enemies[0] && c.enemies[0].title) || 'BOSS';
         DC.Audio.play('boss');
-        setTimeout(function () { DC.FX.banner(lines.appear, 'boss'); }, 350);
+        setTimeout(function () {
+          DC.FX.banner(bossName, 'cinematic');
+          DC.FX.flash('rgba(251, 191, 36, .16)');
+          DC.FX.shake(10);
+        }, 260);
+        setTimeout(function () { DC.FX.banner(lines.appear, 'boss'); }, 1500);
         DC.UI.toast('보스 등장!');
       } else if (kind === 'elite') DC.UI.toast('정예 조우!');
     },

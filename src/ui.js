@@ -116,7 +116,7 @@
     const incoming = it && it.k === 'attack' ? it.v * (it.hits || 1) : 0;
     const lethal = incoming > 0 && incoming >= (c.hp + c.block) && !dead;
     return '' +
-      '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '">' +
+      '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + (e.title ? ' is-boss' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '">' +
         (dead ? '' : '<div class="intent it-' + (it ? it.k : 'none') + (lethal ? ' lethal' : '') + '" data-tip="' + esc(intentTip(it, e)) + '" data-tip-title="적의 의도">' + icon(DC.Combat.intentIcon(it)) + '<b>' + esc(DC.Combat.intentText(it)) + '</b></div>') +
         '<div class="enemy-art">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(e.art, e) + '</svg>' +
@@ -192,6 +192,7 @@
 
   function renderCombat(state) {
     const c = state.combat;
+    const r = state.run;
     const sel = state.ui.sel;
     const canAct = c.phase === 'player' && !state.ui.busy;
     const unused = c.hand.filter(function (h) { return !h.used && !h.locked; }).length;
@@ -204,21 +205,33 @@
 
     const logLen = (c.battleLog || []).length;
     const logOpen = !!state.ui.logOpen;
-    let logHtml = '';
-    if (logOpen) {
-      logHtml = '<div class="battle-log">' +
-        ((c.battleLog || []).slice(-14).map(function (l) {
-          const k = DC.KINDS[l.k];
-          return '<div class="bl-row ' + l.side + '">' +
-            '<span class="bl-turn">T' + l.turn + '</span>' +
-            (l.side === 'p'
-              ? '<span class="bl-ic" style="--c:' + (k ? k.c : '#8ea3c4') + '">' + icon(k ? k.ic : 'dice') + '</span><b>' + esc(l.skill) + '</b><i>' + l.v + '</i>'
-              : '<span class="bl-ic foe">' + icon('skull') + '</span><b>' + esc(l.name) + '</b>') +
-            '<span class="bl-txt">' + esc(l.txt) + '</span>' +
-          '</div>';
-        }).join('') || '<div class="bl-empty">아직 기록이 없습니다</div>') +
-      '</div>';
-    }
+    const logHtml = '<aside class="battle-log-wrap' + (logOpen ? ' open' : '') + ' ' + (c.phase === 'enemy' ? 'foe-turn' : '') + '">' +
+      '<div class="bl-head">' + icon('book') + '<span>전투 기록</span>' + (logLen ? '<b>' + logLen + '</b>' : '') +
+        '<button class="bl-close" data-act="log" aria-label="기록 닫기">' + icon('close') + '</button></div>' +
+      '<div class="battle-log">' +
+      ((c.battleLog || []).slice(-40).map(function (l) {
+        const k = DC.KINDS[l.k];
+        return '<div class="bl-row ' + l.side + '">' +
+          '<span class="bl-turn">T' + l.turn + '</span>' +
+          (l.side === 'p'
+            ? '<span class="bl-ic" style="--c:' + (k ? k.c : '#8ea3c4') + '">' + icon(k ? k.ic : 'dice') + '</span><b>' + esc(l.skill) + '</b><i>' + l.v + '</i>'
+            : '<span class="bl-ic foe">' + icon('skull') + '</span><b>' + esc(l.name) + '</b>') +
+          '<span class="bl-txt">' + esc(l.txt) + '</span>' +
+        '</div>';
+      }).join('') || '<div class="bl-empty">아직 기록이 없습니다</div>') +
+      '</div>' +
+      '<div class="bl-foot">' +
+        '<div class="bf-stats">' +
+          '<span>' + icon('heart') + '<b>' + Math.max(0, c.hp) + '</b>/' + c.maxHp + '</span>' +
+          '<span>' + icon('coin') + '<b>' + r.gold + '</b></span>' +
+          '<span>' + icon('dice') + '<b>' + c.hand.length + '</b></span>' +
+        '</div>' +
+        (r.relics.length ? '<div class="bf-relics">' + r.relics.map(function (id) {
+          const R = DC.RELICS[id];
+          return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc) + '" data-tip-title="' + esc(R.name) + '">' + relicIcon(id) + '</span>';
+        }).join('') + '</div>' : '') +
+      '</div>' +
+      '</aside>';
 
     let tray = '';
     c.hand.forEach(function (h, i) { tray += dieChip(h, i, { sel: sel === i && canAct }); });
@@ -234,7 +247,7 @@
 
     return '' +
       hud(state) +
-      '<main class="combat' + (state.ui.busy ? ' busy' : '') + '">' +
+      '<main class="combat' + (state.ui.busy ? ' busy' : '') + (logOpen ? ' log-open' : '') + '">' +
         '<div class="arena">' +
           '<div class="arena-scene act-' + c.act + '">' +
             '<svg viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' + DC.actScene(c.act) + '</svg>' +
@@ -1088,7 +1101,18 @@
             const comb = q('.combat');
             if (comb) comb.classList.toggle('heat', ev.n >= 4);
             const badge = q('#combo-badge');
-            if (badge) { badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop'); }
+            if (badge) {
+              badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop');
+              if (ev.n >= 3) {
+                badge.classList.remove('burst'); void badge.offsetWidth; badge.classList.add('burst');
+                DC.FX.burst(badge, '#fbbf24', ev.n >= 7 ? 16 : ev.n >= 5 ? 11 : 7);
+              }
+            }
+            const dots = document.querySelectorAll('.chain .chain-dot');
+            if (dots.length) {
+              const last = dots[dots.length - 1];
+              last.classList.remove('lit'); void last.offsetWidth; last.classList.add('lit');
+            }
             delay = 90;
             break;
           case 'edmg': {
@@ -1096,6 +1120,7 @@
             if (el) {
               DC.FX.floatAt(el, '-' + ev.amount, ev.heavy ? 'dmg heavy' : 'dmg');
               DC.FX.burst(el, DC.Combat.faceColor(ev.kind || 'slash'), ev.heavy ? 16 : 8);
+              DC.FX.ring(el, 'rgba(255,255,255,.8)');
               DC.FX.shake(ev.heavy ? 10 : 3 + ev.amount / 6);
               const comboPitch = 1 + Math.min(0.55, ((DC.Game.state.combat && DC.Game.state.combat.combo) || 1) * 0.045);
               if (ev.amount >= 20 || ev.heavy) {

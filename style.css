@@ -1835,3 +1835,178 @@ body.no-motion * { animation-duration: .001s !important; animation-iteration-cou
   color: #67e8f9;
 }
 .die-eye .ic { width: 11px; height: 11px; }
+
+/* ---------------- v4.5 battle log wrapper ---------------- */
+.battle-log-wrap { display: none; }
+.combat.log-open .battle-log-wrap { display: block; }
+.bl-head {
+  display: flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 900;
+  color: #9db0cd; padding: 0 2px 3px;
+}
+.bl-head .ic { width: 12px; height: 12px; }
+.bl-head b {
+  font-size: 9px; background: #1b2740; color: #c9d7ee; border-radius: 6px; padding: 0 5px;
+}
+.bl-close { display: none; margin-left: auto; background: none; border: 0; color: var(--dim); padding: 2px; cursor: pointer; }
+.bl-close .ic { width: 14px; height: 14px; }
+
+/* enemy hit: bright flash + impact ring (v4.5) */
+.enemy .enemy-art { position: relative; }
+.enemy .enemy-art::after {
+  content: ''; position: absolute; inset: 6%; border-radius: 50%; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0) 68%);
+}
+.enemy.hurt .enemy-art::after { animation: hitFlash .24s ease-out; }
+@keyframes hitFlash { 0% { opacity: .95; transform: scale(1.08); } 100% { opacity: 0; transform: scale(1); } }
+.enemy.hurt { animation: hurt2 .3s cubic-bezier(.36, .07, .19, .97); }
+@keyframes hurt2 {
+  0% { transform: translate(0, 0) scale(1); }
+  22% { transform: translate(-9px, 3px) scale(.99); }
+  46% { transform: translate(7px, -3px); }
+  70% { transform: translate(-4px, 1px); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.enemy.crit.hurt { animation: hurtCrit .42s cubic-bezier(.36, .07, .19, .97); }
+@keyframes hurtCrit {
+  0% { transform: translate(0, 0) scale(1); }
+  18% { transform: translate(-12px, 4px) scale(1.05); filter: brightness(1.7); }
+  40% { transform: translate(9px, -4px) scale(1.02); }
+  65% { transform: translate(-5px, 2px); }
+  100% { transform: translate(0, 0) scale(1); filter: brightness(1); }
+}
+/* impact ring at the enemy damage point */
+.fx-ring {
+  position: absolute; width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .85); pointer-events: none;
+  animation: ringOut .42s ease-out forwards;
+}
+@keyframes ringOut {
+  0% { opacity: .9; transform: translate(-50%, -50%) scale(.4); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(5.5); }
+}
+
+/* boss entrance (v4.5) */
+.enemy.is-boss { animation: bossIn .55s cubic-bezier(.2, .9, .2, 1) both; }
+@keyframes bossIn {
+  0% { opacity: 0; transform: translateY(-16px) scale(.9); filter: brightness(2); }
+  60% { opacity: 1; filter: brightness(1.2); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+.fx-banner.cinematic {
+  font-size: 30px; font-weight: 900; letter-spacing: .18em; color: #ffe6a3;
+  text-shadow: 0 0 26px rgba(251, 191, 36, .7), 0 3px 0 rgba(0, 0, 0, .55);
+  animation: cineIn 2.1s cubic-bezier(.2, .8, .2, 1) forwards;
+}
+@keyframes cineIn {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(1.25); letter-spacing: .5em; }
+  16% { opacity: 1; transform: translate(-50%, -50%) scale(1); letter-spacing: .18em; }
+  76% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -56%) scale(1); }
+}
+/* combo burst ring around the badge */
+.combo-badge.burst::after {
+  content: ''; position: absolute; inset: -4px; border-radius: inherit;
+  border: 2px solid rgba(251, 191, 36, .85); animation: comboRing .45s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes comboRing { 0% { opacity: .9; transform: scale(.85); } 100% { opacity: 0; transform: scale(1.8); } }
+.chain .chain-dot.lit { animation: dotLit .4s ease-out; }
+@keyframes dotLit { 0% { transform: scale(1); } 40% { transform: scale(1.35); filter: brightness(1.8); } 100% { transform: scale(1); } }
+
+/* ---------------- v4.5 wide desktop layout (≥1120px) ---------------- */
+@media (min-width: 1120px) {
+  .combat {
+    display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: repeat(6, auto);
+    column-gap: 20px; row-gap: 10px; align-content: center;
+    max-width: 1180px; width: 100%; margin: 0 auto; padding: 16px 24px 20px;
+  }
+  .combat > .arena,
+  .combat > .strip,
+  .combat > .forecast,
+  .combat > .slots,
+  .combat > .tray-wrap,
+  .combat > .actions { grid-column: 1; }
+  .combat > .arena { grid-row: 1; }
+  .combat > .strip { grid-row: 2; }
+  .combat > .forecast { grid-row: 3; }
+  .combat > .slots { grid-row: 4; }
+  .combat > .tray-wrap { grid-row: 5; }
+  .combat > .actions { grid-row: 6; }
+  .battle-log-wrap {
+    display: flex !important; flex-direction: column; grid-column: 2; grid-row: 1 / span 6;
+    min-height: 0; max-height: 100%; padding: 10px 12px 12px;
+    background: linear-gradient(180deg, rgba(16, 23, 38, .92), rgba(11, 17, 29, .92));
+    border: 1px solid #1e2a44; border-radius: 14px;
+  }
+  .battle-log-wrap .bl-head { font-size: 11.5px; padding-bottom: 8px; border-bottom: 1px solid #1a2439; margin-bottom: 6px; }
+  .battle-log-wrap .bl-head .ic { width: 14px; height: 14px; }
+  .battle-log-wrap .battle-log {
+    flex: 1; max-height: none; overflow-y: auto; margin: 0; padding: 0;
+    background: none; border: 0; gap: 3px;
+  }
+  .battle-log-wrap .bl-row { font-size: 11px; line-height: 1.55; }
+  .log-toggle { display: none; }
+  .forecast { max-width: none; }
+  .arena-scene svg { height: 132px; }
+  .map-screen { max-width: 1080px; }
+  .map-canvas { max-width: 860px; }
+  .shop-screen { max-width: 1040px; }
+  .shop-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shop-screen .bottom-bar { grid-column: 1 / -1; }
+  .reward-screen { max-width: 1040px; }
+  .rw-list { display: grid; grid-template-columns: repeat(3, 1fr); max-width: none; }
+  .rw-card { grid-template-columns: 40px 1fr; }
+  .forge-screen { max-width: 1040px; }
+  .event-screen, .rest-screen, .end-screen { max-width: 900px; }
+  .bossrelic-screen { max-width: 1040px; }
+}
+
+@media (min-width: 1120px) {
+  .app { max-width: 1240px; }
+  .hud { padding: 0 24px; }
+}
+
+/* v4.5 — battle log sidebar footer */
+.bl-foot { display: none; }
+@media (min-width: 1120px) {
+  .battle-log-wrap .bl-foot {
+    display: block; border-top: 1px solid #1a2439; padding-top: 8px; margin-top: 8px;
+  }
+  .bf-stats { display: flex; gap: 12px; font-size: 11px; color: #9db0cd; font-weight: 700; }
+  .bf-stats span { display: inline-flex; align-items: center; gap: 3px; }
+  .bf-stats .ic { width: 12px; height: 12px; }
+  .bf-stats b { color: #e8f0ff; font-size: 12px; }
+  .bf-relics { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 7px; }
+  .bf-relics .relic { width: 24px; height: 24px; border-radius: 7px; }
+  .enemy-art { width: 118px; height: 118px; }
+  .enemy-row { min-height: 230px; max-height: 280px; }
+  .enemy { max-width: 300px; }
+  .tray-wrap { padding-top: 2px; }
+}
+
+/* v4.5 — phone: battle log opens as a bottom sheet, not inline */
+@media (max-width: 1119px) {
+  .combat.log-open .battle-log-wrap {
+    display: flex; flex-direction: column;
+    position: fixed; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    max-height: 58vh; z-index: 60; padding: 10px 12px 12px;
+    background: linear-gradient(180deg, #162034, #0c1421);
+    border: 1px solid #26355a; border-radius: 16px;
+    box-shadow: 0 -14px 44px rgba(0, 0, 0, .62), inset 0 1px 0 rgba(255, 255, 255, .05);
+    animation: logSheet .22s cubic-bezier(.2, .8, .3, 1);
+  }
+  @keyframes logSheet { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .combat.log-open .battle-log-wrap .bl-head { font-size: 11.5px; padding-bottom: 7px; border-bottom: 1px solid #1c2740; margin-bottom: 6px; }
+  .combat.log-open .battle-log-wrap .bl-close {
+    display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px;
+    background: #182135; border: 1px solid #26355a; color: #9db0cd;
+  }
+  .combat.log-open .battle-log-wrap .battle-log { max-height: none; flex: 1; overflow-y: auto; margin: 0; background: none; border: 0; }
+  .combat.log-open .battle-log-wrap .bl-row { font-size: 11px; }
+}
+
+@media (min-width: 1120px) {
+  .shop-list { align-items: start; align-content: start; }
+  .shop-item { align-self: start; }
+  .shop-screen .bottom-bar { margin-top: 10px; }
+}
