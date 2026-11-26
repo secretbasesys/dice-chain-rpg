@@ -262,6 +262,7 @@
             '<span class="strip-item">' + icon('dice') + '남은 <b id="left-dice">' + unused + '</b></span>' +
             '<span class="strip-item spark" data-tip="' + esc(DC.KEYWORDS.spark.t) + '" data-tip-title="기세">' + icon('spark') + '기세 <b id="spark-num">' + c.sparks + '</b></span>' +
             (c.cls === 'alchemist' ? flaskUi(c) : '') +
+            (c.cls === 'paladin' ? verdictUi(c) : '') +
             '<span class="strip-item">' + icon('clock') + '턴 <b>' + c.turn + '</b></span>' +
             '<button class="log-toggle' + (logOpen ? ' on' : '') + '" data-act="log" aria-label="전투 기록">' + icon('book') + (logLen ? '<b>' + logLen + '</b>' : '') + '</button>' +
             statusChips(c.statuses) +
@@ -534,7 +535,8 @@
         return '<span class="dchip" style="--c:' + DC.DICE[d].c + '">' + DC.DICE[d].name + '</span>';
       }).join('');
       return '' +
-        '<div class="class-card" data-act="pickclass" data-id="' + id + '" style="--c:' + C.c + '" role="button" tabindex="0">' +
+        '<div class="class-card' + (C.fresh ? ' fresh' : '') + '" data-act="pickclass" data-id="' + id + '" style="--c:' + C.c + '" role="button" tabindex="0">' +
+          (C.fresh ? '<span class="class-new">' + icon('star') + 'NEW</span>' : '') +
           '<div class="class-badge">' + icon(C.ic || (id === 'warrior' ? 'shield' : id === 'mage' ? 'flame' : id === 'gambler' ? 'star' : 'flask')) + '</div>' +
           '<div class="class-name">' + C.name + '</div>' +
           '<div class="class-en">' + C.en + '</div>' +
@@ -547,7 +549,7 @@
     return '' +
       '<main class="class-screen">' +
         '<h2>클래스를 선택하세요</h2>' +
-        '<p class="sub">각 클래스는 다른 주사위와 스킬 슬롯을 가집니다' + ((state.ui.asc || 0) ? ' · 승천 ' + state.ui.asc : '') +
+        '<p class="sub">각 클래스는 다른 주사위와 스킬 슬롯을 가집니다 · ' + DC.CLASS_IDS.length + '개 클래스' + ((state.ui.asc || 0) ? ' · 승천 ' + state.ui.asc : '') +
           ((state.ui.challenge && state.ui.challenge !== 'none') ? ' · ' + esc(DC.challengeById(state.ui.challenge).short) : '') + '</p>' +
         '<div class="class-list">' + cards + '</div>' +
       '</main>';
@@ -738,6 +740,14 @@
         '<div class="ev-choices">' + choices + '</div>' +
         '<button class="ev-skip" data-act="leave">' + icon('right') + '그냥 지나간다</button>' +
       '</main>';
+  }
+
+  function verdictUi(c) {
+    const n = c.verdict || 0;
+    let pips = '';
+    for (let i = 0; i < 6; i++) pips += '<i' + (i < n ? ' class="on"' : '') + '></i>';
+    return '<span class="strip-item vchip' + (n >= 4 ? ' hot' : '') + '" data-tip="' + esc(DC.KEYWORDS.verdict.t) + '" data-tip-title="심판">' +
+      icon('crown') + '<span class="v-pips">' + pips + '</span><b>' + n + '</b></span>';
   }
 
   function renderSkills(state) {
@@ -1049,13 +1059,14 @@
         ['G', '상점', '주사위·유물·단조 도구·회복·각성의 서를 판매합니다. 20골드로 재고를 두 번까지 바꿀 수 있습니다.'],
         ['H', '휴식', '회복(40%)·단련(최대 체력 +8)·단조(면 1회) 중 하나를 고릅니다.'],
         ['I', '스킬 각성', '상점의 각성의 서나 보상으로 스킬 하나를 영구 강화합니다. 런이 끝나면 사라집니다.'],
-        ['J', '유물', '런 내내 유지되는 패시브입니다. 22종이 있으며 조합에 따라 빌드가 달라집니다.'],
+        ['J', '유물', '런 내내 유지되는 패시브입니다. 일반 22종 + 보스 유물 8종. 조합에 따라 빌드가 달라집니다.'],
         ['J2', '보스 유물', '1막·2막 보스를 쓰러뜨리면 세 장 중 하나를 고릅니다. 강력하지만 반드시 대가(최대 체력·골드·방어 등)가 붙습니다.'],
       ],
       meta: [
         ['K', '시드', '타이틀에서 시드를 입력하면 같은 맵·주사위·상점이 재현됩니다. 「오늘의 시드」는 날짜 기반 일일 런입니다.'],
         ['L', '도전 모드', '유리 몸·탐욕·광란 세 가지 변칙 규칙. 표준 외 모드로 이기면 업적이 열립니다.'],
         ['M', '승천', '승리할 때마다 1단계씩 최대 10까지 해금됩니다. 적 체력·공격·상점가가 누적해서 강해집니다.'],
+        ['O', '성기사', '방어도와 신성 면으로 심판을 쌓고, 공격 스킬로 터뜨립니다. 심판 1당 +2 피해, 최대 6.'],
         ['N', '런 기록·도감', '타이틀에서 지난 30런의 승패와 시드, 도감에서 주사위·유물·적·업적 수집 현황을 봅니다.'],
       ],
     };
@@ -1198,6 +1209,15 @@
           case 'spark':
             if (ev.amount > 0) { DC.Audio.play('spark'); DC.FX.floatAt(q('.spark') || q('.hud'), '+' + ev.amount + ' 기세', 'spark'); }
             break;
+          case 'vstack': {
+            const el = q('.vchip');
+            if (el) {
+              DC.FX.floatAt(el, '심판 +' + Math.max(1, (ev.n || 1) - 0) , 'status', { size: 14 });
+              el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+              DC.Audio.play('block');
+            }
+            break;
+          }
           case 'kill': {
             const el = targetEl(ev.eid);
             if (el) {

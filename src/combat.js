@@ -222,6 +222,7 @@
     function atk(targetEnemy, ratio, bonus, opts) {
       let d = (v * ratio + (bonus || 0) + (c.statuses.str || 0)) * m * weakP;
       if (k === 'slash') d *= 1.0;
+      if (fx.verdict) d += (c.verdict || 0) * fx.verdict;
       if (has(c, 'scale') && v % 2 === 1) d *= 1.4;
       if (has(c, 'pledge') && v % 2 === 0) d *= 1.4;
       if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 3;
@@ -242,7 +243,7 @@
 
     switch (fx.type) {
       case 'attack': {
-        if (who) atk(who, fx.ratio, (skill.id === 'dagger' ? (c.combo - 1) * (fx.comboBonus || 0) : 0), { fire: !!fx.burn });
+        if (who) atk(who, fx.ratio, (skill.id === 'dagger' ? (c.combo - 1) * (fx.comboBonus || 0) : 0) + (fx.reflect ? Math.floor(c.block / 2) : 0), { fire: !!fx.burn });
         if (fx.burn && who) { who.st.burn += Math.max(1, Math.floor(v / 2) + (has(c, 'flameHeart') ? 1 : 0)); ev.push({ t: 'status', eid: who.id, s: 'burn', amount: Math.max(1, Math.floor(v / 2)) }); }
         if (fx.status && who) {
           Object.keys(fx.status).forEach(function (s) { who.st[s] += fx.status[s]; ev.push({ t: 'status', eid: who.id, s: s, amount: fx.status[s] }); });
@@ -252,7 +253,12 @@
         break;
       }
       case 'aoe': {
-        alive(c).forEach(function (e) { atk(e, fx.ratio, 0, { fire: !!fx.burn, noDouble: false }); });
+        const vbonus = fx.verdictSpend ? Math.min(c.verdict || 0, 6) * fx.verdictSpend : 0;
+        alive(c).forEach(function (e) { atk(e, fx.ratio, vbonus, { fire: !!fx.burn, noDouble: false }); });
+        if (vbonus) {
+          c.verdict = 0;
+          ev.push({ t: 'msg', text: '심판 소모 — +' + vbonus + ' 피해' });
+        }
         if (fx.burn) {
           alive(c).forEach(function (e) { e.st.burn += fx.burn; ev.push({ t: 'status', eid: e.id, s: 'burn', amount: fx.burn }); });
         }
@@ -291,8 +297,15 @@
         mainDone = true;
         break;
       }
-      case 'spark': {
-        c.sparks += fx.amount || 0;
+      case 'verdict': {
+        c.verdict = Math.min(6, (c.verdict || 0) + (fx.gain || 1));
+        const b = gainBlock(c, fx.block || 0);
+        if (b) ev.push({ t: 'pblock', amount: b });
+        ev.push({ t: 'vstack', n: c.verdict });
+        mainDone = true;
+        break;
+      }
+      case 'spark': {        c.sparks += fx.amount || 0;
         ev.push({ t: 'spark', amount: fx.amount || 0 });
         const b = gainBlock(c, fx.block || 0);
         if (b) ev.push({ t: 'pblock', amount: b });
@@ -323,6 +336,12 @@
       }
     }
 
+    /* paladin: verdict stacks from defensive skills / holy faces */
+    if (fx.verdictGain) {
+      c.verdict = Math.min(6, (c.verdict || 0) + fx.verdictGain);
+      ev.push({ t: 'vstack', n: c.verdict });
+    }
+
     /* face riders (dice identity!) */
     if (k === 'fire' && fx.type !== 'attack' && fx.type !== 'aoe') {
       if (who) { who.st.burn += Math.max(1, Math.floor(v / 2)); ev.push({ t: 'status', eid: who.id, s: 'burn', amount: Math.max(1, Math.floor(v / 2)) }); }
@@ -333,6 +352,13 @@
       if (who) { who.st.poison += Math.max(1, Math.floor(v / 2)); ev.push({ t: 'status', eid: who.id, s: 'poison', amount: Math.max(1, Math.floor(v / 2)) }); }
     } else if (k === 'leech') {
       healPlayer(c, Math.ceil(v / 2), ev);
+    } else if (k === 'holy') {
+      const b = gainBlock(c, Math.ceil(v / 2) + 1);
+      ev.push({ t: 'pblock', amount: b });
+      if (c.cls === 'paladin') {
+        c.verdict = Math.min(6, (c.verdict || 0) + 1);
+        ev.push({ t: 'vstack', n: c.verdict });
+      }
     } else if (k === 'guard' && fx.type !== 'block') {
       const b = gainBlock(c, Math.ceil(v / 2));
       ev.push({ t: 'pblock', amount: b });
@@ -357,7 +383,7 @@
 
   /* ---------- state snapshots (undo) ---------- */
   const SNAP_KEYS = ['enemies', 'hand', 'slots', 'combo', 'multBonus', 'sparks', 'block', 'hp',
-    'statuses', 'phase', 'totalDamage', 'rerollsThisTurn', 'luckyCoinUsed', 'turn', 'chainLog', 'flask'];
+    'statuses', 'phase', 'totalDamage', 'rerollsThisTurn', 'luckyCoinUsed', 'turn', 'chainLog', 'flask', 'verdict'];
 
   /* ---------- public API ---------- */
   const Combat = {
@@ -402,6 +428,7 @@
         chainLog: [],
         skillLv: (run.skills || []).slice(),
         flask: { fire: 0, poison: 0, bolt: 0 },
+        verdict: 0,
         seedNote: null,
       };
       const cls = DC.CLASSES[run.cls];
@@ -429,6 +456,7 @@
 
     newTurn: function (c, first) {
       c.turn += 1;
+      if (c.cls === 'paladin' && (c.verdict || 0) > 0) c.verdict = Math.max(0, c.verdict - 2);
       c.block = first ? c.block : 0;
       c.combo = 0;
       c.multBonus = 0;
@@ -726,13 +754,14 @@
       const nAlive = alive(c).length;
       const out = { mult: nextMult, curMult: cur, gain: nextMult - cur, dmg: 0, hits: 1, lethal: false, text: '' };
       if (fx.type === 'attack') {
-        const bonus = skill.id === 'dagger' ? Math.max(0, c.combo - 1) * (fx.comboBonus || 0) : 0;
+        const bonus = (skill.id === 'dagger' ? Math.max(0, c.combo - 1) * (fx.comboBonus || 0) : 0) +
+          (fx.verdict ? (c.verdict || 0) * fx.verdict : 0) + (fx.reflect ? Math.floor(c.block / 2) : 0);
         out.dmg = dmg(fx.ratio, bonus);
         if (has(c, 'karma') && c.combo >= 4) out.hits = 2;
         out.lethal = out.dmg * out.hits >= tghp && tghp > 0;
         out.text = '≈' + out.dmg + (out.hits > 1 ? '×' + out.hits : '') + ' 피해';
       } else if (fx.type === 'aoe') {
-        out.dmg = dmg(fx.ratio);
+        out.dmg = dmg(fx.ratio, fx.verdictSpend ? Math.min(c.verdict || 0, 6) * fx.verdictSpend : 0);
         out.lethal = alive(c).every(function (e) { return e.hp + e.block <= out.dmg; });
         out.text = '≈' + out.dmg + ' ×' + nAlive + ' 피해';
       } else if (fx.type === 'chain') {
@@ -745,8 +774,11 @@
         out.lethal = out.dmg >= tghp;
         out.text = '≈' + dmg(fx.ratio) + ' ×' + out.hits;
       } else if (fx.type === 'block') {
-        out.dmg = Math.round(h.v * fx.ratio * (has(c, 'wrist') ? 1.25 : 1));
-        out.text = '+' + out.dmg + ' 방어';
+        out.dmg = Math.round(h.v * fx.ratio * (has(c, 'wrist') ? 1.25 : 1) * (has(c, 'warDrum') ? 0.75 : 1));
+        out.text = '+' + out.dmg + ' 방어' + (fx.verdictGain ? ' · 심판 +' + fx.verdictGain : '');
+      } else if (fx.type === 'verdict') {
+        out.dmg = Math.round((fx.block || 0) * (has(c, 'wrist') ? 1.25 : 1) * (has(c, 'warDrum') ? 0.75 : 1));
+        out.text = '심판 +' + (fx.gain || 1) + ' · +' + out.dmg + ' 방어';
       } else if (fx.type === 'mult') {
         out.text = '배율 +' + fx.add.toFixed(1) + (fx.dmgRatio ? ' · ' + dmg(fx.dmgRatio) + ' 피해' : '');
       } else if (fx.type === 'spark') {
@@ -778,8 +810,14 @@
         if (has(c, 'pledge') && h.v % 2 === 0) d *= 1.4;
         return Math.max(1, Math.round(d));
       }
-      if (fx.type === 'attack') return '≈' + dmg(fx.ratio) + ' 피해';
-      if (fx.type === 'aoe') return '≈' + dmg(fx.ratio) + ' 전체';
+      const vbon = fx.verdict ? (c.verdict || 0) * fx.verdict : 0;
+      const reflect = fx.reflect ? Math.floor(c.block / 2) : 0;
+      if (fx.type === 'attack') return '≈' + (dmg(fx.ratio) + Math.round(vbon) + reflect) + ' 피해';
+      if (fx.type === 'aoe') {
+        const spend = fx.verdictSpend ? Math.min(c.verdict || 0, 6) * fx.verdictSpend : 0;
+        return '≈' + (dmg(fx.ratio) + spend) + ' 전체';
+      }
+      if (fx.type === 'verdict') return '심판 +' + (fx.gain || 1) + ' · +' + Math.round((fx.block || 0) * (has(c, 'wrist') ? 1.25 : 1) * (has(c, 'warDrum') ? 0.75 : 1)) + ' 방어';
       if (fx.type === 'chain') return '≈' + dmg(fx.ratio) + ' + 연쇄';
       if (fx.type === 'multi') return '≈' + dmg(fx.ratio) + ' ×' + Math.max(1, c.combo + 1);
       if (fx.type === 'block') return '+' + Math.round(h.v * fx.ratio * (has(c, 'wrist') ? 1.25 : 1) * (has(c, 'warDrum') ? 0.75 : 1)) + ' 방어';

@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '4.5.0';
+  DC.VERSION = '4.6.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -81,6 +81,7 @@
     curse: { n: '저주', ic: 'skull', c: '#a78bfa' },
     blank: { n: '공허', ic: 'void', c: '#7f8ea3' },
     wild: { n: '야생', ic: 'star', c: '#fbbf24' },
+    holy: { n: '신성', ic: 'crown', c: '#fde68a' },
   };
 
   DC.STATUS = {
@@ -109,10 +110,11 @@
     block: { n: '방어도', t: '이번 턴 피해를 먼저 흡수합니다. 내 턴이 시작되면 사라집니다.' },
     pair: { n: '페어', t: '방금 쓴 주사위와 같은 눈의 주사위를 연달아 쓰면 그 스킬 피해가 25% 증가합니다.' },
     flask: { n: '플라스크', t: '연금술사 전용. 화염(불)·독(독)·번개(번개) 면을 쓸 때마다 정수가 1 담기고, 3개가 차면 조합에 따라 비약이 터집니다. 촉매 스킬로 원할 때 터뜨릴 수도 있습니다.' },
+    verdict: { n: '심판', t: '성기사 전용. 방어도 스킬과 신성 면을 쓸 때마다 쌓입니다(최대 6). 공격 스킬이 심판 1당 +2 피해를 더하고, 턴이 시작될 때 심판 2가 사라집니다.' },
     ascension: { n: '승천', t: '승리할 때마다 단계가 오르는 더 어려운 모드입니다. 적 체력·공격이 강해지고 보상이 줄어듭니다.' },
   };
 
-  DC.classesShort = { warrior: '전사', mage: '마도사', gambler: '도박사', alchemist: '연금술사' };
+  DC.classesShort = { warrior: '전사', mage: '마도사', gambler: '도박사', alchemist: '연금술사', paladin: '성기사' };
 
   /* act flavour */
   DC.ACTS = {
@@ -161,9 +163,11 @@
     moon: { name: '달 주사위', tier: 2, price: 85, c: '#c7d2fe', faces: [f('leech', 3), f('mult', 2), f('slash', 4), f('leech', 4), f('guard', 4), f('mult', 1)], tag: '달빛' },
     gear: { name: '톱니 주사위', tier: 2, price: 95, c: '#94a3b8', faces: [f('guard', 5), f('slash', 5), f('guard', 4), f('slash', 4), f('leech', 2), f('guard', 6)], tag: '수호' },
     halo: { name: '성광 주사위', tier: 3, price: 125, c: '#fde68a', faces: [f('fire', 5), f('bolt', 5), f('guard', 5), f('leech', 4), f('mult', 2), f('slash', 6)], tag: '전설' },
-    gambit: { name: '모험 주사위', tier: 2, price: 80, c: '#fb7185', faces: [f('slash', 6), f('curse', 1), f('mult', 2), f('slash', 1), f('guard', 5), f('leech', 3)], tag: '도박' },
-    prism: { name: '무지개 주사위', tier: 3, price: 120, c: '#f0abfc', faces: [f('fire', 4), f('bolt', 4), f('venom', 4), f('leech', 4), f('mult', 2), f('slash', 5)], tag: '전설' },
+    gambit: { name: '모험 주사위', tier: 2, price: 80, c: '#fb7185', faces: [f('slash', 6), f('curse', 1), f('mult', 2), f('slash', 1), f('guard', 5), f('leech', 3)], tag: '도박' },    prism: { name: '무지개 주사위', tier: 3, price: 120, c: '#f0abfc', faces: [f('fire', 4), f('bolt', 4), f('venom', 4), f('leech', 4), f('mult', 2), f('slash', 5)], tag: '전설' },
     titan: { name: '거인의 주사위', tier: 3, price: 130, c: '#fca5a5', faces: [f('slash', 6), f('slash', 6), f('guard', 6), f('slash', 5), f('guard', 5), f('slash', 6)], tag: '전설' },
+    aegis: { name: '성역 주사위', tier: 1, price: 0, c: '#fde68a', faces: [f('guard', 3), f('holy', 3), f('guard', 4), f('holy', 4), f('guard', 5), f('slash', 3)], tag: '신성' },
+    mace: { name: '심판 망치', tier: 1, price: 0, c: '#fcd34d', faces: [f('slash', 3), f('holy', 2), f('slash', 4), f('guard', 4), f('holy', 5), f('slash', 5)], tag: '심판' },
+    sanctum: { name: '성소 주사위', tier: 2, price: 85, c: '#fef3c7', faces: [f('holy', 4), f('guard', 5), f('holy', 5), f('guard', 6), f('mult', 1), f('leech', 3)], tag: '성소' },
   };
   DC.DICE_IDS = Object.keys(DC.DICE);
 
@@ -178,6 +182,7 @@
     { k: 'leech', v: 3, cost: 14 }, { k: 'leech', v: 4, cost: 22 },
     { k: 'mult', v: 1, cost: 14 }, { k: 'mult', v: 2, cost: 24 },
     { k: 'curse', v: 1, cost: 0 },
+    { k: 'holy', v: 3, cost: 12 }, { k: 'holy', v: 4, cost: 20 }, { k: 'holy', v: 5, cost: 28 },
   ];
 
   /* ---------------- classes & skills ---------------- */
@@ -238,8 +243,22 @@
         { id: 'elixir', name: '대비약', req: 'gte4', ic: 'star', fx: { type: 'aoe', ratio: 1.7, burn: 2 }, desc: '모든 적에게 눈 × 1.7 · 화상 2' },
       ],
     },
+    paladin: {
+      id: 'paladin', name: '심판의 성기사', short: '성기사', en: 'PALADIN',
+      hp: 80, sparks: 2, c: '#fde68a', ic: 'crown', fresh: true,
+      desc: '방어도를 쌓아 심판을 준비하고, 쌓은 심판을 한 방에 꽂는다.',
+      startDice: ['aegis', 'mace', 'aegis'],
+      passive: { n: '심판', tip: '방어도 스킬과 신성 면으로 심판이 쌓입니다(최대 6). 공격 스킬이 심판 1당 +2 피해를 더하고, 턴이 시작되면 심판 2가 사라집니다.' },
+      skills: [
+        { id: 'vstrike', name: '심판의 일격', req: 'any', ic: 'sword', fx: { type: 'attack', ratio: 1.6, verdict: 2 }, desc: '눈 × 1.6 · 심판 1당 +2 피해' },
+        { id: 'sanctuary', name: '성역', req: 'any', ic: 'shield', fx: { type: 'block', ratio: 2.8, verdictGain: 1, heal: 1 }, desc: '눈 × 2.8 방어도 · 심판 +1 · 1 회복' },
+        { id: 'retaliate', name: '신성 반사', req: 'odd', ic: 'star', fx: { type: 'attack', ratio: 1.0, reflect: true }, desc: '눈 × 1.0 피해 + 현재 방어도 절반' },
+        { id: 'judge', name: '심판', req: 'prime', ic: 'crown', fx: { type: 'verdict', gain: 2, block: 6 }, desc: '심판 +2 · 방어도 6' },
+        { id: 'wrath', name: '천벌', req: 'gte4', ic: 'flame', fx: { type: 'aoe', ratio: 1.6, verdictSpend: 3 }, desc: '모든 적에게 눈 × 1.6 + 심판×3 (소모)' },
+      ],
+    },
   };
-  DC.CLASS_IDS = ['warrior', 'mage', 'gambler', 'alchemist'];
+  DC.CLASS_IDS = ['warrior', 'mage', 'gambler', 'alchemist', 'paladin'];
 
   /* ---------------- relics ---------------- */
   DC.RELICS = {
@@ -655,6 +674,7 @@
     { id: 'winMage', name: '원소의 주인', desc: '마도사로 승리한다', test: function (c) { return c.win && c.cls === 'mage'; } },
     { id: 'winGambler', name: '운명을 걸다', desc: '도박사로 승리한다', test: function (c) { return c.win && c.cls === 'gambler'; } },
     { id: 'winAlchemist', name: '비약의 대가', desc: '연금술사로 승리한다', test: function (c) { return c.win && c.cls === 'alchemist'; } },
+    { id: 'winPaladin', name: '심판의 손', desc: '성기사로 승리한다', test: function (c) { return c.win && c.cls === 'paladin'; } },
     { id: 'challenger', name: '다른 길', desc: '도전 모드로 승리한다', test: function (c) { return c.win && c.challenge && c.challenge !== 'none'; } },
     { id: 'chain6', name: '끊이지 않는 사슬', desc: '한 턴에 콤보 6 달성', test: function (c) { return (c.maxCombo || 0) >= 6; } },
     { id: 'chain8', name: '완전 연쇄', desc: '한 턴에 콤보 8 달성', test: function (c) { return (c.maxCombo || 0) >= 8; } },

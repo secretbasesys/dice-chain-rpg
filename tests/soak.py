@@ -8,8 +8,8 @@ with sync_playwright() as p:
     t0 = time.time()
     out = page.evaluate("""() => {
       const res = [];
-      for (let i=0;i<6;i++) {
-        const cls = ['warrior','mage','gambler','alchemist'][i%4];
+      for (let i=0;i<10;i++) {
+        const cls = DC.CLASS_IDS[i%DC.CLASS_IDS.length];
         const r = DC.test.autoRun(cls, 900);
         res.push([cls, r.screen, r.act]);
       }

@@ -2010,3 +2010,27 @@ body.no-motion * { animation-duration: .001s !important; animation-iteration-cou
   .shop-item { align-self: start; }
   .shop-screen .bottom-bar { margin-top: 10px; }
 }
+
+/* ---------------- v4.6 paladin: verdict chip + holy face ---------------- */
+.vchip { display: inline-flex; align-items: center; gap: 4px; }
+.vchip .ic { width: 13px; height: 13px; color: #fde68a; }
+.vchip .v-pips { display: inline-flex; gap: 2px; }
+.vchip .v-pips i {
+  width: 6px; height: 6px; border-radius: 50%; background: #26314a; display: block;
+}
+.vchip .v-pips i.on { background: #fde68a; box-shadow: 0 0 6px rgba(253, 230, 138, .7); }
+.vchip b { color: #ffe6a7; }
+.vchip.hot { background: rgba(253, 230, 138, .12); border-radius: 8px; padding: 2px 6px; }
+.vchip.pop { animation: vpop .35s ease-out; }
+@keyframes vpop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+/* v4.6 — new class ribbon */
+.class-card { position: relative; }
+.class-new {
+  position: absolute; top: -7px; right: 10px; display: inline-flex; align-items: center; gap: 3px;
+  background: linear-gradient(120deg, #fde68a, #fbbf24); color: #2a1f05;
+  font-size: 9px; font-weight: 900; letter-spacing: .1em; padding: 3px 8px; border-radius: 999px;
+  box-shadow: 0 3px 10px rgba(251, 191, 36, .35);
+}
+.class-new .ic { width: 10px; height: 10px; }
+.class-card.fresh { box-shadow: 0 0 0 1px rgba(253, 230, 138, .45), 0 8px 26px rgba(251, 191, 36, .14); }
