@@ -17,6 +17,7 @@
       ach: {},
       lastAsc: 0,
       bestDepth: 3,
+      daily: null,
       history: [],
       tut: 0,
     };
@@ -69,9 +70,17 @@
 
     history: function () { return load().history || []; },
 
+    daily: function () { return load().daily || null; },
+
     tutSeen: function () { return !!load().tut; },
 
     setTut: function () { const m = load(); m.tut = 1; save(); },
+
+    noteDaily: function (rec) {
+      const m = load();
+      m.daily = rec;
+      save();
+    },
 
     noteDepth: function (act) {
       const m = load();

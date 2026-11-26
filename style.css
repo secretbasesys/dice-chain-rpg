@@ -476,7 +476,7 @@ body[data-act="3"] .map-screen { --act-glow: rgba(167, 139, 250, .22); --scene-c
   flex: 1; min-height: 0; display: flex; flex-direction: column;
   padding: 16px; overflow-y: auto;
 }
-.title-screen { align-items: center; justify-content: center; text-align: center; gap: 6px; }
+.title-screen { align-items: center; justify-content: safe center; text-align: center; gap: 6px; }
 .logo-dice { display: flex; gap: 10px; margin-bottom: 4px; }
 .ld {
   width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
@@ -1522,3 +1522,41 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 
 .map-deadend { display: flex; gap: 6px; margin: 2px 0; }
 .map-deadend .bigbtn { flex: 1; height: 42px; font-size: 12px; }
+
+/* ---------------- daily challenge (v2.6) ---------------- */
+.daily-card {
+  width: min(320px, 92%); margin: 6px auto 2px; border-radius: 14px; padding: 8px 11px;
+  background: linear-gradient(140deg, rgba(103, 232, 249, .12), #101725 70%);
+  border: 1px solid rgba(103, 232, 249, .32); text-align: left;
+}
+.daily-card.done { background: linear-gradient(140deg, rgba(52, 211, 153, .12), #101725 70%); border-color: rgba(126, 226, 184, .35); }
+.dc-head { display: flex; align-items: center; justify-content: space-between; }
+.dc-head span { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 900; color: #7fd8e8; letter-spacing: .02em; }
+.dc-head span .ic { width: 11px; height: 11px; }
+.dc-head b { font-size: 10px; color: #93a4c2; }
+.dc-body { font-size: 11px; color: #dbe6f8; margin: 3px 0 6px; font-weight: 700; }
+.dc-btn {
+  width: 100%; min-height: 40px; border: 0; border-radius: 10px; cursor: pointer;
+  background: linear-gradient(180deg, #67e8f9, #22b8cf); color: #04222a;
+  font-size: 12px; font-weight: 900;
+}
+.dc-btn:active { transform: scale(.98); }
+.dc-result { font-size: 10.5px; font-weight: 800; color: #7ee2b8; }
+
+/* ---------------- short screens: compact title ---------------- */
+@media (max-height: 720px) {
+  .title-screen { gap: 3px; padding: 8px 12px; }
+  .title-screen .logo { font-size: 34px; }
+  .title-screen .ld { width: 32px; height: 32px; border-radius: 9px; }
+  .title-screen .ld .ic { width: 17px; height: 17px; }
+  .title-screen .logo-dice { gap: 7px; margin-bottom: 0; }
+  .title-screen .logo-sub { font-size: 8px; letter-spacing: .3em; margin-bottom: 0; }
+  .title-screen .tagline { display: none; }
+  .title-screen .asc-row { margin: 1px 0; }
+  .title-screen .daily-card { padding: 6px 9px; margin: 3px auto 1px; }
+  .title-screen .challenge-chip { min-height: 40px; margin: -3px auto -3px; }
+  .title-screen .seed-row { margin: 3px auto 1px; }
+  .title-screen .title-btns { gap: 5px; }
+  .title-screen .bigbtn { height: 42px; font-size: 13.5px; }
+  .title-screen .ver { margin-top: 5px; margin-bottom: 2px; }
+}

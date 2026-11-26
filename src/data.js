@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '2.5.0';
+  DC.VERSION = '2.6.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -570,6 +570,21 @@
     { id: 'greed', name: '탐욕', short: '탐욕', desc: '상점 가격 +50% · 골드 획득 +50%', c: '#fbbf24', mod: { price: 0.5, gold: 1.5 } },
     { id: 'frenzy', name: '광란', short: '광란', desc: '적 체력 -15% · 적 공격 +25%', c: '#f87171', mod: { ehp: -0.15, eatk: 0.25 } },
   ];
+  DC.dailyConfig = function () {
+    const t = DC.todaySeed();               // DAILY-YYYYMMDD
+    const digits = t.replace(/\D/g, '');
+    const n = parseInt(digits.slice(-6), 10) || 1;
+    const chs = ['none', 'glass', 'greed', 'frenzy'];
+    const classes = DC.CLASS_IDS || ['warrior'];
+    return {
+      seed: t,
+      challenge: chs[(n * 7) % chs.length],
+      cls: classes[(n * 3) % classes.length],
+      asc: (n % 3),
+      day: Number(t.slice(10, 12)) + '/' + Number(t.slice(12, 14)),
+    };
+  };
+
   DC.challengeById = function (id) {
     for (let i = 0; i < DC.CHALLENGES.length; i++) if (DC.CHALLENGES[i].id === id) return DC.CHALLENGES[i];
     return DC.CHALLENGES[0];

@@ -122,6 +122,18 @@
         case 'undo': this.undo(); break;
         case 'speed': this.toggleSpeed(); break;
         case 'log': s.ui.logOpen = !s.ui.logOpen; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'dailyrun': {
+          const cfg = DC.dailyConfig();
+          s.ui.seed = cfg.seed;
+          s.ui.challenge = cfg.challenge;
+          s.ui.asc = Math.max(0, Math.min(DC.Meta.get().unlockedAsc || 0, cfg.asc));
+          s.ui.daily = true;
+          DC.setSeed(cfg.seed);
+          this.pickClass(cfg.cls);
+          if (this.state.run) this.state.run.daily = true;
+          DC.UI.toast('오늘의 도전 — ' + DC.classesShort[cfg.cls] + ' · ' + DC.challengeById(cfg.challenge).short);
+          break;
+        }
         case 'challenge': s.ui.modal = s.ui.modal === 'challenge' ? null : 'challenge'; DC.Audio.play('click'); DC.UI.render(); break;
         case 'pickchallenge': s.ui.challenge = d.id || 'none'; s.ui.modal = null; DC.Audio.play('click'); DC.UI.render(); break;
         case 'closechallenge': s.ui.modal = null; DC.UI.render(); break;
@@ -181,6 +193,7 @@
     },
 
     newRun: function () {
+      this.state.ui.daily = false;
       this.state.screen = 'class';
       this.state.run = null;
       this.state.combat = null;
@@ -216,12 +229,14 @@
         seed: seed || null,
         challenge: ch.id,
         cmod: cmod,
+        daily: !!this.state.ui.daily,
       };
       run.map = DC.MapGen.gen(DC.rng, 1);
       DC.Meta.noteRunStart(asc);
       run.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });
       this.state.run = run;
       this.state.combat = null;
+      this.state.ui.daily = false;
       this.goMap();
       DC.UI.toast(C.name + ' — 행운을 빈다');
       if (!DC.Meta.tutSeen()) { this.state.ui.modal = 'tut'; DC.Meta.setTut(); DC.UI.render(); }
@@ -458,6 +473,9 @@
     recordRun: function (win) {
       const r = this.state.run;
       if (!r) return;
+      if (r.daily) {
+        DC.Meta.noteDaily({ day: DC.todaySeed(), win: !!win, act: r.act, depth: r.depth || 3, cls: r.cls, dmg: (r.stats && r.stats.dmg) || 0, t: Date.now() });
+      }
       DC.Meta.noteRunEnd({
         t: Date.now(),
         cls: r.cls,

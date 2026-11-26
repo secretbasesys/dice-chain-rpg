@@ -1,0 +1,22 @@
+import sys, json; sys.path.insert(0,'/workspace/work/dice-rpg/tests')
+from harness import *
+serve()
+with sync_playwright() as p:
+    b,ctx,page,errors=launch(p,390,844,True)
+    page.goto(BASE); page.wait_for_timeout(350)
+    page.evaluate("() => localStorage.clear()"); page.reload(); page.wait_for_timeout(350)
+    print("cfg:", page.evaluate("() => { const c=DC.dailyConfig(); return [c.seed,c.cls,c.challenge,c.asc,c.day]; }"))
+    page.screenshot(path=OUT + "/v26_title.png")
+    page.click('[data-act="dailyrun"]'); page.wait_for_timeout(500)
+    try: page.click('[data-act="closetut"]'); page.wait_for_timeout(250)
+    except Exception: pass
+    print("run:", page.evaluate("() => { const r=DC.Game.state.run; return {cls:r.cls, seed:r.seed, ch:r.challenge, asc:r.asc, daily:r.daily}; }"))
+    page.evaluate("() => { DC.Game.state.run.stats.dmg=500; DC.Game.state.run.act=2; DC.Game.combatLost(); }")
+    page.wait_for_timeout(300)
+    print("daily meta:", page.evaluate("() => JSON.stringify(DC.Meta.daily())"))
+    page.evaluate("() => { DC.Game.state.screen='title'; DC.UI.render(); }")
+    page.wait_for_timeout(200)
+    page.screenshot(path=OUT + "/v26_title_done.png")
+    print("card text:", page.evaluate("() => { const e=document.querySelector('.daily-card'); return e?e.textContent:null; }"))
+    print("ERRORS", json.dumps(errors, ensure_ascii=False))
+    b.close()

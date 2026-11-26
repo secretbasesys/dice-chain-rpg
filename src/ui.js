@@ -429,6 +429,21 @@
   }
 
   /* ---------------- title / class ---------------- */
+  function dailyCard(state) {
+    const cfg = DC.dailyConfig();
+    const last = DC.Meta.daily();
+    const doneToday = last && last.day === cfg.seed;
+    const ch = DC.challengeById(cfg.challenge);
+    const cls = DC.classesShort[cfg.cls] || cfg.cls;
+    return '<div class="daily-card' + (doneToday ? ' done' : '') + '">' +
+      '<div class="dc-head"><span>' + icon('star') + '오늘의 도전</span><b>' + esc(cfg.day) + '</b></div>' +
+      '<div class="dc-body">' + esc(cls) + ' · ' + esc(ch.short) + ' · 승천 ' + cfg.asc + '</div>' +
+      (doneToday
+        ? '<div class="dc-result">' + (last.win ? '오늘 클리어 · ACT ' + last.act : '오늘 기록 · ACT ' + last.act) + '</div>'
+        : '<button class="dc-btn" data-act="dailyrun">도전 시작</button>') +
+    '</div>';
+  }
+
   function renderTitle(state) {
     const hasSave = DC.Game.hasSave();
     const meta = DC.Meta.get();
@@ -454,6 +469,7 @@
           '</div>' +
           '<button class="asc-btn" data-act="asc" data-dir="1" ' + (asc >= maxAsc ? 'disabled' : '') + ' aria-label="승천 높이기">' + icon('plus') + '</button>' +
         '</div>' +
+        dailyCard(state) +
         '<button class="challenge-chip' + ((state.ui.challenge && state.ui.challenge !== 'none') ? ' on' : '') + '" data-act="challenge">' +
           icon('crown') + '도전 모드 <b>' + esc(DC.challengeById(state.ui.challenge || 'none').short) + '</b>' +
         '</button>' +
