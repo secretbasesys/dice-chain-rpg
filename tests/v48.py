@@ -1,0 +1,35 @@
+"""v4.8 — accessibility: high contrast, text size, slot hotkeys, reduced motion."""
+import sys, json; sys.path.insert(0, '/workspace/work/dice-rpg/tests')
+from harness import *
+
+serve()
+with sync_playwright() as p:
+    b, ctx, page, errors = launch(p, 390, 844, True)
+    page.goto(BASE); page.wait_for_timeout(300)
+    page.evaluate("() => { localStorage.clear(); DC.Meta.setTut(); DC.Game.newRun(); DC.Game.pickClass('warrior'); DC.Game.state.ui.modal=null; }")
+    page.wait_for_timeout(200)
+    if page.locator('[data-act="gift"]').count():
+        page.click('[data-act="gift"][data-i="0"]'); page.wait_for_timeout(200)
+    page.evaluate("() => { DC.Game.state.ui.modal='settings'; DC.UI.render(); }")
+    page.wait_for_timeout(200)
+    print("seg buttons:", page.evaluate("() => document.querySelectorAll('.seg-btn').length"))
+    shot(page, "settings_v48")
+    page.click('[data-act="setfs"][data-v="2"]'); page.wait_for_timeout(200)
+    page.click('[data-act="sethc"]'); page.wait_for_timeout(200)
+    print("classes:", page.evaluate("() => document.body.className"))
+    page.click('[data-act="closesettings"]'); page.wait_for_timeout(200)
+    page.evaluate("() => { DC.Game.spawnsFor = () => [DC.ENEMIES[1][0], DC.ENEMIES[1][4]]; DC.Game.startCombat('combat'); }")
+    page.wait_for_timeout(300)
+    shot(page, "combat_hc_xl")
+    rep = layout_report(page)
+    print("layout xl:", rep["overflowX"], "off", len(rep["offscreen"]), "small", len(rep["smallTargets"]))
+    # hotkeys: select die 1 then press W (slot 2)
+    page.keyboard.press("1"); page.wait_for_timeout(150)
+    sel = page.evaluate("() => DC.Game.state.ui.sel")
+    page.keyboard.press("w"); page.wait_for_timeout(400)
+    print("sel:", sel, "combo:", page.evaluate("() => DC.Game.state.combat.combo"))
+    # persistence of display settings
+    page.reload(); page.wait_for_timeout(400)
+    print("after reload classes:", page.evaluate("() => document.body.className"))
+    print("errors:", errors[:4])
+    b.close()

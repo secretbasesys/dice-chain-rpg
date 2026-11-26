@@ -2063,3 +2063,42 @@ body.no-motion * { animation-duration: .001s !important; animation-iteration-cou
 .ds-main span { font-size: 10.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ds-swap { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 800; color: #c084fc; }
 .ds-swap .ic { width: 12px; height: 12px; }
+
+/* ---------------- v4.8 accessibility: high contrast + text size ---------------- */
+body.hc {
+  --dim: #b9c9e2;
+  --line: #33456a;
+}
+body.hc .slot-eff, body.hc .rw-desc, body.hc .si-desc, body.hc .sub,
+body.hc .class-desc, body.hc .bl-row, body.hc .help-row p, body.hc .ev-choice span,
+body.hc .enemy-name, body.hc .enemy-foot { color: #dbe8fb; }
+body.hc .hpbar { background: #2f3b57; }
+body.hc .hpbar > i { background: linear-gradient(90deg, #ff6b6b, #ffb48a); }
+body.hc .die, body.hc .slot, body.hc .rw-card, body.hc .shop-item, body.hc .ev-choice {
+  border-color: rgba(190, 214, 255, .45) !important;
+}
+body.hc .die-kind, body.hc .slot-eff, body.hc .fg-l { font-weight: 700; }
+body.hc .combo-badge { box-shadow: 0 0 0 1px rgba(255, 255, 255, .35); }
+
+body.fs-l .slot-eff, body.fs-l .rw-desc, body.fs-l .si-desc, body.fs-l .sub,
+body.fs-l .class-desc, body.fs-l .bl-row, body.fs-l .help-row p, body.fs-l .ev-choice span,
+body.fs-l .die-kind, body.fs-l .enemy-name { font-size: 12.5px; line-height: 1.45; }
+body.fs-l .strip, body.fs-l .tray-label { font-size: 12.5px; }
+body.fs-l .slot-name { font-size: 15px; }
+body.fs-l .die-val { font-size: 27px; }
+
+body.fs-xl .slot-eff, body.fs-xl .rw-desc, body.fs-xl .si-desc, body.fs-xl .sub,
+body.fs-xl .class-desc, body.fs-xl .bl-row, body.fs-xl .help-row p, body.fs-xl .ev-choice span,
+body.fs-xl .die-kind, body.fs-xl .enemy-name { font-size: 14px; line-height: 1.45; }
+body.fs-xl .strip, body.fs-xl .tray-label { font-size: 13.5px; }
+body.fs-xl .slot-name { font-size: 16.5px; }
+body.fs-xl .slot-req { font-size: 11px; }
+body.fs-xl .die-val { font-size: 29px; }
+
+.set-row.fs-row { justify-content: space-between; align-items: center; }
+.seg { display: inline-flex; gap: 3px; background: #131c2c; border: 1px solid var(--line); border-radius: 9px; padding: 2px; }
+.seg-btn {
+  border: 0; background: none; color: var(--dim); font-size: 11px; font-weight: 800;
+  padding: 5px 8px; border-radius: 7px; cursor: pointer;
+}
+.seg-btn.on { background: rgba(251, 191, 36, .16); color: #ffe6a7; }

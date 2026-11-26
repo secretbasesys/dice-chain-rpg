@@ -802,6 +802,14 @@
         icon('clock') + '전투 애니메이션 <b>' + (state.ui.speed === 2 ? '2x 빠르게' : '1x') + '</b></button>' +
       '<button class="set-toggle' + (st.motion ? ' on' : '') + '" data-act="setmotion">' +
         icon('eye') + '모션 줄이기 <b>' + (st.motion ? '켜짐' : '꺼짐') + '</b></button>' +
+      '<button class="set-toggle' + (st.hc ? ' on' : '') + '" data-act="sethc">' +
+        icon('star') + '고대비 <b>' + (st.hc ? '켜짐' : '꺼짐') + '</b></button>' +
+      '<div class="set-row fs-row"><label>글씨 크기</label>' +
+        '<div class="seg">' +
+          [[0, '보통'], [1, '크게'], [2, '아주 크게']].map(function (o) {
+            return '<button class="seg-btn' + ((st.fs || 0) === o[0] ? ' on' : '') + '" data-act="setfs" data-v="' + o[0] + '">' + o[1] + '</button>';
+          }).join('') +
+        '</div></div>' +
       '<button class="set-toggle" data-act="help">' + icon('book') + '게임 방법 <b>열기</b></button>' +
       '<p class="set-foot">설정은 이 기기에 저장됩니다.</p>' +
       '</div></div>';
@@ -1095,6 +1103,7 @@
         ['D', '플라스크 (연금술사)', '화염·독·번개 면을 쓸 때마다 정수가 담기고 3개가 차면 조합별 비약이 자동 발동합니다. 촉매로 즉시 터뜨릴 수도 있습니다.'],
         ['E', '전투 기록', '상단 책 아이콘을 누르면 최근 턴의 스킬·적 행동·피해 내역이 펼쳐집니다.'],
         ['F', '되돌리기', '같은 턴 안에서 배치·재굴림·눈 조작을 되돌립니다(Z 또는 ↺).'],
+        ['G', '단축키', '1~5 주사위 선택 · Q W E R T 슬롯에 배치 · Enter 턴 종료 · Z 되돌리기 · Esc 창 닫기.'],
       ],
       grow: [
         ['G', '상점', '주사위·유물·단조 도구·회복·각성의 서를 판매합니다. 20골드로 재고를 두 번까지 바꿀 수 있습니다.'],

@@ -54,7 +54,7 @@
       screen: 'title',
       run: null,
       combat: null,
-      ui: { sel: null, busy: false, modal: null, set: { music: 0.6, sfx: 0.8, motion: false }, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1, asc: 0 },
+      ui: { sel: null, busy: false, modal: null, set: { music: 0.6, sfx: 0.8, motion: false, hc: false, fs: 1 }, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1, asc: 0 },
       lastCombat: null,
     },
 
@@ -67,8 +67,13 @@
         if (s.music != null) this.state.ui.set.music = s.music;
         if (s.sfx != null) this.state.ui.set.sfx = s.sfx;
         if (s.motion) this.state.ui.set.motion = true;
+        if (s.hc) this.state.ui.set.hc = true;
+        if (s.fs) this.state.ui.set.fs = s.fs;
         DC.Audio.setVolumes(this.state.ui.set.sfx, this.state.ui.set.music);
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.state.ui.set.motion = true;
         if (this.state.ui.set.motion) document.body.classList.add('no-motion');
+        DC.FX.setReduced(this.state.ui.set.motion);
+        this.applyDisplay();
         DC.Speed = this.state.ui.speed;
         const m = DC.Meta.get();
         this.state.ui.asc = Math.min(m.unlockedAsc || 0, 5);
@@ -115,6 +120,8 @@
           if (e.key === 'Enter') self.endTurn();
           if (e.key === 'z' || e.key === 'Z') self.undo();
           if (e.key >= '1' && e.key <= '9') self.tapDie(parseInt(e.key, 10) - 1);
+          const sk = 'qwert'.indexOf((e.key || '').toLowerCase());
+          if (sk >= 0 && self.state.ui.sel != null) { e.preventDefault(); self.tapSlot(sk); }
         }
       });
       window.addEventListener('resize', function () { if (self.state.screen === 'map') DC.UI.drawMapEdges(); });
@@ -207,7 +214,10 @@
         case 'setmotion':
           s.ui.set.motion = !s.ui.set.motion;
           document.body.classList.toggle('no-motion', s.ui.set.motion);
+          DC.FX.setReduced(s.ui.set.motion);
           this.saveSettings(); DC.UI.render(); break;
+        case 'sethc': this.setDisplay('hc'); break;
+        case 'setfs': this.setDisplay('fs', parseInt(d.v, 10) || 0); break;
         case 'setspeed2':
           s.ui.speed = s.ui.speed === 2 ? 1 : 2; DC.Speed = s.ui.speed; this.saveSettings(); DC.UI.render(); break;
         case 'helptab': s.ui.helpTab = d.tab || 'basic'; DC.Audio.play('click'); DC.UI.render(); break;
@@ -569,12 +579,32 @@
     },
 
     /* ---------------- combat resolution ---------------- */
+    applyDisplay: function () {
+      const set = this.state.ui.set || {};
+      document.body.classList.toggle('hc', !!set.hc);
+      document.body.classList.toggle('fs-l', set.fs === 1);
+      document.body.classList.toggle('fs-xl', set.fs === 2);
+      DC.FX.setReduced(!!set.motion);
+    },
+
+    setDisplay: function (key, val) {
+      const set = this.state.ui.set;
+      if (key === 'hc') set.hc = !set.hc;
+      if (key === 'fs') set.fs = val;
+      this.applyDisplay();
+      this.saveSettings();
+      DC.Audio.play('click');
+      DC.UI.render();
+    },
+
     saveSettings: function () {
       try {
         const s = JSON.parse(localStorage.getItem(SET_KEY) || '{}');
         s.music = this.state.ui.set.music;
         s.sfx = this.state.ui.set.sfx;
         s.motion = this.state.ui.set.motion;
+        s.hc = this.state.ui.set.hc;
+        s.fs = this.state.ui.set.fs;
         s.speed = this.state.ui.speed;
         s.muted = DC.Audio.isMuted();
         localStorage.setItem(SET_KEY, JSON.stringify(s));
