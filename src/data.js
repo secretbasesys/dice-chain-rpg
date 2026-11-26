@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '6.2.0';
+  DC.VERSION = '6.3.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -317,6 +317,9 @@
       desc: '주는 피해가 50% 증가한다.', trade: '받는 피해 +50%' },
     timeLoop: { boss: true, name: '시간의 고리', ic: 'clock', c: '#93c5fd',
       desc: '매 턴 무료 재굴림 2회.', trade: '최대 체력 -10' },
+    clockwork: { name: '태엽 장치', ic: 'clock', c: '#67e8f9', desc: '매 턴 시작에 방어도 2를 얻는다.', price: 80 },
+    collector: { name: '수집가의 눈', ic: 'eye', c: '#34d399', desc: '상점의 유물 가격이 20% 싸진다.', price: 75 },
+    bloodRite: { name: '피의 의식', ic: 'blood', c: '#ef4444', desc: '전투 시작 시 체력 3을 잃고 기세 +2를 얻는다.', price: 85 },
     engine: { name: '톱니 심장', ic: 'clock', c: '#67e8f9', desc: '매 턴 첫 방어 스킬을 쓰면 기세 +1.', price: 90 },
     executioner: { name: '집행인의 도끼', ic: 'hammer', c: '#f87171', desc: '체력 30% 이하인 적에게 주는 피해가 40% 증가한다.', price: 105 },
     sixGuard: { name: '여섯 수호', ic: 'shield', c: '#a5b4fc', desc: '6이 나올 때마다 방어도 4를 얻는다.', price: 85 },

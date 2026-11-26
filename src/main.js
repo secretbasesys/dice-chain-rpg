@@ -411,6 +411,7 @@
       DC.Combat.attachBag(c, r.dice);
       c.hp = r.hp;
       c.maxHp = r.maxHp;
+      if (r.relics.indexOf('bloodRite') >= 0) c.hp = Math.max(1, c.hp - 3);
       this.state.combat = c;
       this.state.screen = 'combat';
       this.state.ui.sel = null;
@@ -1043,7 +1044,8 @@
       for (let i = 0; i < 2 && relicPool.length; i++) {
         const id = relicPool.pop();
         const R = DC.RELICS[id];
-        items.push({ kind: 'relic', id: id, name: R.name, desc: R.desc, price: Math.round(R.price * disc), ic: R.ic, c: R.c });
+        const relicDisc = disc * (r.relics.indexOf('collector') >= 0 ? 0.8 : 1);
+        items.push({ kind: 'relic', id: id, name: R.name, desc: R.desc, price: Math.round(R.price * relicDisc), ic: R.ic, c: R.c });
       }
       items.push({ kind: 'forge', name: '단조 도구', desc: '주사위 면을 1회 바꿉니다 (무료)', price: Math.round(40 * disc), ic: 'anvil', c: '#fb923c' });
       items.push({ kind: 'heal', name: '회복 물약', desc: '체력 25 회복', price: Math.round(32 * disc), ic: 'heart', c: '#f472b6' });

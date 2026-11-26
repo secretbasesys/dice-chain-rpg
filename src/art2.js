@@ -300,6 +300,28 @@
       '<circle cx="5.6" cy="8" r="1.4" opacity=".4"/>' +
       '<circle cx="22.4" cy="24.6" r="1" fill="currentColor" stroke="none" opacity=".6"/>',
 
+    /* ---- v6.3 relics ---- */
+    clockwork:
+      '<circle cx="16" cy="16" r="9" fill="currentColor" opacity=".14"/>' +
+      '<circle cx="16" cy="16" r="9"/>' +
+      '<circle cx="16" cy="16" r="2" fill="currentColor" stroke="none"/>' +
+      '<path d="M16 9.4V16l4.4 2.6" stroke-width="1.8"/>' +
+      '<path d="M16 3.6v2M16 26.4v2M3.6 16h2M26.4 16h2" opacity=".5" stroke-width="1.4"/>' +
+      '<path d="M21.6 5.4l1.8-1.4M10.4 26.6l-1.8 1.4" opacity=".4"/>',
+
+    collector:
+      '<path d="M4.6 10.4c0-1.6 1.2-2.8 2.8-2.8h17.2c1.6 0 2.8 1.2 2.8 2.8v1.2c-1.6 0-2.8 1.2-2.8 2.8s1.2 2.8 2.8 2.8v1.2c0 1.6-1.2 2.8-2.8 2.8H7.4c-1.6 0-2.8-1.2-2.8-2.8v-1.2c1.6 0 2.8-1.2 2.8-2.8s-1.2-2.8-2.8-2.8z" fill="currentColor" opacity=".16"/>' +
+      '<path d="M4.6 10.4c0-1.6 1.2-2.8 2.8-2.8h17.2c1.6 0 2.8 1.2 2.8 2.8v1.2c-1.6 0-2.8 1.2-2.8 2.8s1.2 2.8 2.8 2.8v1.2c0 1.6-1.2 2.8-2.8 2.8H7.4c-1.6 0-2.8-1.2-2.8-2.8v-1.2c1.6 0 2.8-1.2 2.8-2.8s-1.2-2.8-2.8-2.8z"/>' +
+      '<circle cx="16" cy="14.4" r="3.4"/>' +
+      '<circle cx="16" cy="14.4" r="1.2" fill="currentColor" stroke="none"/>' +
+      '<path d="M16 5.4v1.6M16 22v1.6" opacity=".4"/>',
+
+    bloodRite:
+      '<path d="M16 3.4c-1.4 3-4 5.6-4 9.2 0 2.6 1.8 4.6 4 4.6s4-2 4-4.6c0-3.6-2.6-6.2-4-9.2z" fill="currentColor" opacity=".3"/>' +
+      '<path d="M16 3.4c-1.4 3-4 5.6-4 9.2 0 2.6 1.8 4.6 4 4.6s4-2 4-4.6c0-3.6-2.6-6.2-4-9.2z"/>' +
+      '<path d="M8.4 22.4c1.6-1.4 3.6-1.4 5.2 0s3.6 1.4 5.2 0 3-1.4 4.4-.4" stroke-width="1.7"/>' +
+      '<path d="M8.4 26c1.6-1.4 3.6-1.4 5.2 0s3.6 1.4 5.2 0 3-1.4 4.4-.4" opacity=".5" stroke-width="1.4"/>',
+
     /* ---- v4.7 relics ---- */
     engine:
       '<circle cx="16" cy="14.6" r="6.4" fill="currentColor" opacity=".18"/>' +

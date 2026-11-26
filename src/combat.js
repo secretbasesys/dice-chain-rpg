@@ -493,6 +493,7 @@
       c.maxSparks = cls.sparks + (has(c, 'gamblersHand') ? 1 : 0);
       if (has(c, 'warDrum')) c.maxSparks += 2;
       if (has(c, 'pact')) c.maxSparks += 2;
+      if (has(c, 'bloodRite')) c.maxSparks += 2;
       if (has(c, 'rupture')) c.maxSparks = Math.max(0, c.maxSparks - 1);
       if (has(c, 'doubleRoll') || has(c, 'timeLoop')) c.freeRerolls = has(c, 'timeLoop') ? 2 : 1;
       if (abyss(c) && abyss(c).freeReroll) c.freeRerolls = Math.max(c.freeRerolls || 0, abyss(c).freeReroll);
@@ -565,6 +566,7 @@
       c.hand = hand;
       c.block = 0;
       if (synOn(c, 'ironWall')) c.block += 3;
+      if (has(c, 'clockwork')) c.block += 2;
       if (c.statuses.weak > 0) c.statuses.weak -= 1;
       if (c.statuses.vuln > 0) c.statuses.vuln -= 1;
     },
