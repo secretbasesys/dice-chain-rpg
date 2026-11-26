@@ -3,7 +3,7 @@
   'use strict';
   const DC = window.DC;
 
-  let ctx = null, master = null, muted = false;
+  let ctx = null, master = null, muted = false, sfxVol = 0.8, musicVol = 0.6;
 
   function ensure() {
     if (ctx) return ctx;
@@ -12,7 +12,7 @@
     try {
       ctx = new AC();
       master = ctx.createGain();
-      master.gain.value = 0.55;
+      master.gain.value = 0.55 * sfxVol;
       master.connect(ctx.destination);
     } catch (e) { ctx = null; }
     return ctx;
@@ -170,7 +170,7 @@
       music.mode = mode;
       music.step = 0;
       music.next = t + 0.06;
-      bus.gain.exponentialRampToValueAtTime(muted ? 0.0001 : 1, t + 0.9);
+      bus.gain.exponentialRampToValueAtTime(muted ? 0.0001 : Math.max(0.0001, musicVol * 1.6), t + 0.9);
       startLoop();
     },
     current: function () { return music.mode; },
@@ -237,6 +237,17 @@
       if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} }
       const fn = SFX[name];
       if (fn) { try { fn(a); } catch (e) {} }
+    },
+    setVolumes: function (sfx, music2) {
+      if (typeof sfx === 'number') sfxVol = Math.max(0, Math.min(1, sfx));
+      if (typeof music2 === 'number') musicVol = Math.max(0, Math.min(1, music2));
+      if (ctx && master) master.gain.value = 0.55 * sfxVol * (muted ? 0 : 1);
+      if (ctx && music.bus) {
+        const t = ctx.currentTime;
+        music.bus.gain.cancelScheduledValues(t);
+        music.bus.gain.setValueAtTime(Math.max(0.0001, music.bus.gain.value), t);
+        music.bus.gain.exponentialRampToValueAtTime(muted || !music.mode ? 0.0001 : Math.max(0.0001, musicVol * 1.6), t + 0.3);
+      }
     },
     setMuted: function (m) {
       muted = !!m;

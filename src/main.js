@@ -54,7 +54,7 @@
       screen: 'title',
       run: null,
       combat: null,
-      ui: { sel: null, busy: false, modal: null, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1, asc: 0 },
+      ui: { sel: null, busy: false, modal: null, set: { music: 0.6, sfx: 0.8, motion: false }, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1, asc: 0 },
       lastCombat: null,
     },
 
@@ -64,6 +64,11 @@
         const s = JSON.parse(localStorage.getItem(SET_KEY) || '{}');
         if (s.muted) DC.Audio.setMuted(true);
         if (s.speed === 2) this.state.ui.speed = 2;
+        if (s.music != null) this.state.ui.set.music = s.music;
+        if (s.sfx != null) this.state.ui.set.sfx = s.sfx;
+        if (s.motion) this.state.ui.set.motion = true;
+        DC.Audio.setVolumes(this.state.ui.set.sfx, this.state.ui.set.music);
+        if (this.state.ui.set.motion) document.body.classList.add('no-motion');
         DC.Speed = this.state.ui.speed;
         const m = DC.Meta.get();
         this.state.ui.asc = Math.min(m.unlockedAsc || 0, 5);
@@ -92,6 +97,17 @@
       });
       document.addEventListener('input', function (e) {
         if (e.target && e.target.id === 'seed-input') self.state.ui.seed = e.target.value;
+        if (e.target && e.target.id === 'vol-music') {
+          self.state.ui.set.music = parseInt(e.target.value, 10) / 100;
+          DC.Audio.setVolumes(self.state.ui.set.sfx, self.state.ui.set.music);
+          self.saveSettings();
+        }
+        if (e.target && e.target.id === 'vol-sfx') {
+          self.state.ui.set.sfx = parseInt(e.target.value, 10) / 100;
+          DC.Audio.setVolumes(self.state.ui.set.sfx, self.state.ui.set.music);
+          self.saveSettings();
+          DC.Audio.play('click');
+        }
       });
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') { self.state.ui.modal = null; DC.UI.hideTip(); DC.UI.render(); }
@@ -180,6 +196,14 @@
         case 'closedeck': s.ui.modal = null; DC.UI.render(); break;
         case 'help': s.ui.modal = s.ui.modal === 'help' ? null : 'help'; DC.UI.render(); break;
         case 'closehelp': s.ui.modal = null; DC.UI.render(); break;
+        case 'settings': s.ui.modal = s.ui.modal === 'settings' ? null : 'settings'; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'closesettings': s.ui.modal = null; this.saveSettings(); DC.UI.render(); break;
+        case 'setmotion':
+          s.ui.set.motion = !s.ui.set.motion;
+          document.body.classList.toggle('no-motion', s.ui.set.motion);
+          this.saveSettings(); DC.UI.render(); break;
+        case 'setspeed2':
+          s.ui.speed = s.ui.speed === 2 ? 1 : 2; DC.Speed = s.ui.speed; this.saveSettings(); DC.UI.render(); break;
         case 'helptab': s.ui.helpTab = d.tab || 'basic'; DC.Audio.play('click'); DC.UI.render(); break;
         case 'showtut': s.ui.modal = 'tut'; DC.Audio.play('click'); DC.UI.render(); break;
         case 'sound':
@@ -532,6 +556,18 @@
     },
 
     /* ---------------- combat resolution ---------------- */
+    saveSettings: function () {
+      try {
+        const s = JSON.parse(localStorage.getItem(SET_KEY) || '{}');
+        s.music = this.state.ui.set.music;
+        s.sfx = this.state.ui.set.sfx;
+        s.motion = this.state.ui.set.motion;
+        s.speed = this.state.ui.speed;
+        s.muted = DC.Audio.isMuted();
+        localStorage.setItem(SET_KEY, JSON.stringify(s));
+      } catch (e) {}
+    },
+
     recordRun: function (win) {
       const r = this.state.run;
       if (!r) return;

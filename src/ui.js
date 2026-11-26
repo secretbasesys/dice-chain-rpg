@@ -88,7 +88,7 @@
           '<span class="goldchip" title="골드">' + icon('coin') + gold + '</span>' +
           '<button class="iconbtn" data-act="deck" title="덱 보기" aria-label="덱 보기">' + icon('book') + '</button>' +
           '<button class="iconbtn" data-act="sound" title="소리" aria-label="소리">' + icon(DC.Audio.isMuted() ? 'mute' : 'sound') + '</button>' +
-          '<button class="iconbtn" data-act="help" title="도움말" aria-label="도움말">' + icon('mystery') + '</button>' +
+          '<button class="iconbtn" data-act="settings" title="설정 · 도움말" aria-label="설정">' + icon('gear') + '</button>' +
         '</div>' +
       '</div>';
   }
@@ -473,6 +473,7 @@
     const prog = DC.Meta.progress();
     return '' +
       '<main class="title-screen">' +
+        '<button class="title-gear" data-act="settings" aria-label="설정">' + icon('gear') + '</button>' +
         '<div class="logo-dice">' +
           '<span class="ld ld1">' + icon('sword') + '</span>' +
           '<span class="ld ld2">' + icon('bolt') + '</span>' +
@@ -728,6 +729,25 @@
       '<div class="panel-head"><h3>' + icon('crown') + ' 도전 모드</h3><button class="iconbtn" data-act="closechallenge">' + icon('close') + '</button></div>' +
       '<p class="sub">표준 외 모드는 더 위험하지만, 승리하면 「다른 길」 업적이 열립니다.</p>' +
       '<div class="ch-list">' + cards + '</div>' +
+      '</div></div>';
+  }
+
+  function renderSettings(state) {
+    const st = state.ui.set || { music: .6, sfx: .8, motion: false };
+    return '<div class="overlay" data-act="closesettings"><div class="panel set-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('gear') + ' 설정</h3><button class="iconbtn" data-act="closesettings">' + icon('close') + '</button></div>' +
+      '<div class="set-row"><label>배경 음악</label>' +
+        '<input id="vol-music" type="range" min="0" max="100" value="' + Math.round(st.music * 100) + '" />' +
+        '<b>' + Math.round(st.music * 100) + '</b></div>' +
+      '<div class="set-row"><label>효과음</label>' +
+        '<input id="vol-sfx" type="range" min="0" max="100" value="' + Math.round(st.sfx * 100) + '" />' +
+        '<b>' + Math.round(st.sfx * 100) + '</b></div>' +
+      '<button class="set-toggle' + (state.ui.speed === 2 ? ' on' : '') + '" data-act="setspeed2">' +
+        icon('clock') + '전투 애니메이션 <b>' + (state.ui.speed === 2 ? '2x 빠르게' : '1x') + '</b></button>' +
+      '<button class="set-toggle' + (st.motion ? ' on' : '') + '" data-act="setmotion">' +
+        icon('eye') + '모션 줄이기 <b>' + (st.motion ? '켜짐' : '꺼짐') + '</b></button>' +
+      '<button class="set-toggle" data-act="help">' + icon('book') + '게임 방법 <b>열기</b></button>' +
+      '<p class="set-foot">설정은 이 기기에 저장됩니다.</p>' +
       '</div></div>';
   }
 
@@ -1301,6 +1321,7 @@
       if (state.ui.modal === 'tut') app.innerHTML += renderTut();
       if (state.ui.modal === 'challenge') app.innerHTML += renderChallenge(state);
       if (state.ui.modal === 'remove' && state.run) app.innerHTML += renderRemove(state);
+      if (state.ui.modal === 'settings') app.innerHTML += renderSettings(state);
       if (!document.querySelector('.rotate-hint')) {
         const rh = document.createElement('div');
         rh.className = 'rotate-hint';

@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '3.9.0';
+  DC.VERSION = '4.0.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -59,6 +59,7 @@
     trash: '<path d="M4.5 6.5h15M9 6.5V4h6v2.5M6.5 6.5l1 13.5h9l1-13.5"/>',
     spark: '<path d="M12 2.5l1.8 6.2 6.2 1.8-6.2 1.8L12 18.5l-1.8-6.2L4 10.5l6.2-1.8L12 2.5z"/>',
     right: '<path d="M9 5l7 7-7 7"/>',
+    gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v2.6M12 18.8v2.6M4.4 12H1.8M22.2 12h-2.6M6.6 6.6L4.8 4.8M19.2 19.2l-1.8-1.8M17.4 6.6l1.8-1.8M4.8 19.2l1.8-1.8"/>',
     flag: '<path d="M6 21V3.6M6 4.4h12l-2.6 3.6L18 11.6H6" /><path d="M4 21h6"/>',
     flask: '<path d="M9.5 3h5"/><path d="M10.5 3v5.2L5.8 17a2.6 2.6 0 0 0 2.3 3.9h7.8a2.6 2.6 0 0 0 2.3-3.9L13.5 8.2V3"/><path d="M7.6 15.4h8.8"/><circle cx="11" cy="18" r=".9" fill="currentColor" stroke="none"/><circle cx="14" cy="17" r=".6" fill="currentColor" stroke="none"/>',
   };
