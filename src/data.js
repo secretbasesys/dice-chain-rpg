@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '1.8.0';
+  DC.VERSION = '1.9.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -550,12 +550,25 @@
     return out;
   };
 
+  /* ---------------- challenge modes (v1.9) ---------------- */
+  DC.CHALLENGES = [
+    { id: 'none', name: '표준', short: '표준', desc: '기본 난이도로 플레이합니다.', c: '#8ea3c4', mod: {} },
+    { id: 'glass', name: '유리 몸', short: '유리 몸', desc: '최대 체력 -30% · 내 공격 피해 +30%', c: '#f472b6', mod: { hpMul: -0.30, dmg: 1.30 } },
+    { id: 'greed', name: '탐욕', short: '탐욕', desc: '상점 가격 +50% · 골드 획득 +50%', c: '#fbbf24', mod: { price: 0.5, gold: 1.5 } },
+    { id: 'frenzy', name: '광란', short: '광란', desc: '적 체력 -15% · 적 공격 +25%', c: '#f87171', mod: { ehp: -0.15, eatk: 0.25 } },
+  ];
+  DC.challengeById = function (id) {
+    for (let i = 0; i < DC.CHALLENGES.length; i++) if (DC.CHALLENGES[i].id === id) return DC.CHALLENGES[i];
+    return DC.CHALLENGES[0];
+  };
+
   DC.ACHIEVEMENTS = [
     { id: 'win1', name: '첫 승리', desc: '주사위 군주를 쓰러뜨린다', test: function (c) { return c.win; } },
     { id: 'winWarrior', name: '강철의 의지', desc: '전사로 승리한다', test: function (c) { return c.win && c.cls === 'warrior'; } },
     { id: 'winMage', name: '원소의 주인', desc: '마도사로 승리한다', test: function (c) { return c.win && c.cls === 'mage'; } },
     { id: 'winGambler', name: '운명을 걸다', desc: '도박사로 승리한다', test: function (c) { return c.win && c.cls === 'gambler'; } },
     { id: 'winAlchemist', name: '비약의 대가', desc: '연금술사로 승리한다', test: function (c) { return c.win && c.cls === 'alchemist'; } },
+    { id: 'challenger', name: '다른 길', desc: '도전 모드로 승리한다', test: function (c) { return c.win && c.challenge && c.challenge !== 'none'; } },
     { id: 'chain6', name: '끊이지 않는 사슬', desc: '한 턴에 콤보 6 달성', test: function (c) { return (c.maxCombo || 0) >= 6; } },
     { id: 'dmg1000', name: '분쇄자', desc: '한 런에서 누적 1000 피해', test: function (c) { return (c.dmg || 0) >= 1000; } },
     { id: 'asc3', name: '승천자', desc: '승천 3 이상에서 승리', test: function (c) { return c.win && (c.asc || 0) >= 3; } },

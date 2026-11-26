@@ -1,0 +1,21 @@
+import sys, json; sys.path.insert(0,'/workspace/work/dice-rpg/tests')
+from harness import *
+serve()
+with sync_playwright() as p:
+    b,ctx,page,errors=launch(p,390,844,True)
+    page.goto(BASE); page.wait_for_timeout(300)
+    page.evaluate("() => localStorage.clear()")
+    page.reload(); page.wait_for_timeout(300)
+    page.click('[data-act="newrun"]'); page.wait_for_timeout(200)
+    page.click('[data-act="pickclass"][data-id="warrior"]'); page.wait_for_timeout(400)
+    try: page.click('[data-act="closetut"]'); page.wait_for_timeout(200)
+    except Exception: pass
+    page.evaluate("""() => { DC.Game.spawnsFor = () => [DC.ENEMIES[1][0]]; DC.Game.startCombat('combat'); }""")
+    page.wait_for_timeout(200)
+    print("roll-in:", page.evaluate("() => !!document.querySelector('.tray.roll-in')"))
+    page.evaluate("() => { const c=DC.Game.state.combat; c.hand.forEach((h,i)=>{h.k='slash';h.v=5}); }")
+    page.evaluate("() => { DC.Combat.play(DC.Game.state.combat,0,0); DC.Combat.endTurn(DC.Game.state.combat); DC.UI.render(); }")
+    page.wait_for_timeout(300)
+    page.screenshot(path=OUT + "/v19b_combat.png")
+    print("ERRORS", errors[:3])
+    b.close()

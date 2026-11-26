@@ -224,6 +224,7 @@
       if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 3;
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
       if (c.prevV != null && c.prevV === v) d *= 1.25;
+      if (c.cmod && c.cmod.dmg) d *= c.cmod.dmg;
       if (has(c, 'vanguard') && c.turn === 1) d *= 1.5;
       if (has(c, 'duelist') && alive(c).length === 1) d *= 1.25;
       let dmg = Math.max(1, Math.round(d));
@@ -373,6 +374,7 @@
         act: run.act,
         relics: (run.relics || []).slice(),
         cls: run.cls,
+        cmod: run.cmod || null,
         hp: run.hp,
         maxHp: run.maxHp,
         block: 0,
@@ -405,9 +407,10 @@
       c.asc = run.asc || 0;
       c.enemies = spawns.map(function (s) {
         const e = mkEnemy(s, scale, c.act);
-        const mult = 1 + (mod.hp || 0) + ((s.gimmick && mod.bossHp) ? mod.bossHp : 0);
+        const cm = run.cmod || {};
+        const mult = (1 + (mod.hp || 0) + ((s.gimmick && mod.bossHp) ? mod.bossHp : 0)) * (1 + (cm.ehp || 0));
         if (mult !== 1) { e.maxHp = Math.max(1, Math.round(e.maxHp * mult)); e.hp = e.maxHp; }
-        e.ascAtk = 1 + (mod.atk || 0);
+        e.ascAtk = (1 + (mod.atk || 0)) * (1 + ((run.cmod || {}).eatk || 0));
         return e;
       });
       c.slots = cls.skills.map(function (s) { return { id: s.id, handIdx: null }; });

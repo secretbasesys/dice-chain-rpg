@@ -121,6 +121,9 @@
         case 'undo': this.undo(); break;
         case 'speed': this.toggleSpeed(); break;
         case 'log': s.ui.logOpen = !s.ui.logOpen; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'challenge': s.ui.modal = s.ui.modal === 'challenge' ? null : 'challenge'; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'pickchallenge': s.ui.challenge = d.id || 'none'; s.ui.modal = null; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'closechallenge': s.ui.modal = null; DC.UI.render(); break;
         case 'daily': s.ui.seed = DC.todaySeed(); DC.Audio.play('click'); DC.UI.render(); DC.UI.toast('오늘의 시드로 고정했습니다'); break;
         case 'clearseed': s.ui.seed = ''; DC.UI.render(); break;
         case 'history': s.ui.modal = s.ui.modal === 'history' ? null : 'history'; DC.Audio.play('click'); DC.UI.render(); break;
@@ -183,11 +186,15 @@
       const C = DC.CLASSES[id];
       const asc = this.state.ui.asc || 0;
       const seed = DC.setSeed(this.state.ui.seed || '');
+      const ch = DC.challengeById(this.state.ui.challenge || 'none');
+      const cmod = Object.assign({}, ch.mod || {});
+      if (cmod.hpMul) { /* applied below to maxHp */ }
       const mod = DC.ascMod(asc);
       const run = {
         cls: id,
         asc: asc,
-        hp: C.hp, maxHp: C.hp,
+        hp: Math.max(20, Math.round(C.hp * (1 + (cmod.hpMul || 0)))),
+        maxHp: Math.max(20, Math.round(C.hp * (1 + (cmod.hpMul || 0)))),
         gold: Math.max(20, 60 + (mod.gold || 0)),
         act: 1,
         dice: C.startDice.map(function (d) { return DC.Dice.make(d); }),
@@ -202,6 +209,8 @@
         startedAt: Date.now(),
         nodeSeq: 0,
         seed: seed || null,
+        challenge: ch.id,
+        cmod: cmod,
       };
       run.map = DC.MapGen.gen(DC.rng, 1);
       DC.Meta.noteRunStart(asc);
@@ -447,6 +456,7 @@
         cls: r.cls,
         asc: r.asc || 0,
         seed: r.seed || null,
+        challenge: r.challenge || 'none',
         win: !!win,
         act: r.act,
         kills: (r.stats && r.stats.kills) || 0,
@@ -470,6 +480,7 @@
       gold += r.act * 4;
       if (r.relics.indexOf('contract') >= 0) gold = Math.round(gold * 1.4);
       if (r.relics.indexOf('miser') >= 0) gold = Math.round(gold * 1.25);
+      if (r.cmod && r.cmod.gold) gold = Math.round(gold * r.cmod.gold);
       r.gold += gold;
       const bossClear = c.kind === 'boss';
       s.combat = null;
@@ -487,7 +498,7 @@
       if (s.combat) s.run.hp = 0;
       if (s.run) {
         DC.Meta.noteBestAct(s.run.act);
-        DC.Meta.check({ win: false, cls: s.run.cls, asc: s.run.asc || 0, maxCombo: s.run.maxCombo || 0, dmg: s.run.stats.dmg || 0 });
+        DC.Meta.check({ win: false, cls: s.run.cls, asc: s.run.asc || 0, maxCombo: s.run.maxCombo || 0, dmg: s.run.stats.dmg || 0, challenge: s.run.challenge });
         this.recordRun(false);
       }
       s.screen = 'gameover';
@@ -559,7 +570,7 @@
         this.state.screen = 'win';
         const res = DC.Meta.noteWin(r.cls, r.asc || 0);
         this.state.ui.winInfo = res;
-        const gained = DC.Meta.check({ win: true, cls: r.cls, asc: r.asc || 0, maxCombo: r.maxCombo || 0, dmg: r.stats.dmg || 0 });
+        const gained = DC.Meta.check({ win: true, cls: r.cls, asc: r.asc || 0, maxCombo: r.maxCombo || 0, dmg: r.stats.dmg || 0, challenge: r.challenge });
         this.state.ui.newAch = gained;
         this.recordRun(true);
         r.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });
@@ -648,7 +659,7 @@
     openShop: function (node) {
       const r = this.state.run;
       const ascPrice = 1 + (DC.ascMod(r.asc || 0).price || 0);
-      const disc = (r.relics.indexOf('merchant') >= 0 ? 0.7 : 1) * ascPrice;
+      const disc = (r.relics.indexOf('merchant') >= 0 ? 0.7 : 1) * ascPrice * (1 + ((r.cmod || {}).price || 0));
       const tierMax = r.act >= 3 ? 3 : r.act >= 2 ? 2 : 1;
       const diePool = shuffle(DC.DICE_IDS.filter(function (id) { return DC.DICE[id].price > 0 && DC.DICE[id].tier <= tierMax; }));
       const relicPool = shuffle(DC.RELIC_IDS.filter(function (id) { return r.relics.indexOf(id) < 0; }));

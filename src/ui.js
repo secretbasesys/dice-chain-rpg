@@ -363,6 +363,7 @@
           '<div class="mh-left"><span class="act-chip">ACT ' + r.act + '</span>' +
             '<span class="act-title">' + ACT_NAMES[r.act] + '</span></div>' +
           '<div class="map-prog">' +
+            (r.challenge && r.challenge !== 'none' ? '<span class="map-ch-chip" style="--c:' + DC.challengeById(r.challenge).c + '">' + esc(DC.challengeById(r.challenge).short) + '</span>' : '') +
             (r.seed ? '<button class="seed-chip" data-act="copyseed" title="시드 복사">' + icon('copy') + esc(DC.seedDisplay(r.seed)) + '</button>' : '') +
             '<b>층 ' + (curRow + 1) + '</b><span>/' + rows + '</span></div>' +
         '</div>' +
@@ -450,6 +451,9 @@
           '</div>' +
           '<button class="asc-btn" data-act="asc" data-dir="1" ' + (asc >= maxAsc ? 'disabled' : '') + ' aria-label="승천 높이기">' + icon('plus') + '</button>' +
         '</div>' +
+        '<button class="challenge-chip' + ((state.ui.challenge && state.ui.challenge !== 'none') ? ' on' : '') + '" data-act="challenge">' +
+          icon('crown') + '도전 모드 <b>' + esc(DC.challengeById(state.ui.challenge || 'none').short) + '</b>' +
+        '</button>' +
         '<div class="seed-row">' +
           '<span class="seed-ic">' + icon('dice') + '</span>' +
           '<input id="seed-input" class="seed-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" maxlength="14"' +
@@ -487,7 +491,8 @@
     return '' +
       '<main class="class-screen">' +
         '<h2>클래스를 선택하세요</h2>' +
-        '<p class="sub">각 클래스는 다른 주사위와 스킬 슬롯을 가집니다' + ((state.ui.asc || 0) ? ' · 승천 ' + state.ui.asc : '') + '</p>' +
+        '<p class="sub">각 클래스는 다른 주사위와 스킬 슬롯을 가집니다' + ((state.ui.asc || 0) ? ' · 승천 ' + state.ui.asc : '') +
+          ((state.ui.challenge && state.ui.challenge !== 'none') ? ' · ' + esc(DC.challengeById(state.ui.challenge).short) : '') + '</p>' +
         '<div class="class-list">' + cards + '</div>' +
       '</main>';
   }
@@ -656,6 +661,20 @@
       '<div class="panel-head"><h3>' + icon('book') + ' 스킬 각성</h3><button class="iconbtn" data-act="closeskills">' + icon('close') + '</button></div>' +
       '<p class="sub">스킬 하나를 영구히 강화합니다. 런이 끝나면 사라집니다.</p>' +
       '<div class="sk-list">' + rows + '</div>' +
+      '</div></div>';
+  }
+
+  function renderChallenge(state) {
+    const cur = state.ui.challenge || 'none';
+    const cards = DC.CHALLENGES.map(function (c) {
+      return '<button class="ch-card' + (cur === c.id ? ' on' : '') + '" data-act="pickchallenge" data-id="' + c.id + '" style="--c:' + c.c + '">' +
+        '<span class="ch-dot">' + (cur === c.id ? icon('check') : '') + '</span>' +
+        '<b>' + esc(c.name) + '</b><span>' + esc(c.desc) + '</span></button>';
+    }).join('');
+    return '<div class="overlay" data-act="closechallenge"><div class="panel ch-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('crown') + ' 도전 모드</h3><button class="iconbtn" data-act="closechallenge">' + icon('close') + '</button></div>' +
+      '<p class="sub">표준 외 모드는 더 위험하지만, 승리하면 「다른 길」 업적이 열립니다.</p>' +
+      '<div class="ch-list">' + cards + '</div>' +
       '</div></div>';
   }
 
@@ -1114,6 +1133,24 @@
       if (state.ui.modal === 'codex') app.innerHTML += renderCodex(state);
       if (state.ui.modal === 'history') app.innerHTML += renderHistory(state);
       if (state.ui.modal === 'tut') app.innerHTML += renderTut();
+      if (state.ui.modal === 'challenge') app.innerHTML += renderChallenge(state);
+      /* micro-interactions: gold pop + dice roll-in on new turn */
+      if (state.run) {
+        if (state.ui._lastGold != null && state.run.gold !== state.ui._lastGold) {
+          const g = document.querySelector('.goldchip');
+          if (g) { g.classList.add('pop'); }
+        }
+        state.ui._lastGold = state.run.gold;
+      }
+      if (state.screen === 'combat' && state.combat) {
+        if (state.ui._lastTurn !== state.combat.turn) {
+          const tr = document.querySelector('.tray');
+          if (tr) tr.classList.add('roll-in');
+          state.ui._lastTurn = state.combat.turn;
+        }
+      } else {
+        state.ui._lastTurn = null;
+      }
       document.body.setAttribute('data-screen', state.screen);
       if (state.run) document.body.setAttribute('data-act', state.run.act);
       if (DC.AudioMusic) {
