@@ -1077,6 +1077,30 @@
           (r.challenge && r.challenge !== 'none' ? '<span class="end-tag ch">' + icon('crown') + esc(DC.challengeById(r.challenge).short) + '</span>' : '') +
           (r.asc ? '<span class="end-tag">' + icon('up') + '승천 ' + r.asc + '</span>' : '') +
         '</div>' +
+        (function () {
+          const syns = DC.synergiesFor ? DC.synergiesFor(r.relics) : [];
+          const bosses = r.relics.filter(function (id) { return DC.RELICS[id] && DC.RELICS[id].boss; });
+          if (!syns.length && !bosses.length) return '';
+          return '<div class="end-build">' +
+            (syns.length ? '<div class="eb-row"><span>시너지</span>' + syns.map(function (sy) {
+              return '<i class="eb-chip" style="--c:' + sy.c + '" data-tip="' + esc(sy.desc) + '" data-tip-title="' + esc(sy.name) + '">' + icon('spark') + esc(sy.name) + '</i>';
+            }).join('') + '</div>' : '') +
+            (bosses.length ? '<div class="eb-row"><span>보스 유물</span>' + bosses.map(function (id) {
+              const R = DC.RELICS[id];
+              return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc + (R.trade ? ' · ' + R.trade : '')) + '" data-tip-title="' + esc(R.name) + '">' + relicIcon(id) + '</span>';
+            }).join('') + '</div>' : '') +
+          '</div>';
+        })() +
+        (function () {
+          const list = DC.Meta.achList().filter(function (a) { return !a.done && a.prog; });
+          if (!list.length) return '';
+          list.sort(function (a, b) { return (b.prog[0] / Math.max(1, b.prog[1])) - (a.prog[0] / Math.max(1, a.prog[1])); });
+          const a = list[0];
+          const pct = Math.min(100, Math.round(a.prog[0] / Math.max(1, a.prog[1]) * 100));
+          return '<div class="end-goal" data-tip="도감 · 업적에서 전체 목표를 볼 수 있습니다" data-tip-title="다음 목표">' +
+            icon('target') + '<div><b>' + esc(a.name) + '</b><span>' + esc(a.desc) + ' · ' + a.prog[0] + '/' + a.prog[1] + '</span>' +
+            '<i class="eg-bar"><u style="width:' + pct + '%"></u></i></div></div>';
+        })() +
         '<div class="title-btns">' +
           '<button class="bigbtn primary" data-act="newrun">새 게임</button>' +
           (r.seed ? '<button class="bigbtn ghost" data-act="retryseed">같은 시드로 다시</button>' : '') +
