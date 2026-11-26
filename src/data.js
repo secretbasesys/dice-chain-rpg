@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '4.3.0';
+  DC.VERSION = '4.4.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -265,8 +265,29 @@
     duelist: { name: '결투가의 장갑', ic: 'sword', c: '#fbbf24', desc: '살아 있는 적이 하나뿐이면 피해가 25% 증가한다.', price: 90 },
     miser: { name: '수전노의 지갑', ic: 'coin', c: '#fde68a', desc: '골드 획득이 25% 증가한다.', price: 80 },
     karma: { name: '업보의 사슬', ic: 'mult', c: '#f472b6', desc: '콤보 4 이상에서 모든 공격이 2번 적중한다.', price: 130 },
+
+    /* -------- boss relics (v4.4): 1·2막 보스 보상 전용, 굵직한 대가 -------- */
+    eyeOfFate: { boss: true, name: '운명의 눈', ic: 'eye', c: '#67e8f9',
+      desc: '매 턴 그림자 주사위 1개를 더 굴린다.', trade: '최대 체력 -8' },
+    rupture: { boss: true, name: '균열의 핵', ic: 'mult', c: '#f472b6',
+      desc: '연쇄 배율 상한이 3.0에서 5.0이 된다.', trade: '매 턴 기세 -1' },
+    warDrum: { boss: true, name: '전쟁의 북', ic: 'spark', c: '#fbbf24',
+      desc: '매 턴 기세를 2 더 얻는다.', trade: '방어도 획득 -25%' },
+    gildedIdol: { boss: true, name: '황금 우상', ic: 'crown', c: '#fde68a',
+      desc: '상점에 들어갈 때마다 물건 하나를 무료로 산다.', trade: '전투 골드 -30%' },
+    bloodPact: { boss: true, name: '피의 서약', ic: 'blood', c: '#f87171',
+      desc: '모든 피해가 35% 증가한다.', trade: '최대 체력 -12' },
+    glassCannon: { boss: true, name: '유리 대포', ic: 'target', c: '#fb923c',
+      desc: '주는 피해가 50% 증가한다.', trade: '받는 피해 +50%' },
+    timeLoop: { boss: true, name: '시간의 고리', ic: 'clock', c: '#93c5fd',
+      desc: '매 턴 무료 재굴림 2회.', trade: '최대 체력 -10' },
+    soulHarvest: { boss: true, name: '영혼 수확', ic: 'skull', c: '#a78bfa',
+      desc: '전투에서 이길 때마다 최대 체력 +4 (즉시 회복).', trade: '골드 획득 -25%' },
   };
   DC.RELIC_IDS = Object.keys(DC.RELICS);
+  DC.BOSS_RELIC_IDS = DC.RELIC_IDS.filter(function (id) { return !!DC.RELICS[id].boss; });
+  /* shop / reward / gift pools exclude boss relics */
+  DC.POOL_RELIC_IDS = DC.RELIC_IDS.filter(function (id) { return !DC.RELICS[id].boss; });
 
   /* ---------------- enemies ---------------- */
   function E(id, name, hp, art, c, intents, extra) {

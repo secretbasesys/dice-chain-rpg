@@ -14,7 +14,8 @@
   function mult(c) {
     const step = DC.BAL.comboStep + (has(c, 'mask') ? 0.1 : 0);
     const base = 1 + step * Math.max(0, c.combo - 1);
-    return Math.min(DC.BAL.comboCap + 0.5, base + c.multBonus);
+    const cap = has(c, 'rupture') ? 5.0 : DC.BAL.comboCap;
+    return Math.min(cap + 0.5, base + c.multBonus);
   }
 
   function target(c) {
@@ -138,6 +139,7 @@
 
   function hitPlayer(c, amount, ev, opts) {
     let dmg = Math.round(amount);
+    if (opts && opts.raw !== true && has(c, 'glassCannon')) dmg = Math.round(dmg * 1.5);
     if (c.statuses.vuln > 0) dmg = Math.round(dmg * DC.BAL.vulnMult);
     const absorbed = Math.min(c.block, dmg);
     c.block -= absorbed;
@@ -149,7 +151,7 @@
   }
 
   function gainBlock(c, amount) {
-    let v = Math.round(amount * (has(c, 'wrist') ? 1.25 : 1));
+    let v = Math.round(amount * (has(c, 'wrist') ? 1.25 : 1) * (has(c, 'warDrum') ? 0.75 : 1));
     c.block += v;
     return v;
   }
@@ -228,6 +230,8 @@
       if (c.cmod && c.cmod.dmg) d *= c.cmod.dmg;
       if (has(c, 'vanguard') && c.turn === 1) d *= 1.5;
       if (has(c, 'duelist') && alive(c).length === 1) d *= 1.25;
+      if (has(c, 'bloodPact')) d *= 1.35;
+      if (has(c, 'glassCannon')) d *= 1.5;
       let dmg = Math.max(1, Math.round(d));
       const hits = (has(c, 'karma') && c.combo >= 4 && !(opts && opts.noDouble)) ? 2 : 1;
       for (let i = 0; i < hits; i++) {
@@ -243,7 +247,7 @@
         if (fx.status && who) {
           Object.keys(fx.status).forEach(function (s) { who.st[s] += fx.status[s]; ev.push({ t: 'status', eid: who.id, s: s, amount: fx.status[s] }); });
         }
-        if (fx.selfDmg) hitPlayer(c, fx.selfDmg, ev, { kind: 'self' });
+        if (fx.selfDmg) hitPlayer(c, fx.selfDmg, ev, { kind: 'self', raw: true });
         mainDone = true;
         break;
       }
@@ -336,7 +340,7 @@
       if (fx.type !== 'mult') { c.multBonus += 0.5; ev.push({ t: 'msg', text: '증폭 +0.5' }); }
     } else if (k === 'curse') {
       const self = Math.ceil(v / 2);
-      const real = hitPlayer(c, self, ev, { kind: 'curse' });
+      const real = hitPlayer(c, self, ev, { kind: 'curse', raw: true });
       ev.push({ t: 'msg', text: '저주! ' + real + ' 피해' });
     } else if (k === 'blank') {
       ev.push({ t: 'msg', text: '공허 — 효과 없음' });
@@ -402,6 +406,9 @@
       };
       const cls = DC.CLASSES[run.cls];
       c.maxSparks = cls.sparks + (has(c, 'gamblersHand') ? 1 : 0);
+      if (has(c, 'warDrum')) c.maxSparks += 2;
+      if (has(c, 'rupture')) c.maxSparks = Math.max(0, c.maxSparks - 1);
+      if (has(c, 'doubleRoll') || has(c, 'timeLoop')) c.freeRerolls = has(c, 'timeLoop') ? 2 : 1;
       if (run.extraSpark) c.maxSparks += run.extraSpark;
       const scale = spawns.length > 1 ? 0.78 : 1;
       const mod = DC.ascMod(run.asc || 0);
@@ -441,6 +448,10 @@
       if (has(c, 'rune') && bag.length) {
         const r = DC.Dice.rollDie(bag[Math.floor(DC.rng() * bag.length)], DC.rng);
         hand.push({ uid: DC.uid('h'), dieIdx: -1, fi: r.fi, k: r.k, v: r.v, baseV: r.v, used: false, locked: false, phantom: true });
+      }
+      if (has(c, 'eyeOfFate') && bag.length) {
+        const r = DC.Dice.rollDie(bag[Math.floor(DC.rng() * bag.length)], DC.rng);
+        hand.push({ uid: DC.uid('h'), dieIdx: -1, fi: r.fi, k: r.k, v: r.v, baseV: r.v, used: false, locked: false, phantom: true, shadowEye: true });
       }
       // mage passive / hourglass
       if (c.cls === 'mage') c.sparks += 1;
@@ -525,7 +536,7 @@
       if (h.locked) return { ok: false, why: '봉인된 주사위', events: [] };
       const ev = [];
       if (op === 'reroll') {
-        const free = has(c, 'doubleRoll') && c.rerollsThisTurn === 0;
+        const free = c.freeRerolls != null ? c.rerollsThisTurn < c.freeRerolls : (has(c, 'doubleRoll') && c.rerollsThisTurn === 0);
         if (!free && c.sparks < 1) return { ok: false, why: '기세 부족', events: [] };
         if (!free) c.sparks -= 1;
         c.rerollsThisTurn += 1;
@@ -699,8 +710,9 @@
       const skill = skillOf(c, slotIdx);
       const fx = skill.fx;
       const step = DC.BAL.comboStep + (has(c, 'mask') ? 0.1 : 0);
-      const cur = 1 + step * Math.max(0, c.combo - 1) + c.multBonus;
-      const nextMult = Math.min(DC.BAL.comboCap + 0.5, 1 + step * c.combo + c.multBonus);
+      const capV = has(c, 'rupture') ? 5.0 : DC.BAL.comboCap;
+      const cur = Math.min(capV + 0.5, 1 + step * Math.max(0, c.combo - 1) + c.multBonus);
+      const nextMult = Math.min(capV + 0.5, 1 + step * c.combo + c.multBonus);
       const weakP = c.statuses.weak > 0 ? DC.BAL.weakMult : 1;
       function dmg(ratio, extra) {
         let d = (h.v * ratio + (extra || 0) + (c.statuses.str || 0)) * nextMult * weakP;
@@ -756,7 +768,8 @@
       const m = mult(c) + 0; // combo hasn't incremented yet -> preview next
       const nextMult = (function () {
         const step = DC.BAL.comboStep + (has(c, 'mask') ? 0.1 : 0);
-        return Math.min(DC.BAL.comboCap + 0.5, 1 + step * c.combo + c.multBonus);
+        const capV = has(c, 'rupture') ? 5.0 : DC.BAL.comboCap;
+        return Math.min(capV + 0.5, 1 + step * c.combo + c.multBonus);
       })();
       const fx = skill.fx;
       function dmg(ratio) {
@@ -769,7 +782,7 @@
       if (fx.type === 'aoe') return '≈' + dmg(fx.ratio) + ' 전체';
       if (fx.type === 'chain') return '≈' + dmg(fx.ratio) + ' + 연쇄';
       if (fx.type === 'multi') return '≈' + dmg(fx.ratio) + ' ×' + Math.max(1, c.combo + 1);
-      if (fx.type === 'block') return '+' + Math.round(h.v * fx.ratio * (has(c, 'wrist') ? 1.25 : 1)) + ' 방어';
+      if (fx.type === 'block') return '+' + Math.round(h.v * fx.ratio * (has(c, 'wrist') ? 1.25 : 1) * (has(c, 'warDrum') ? 0.75 : 1)) + ' 방어';
       if (fx.type === 'mult') return '배율 +' + fx.add.toFixed(1);
       if (fx.type === 'spark') return '기세 +' + fx.amount;
       if (fx.type === 'buff') return '힘 +' + fx.str;
@@ -790,7 +803,8 @@
     faceColor: faceColor,
     nextMult: function (c) {
       const step = DC.BAL.comboStep + (has(c, 'mask') ? 0.1 : 0);
-      return Math.min(DC.BAL.comboCap + 0.5, 1 + step * c.combo + c.multBonus);
+      const capV = has(c, 'rupture') ? 5.0 : DC.BAL.comboCap;
+      return Math.min(capV + 0.5, 1 + step * c.combo + c.multBonus);
     },
   };
 

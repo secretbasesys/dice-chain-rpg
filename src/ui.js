@@ -34,6 +34,7 @@
         '<span class="die-kind">' + k.n + '</span>' +
         (h.locked ? '<span class="die-lock">' + icon('lock') + '</span>' : '') +
         (h.used ? '<span class="die-used">' + icon('check') + '</span>' : '') +
+        (h.shadowEye ? '<span class="die-eye" data-tip="운명의 눈 — 매 턴 추가로 굴린 그림자 주사위" data-tip-title="그림자 주사위">' + icon('eye') + '</span>' : '') +
       '</div>';
   }
 
@@ -69,10 +70,11 @@
     const hp = c ? c.hp : r.hp;
     const maxHpv = c ? c.maxHp : r.maxHp;
     const gold = r.gold;
-    const relics = r.relics.map(function (id) {
+    const relicHtml = r.relics.map(function (id) {
       const R = DC.RELICS[id];
       return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc) + '" data-tip-title="' + esc(R.name) + '">' + relicIcon(id) + '</span>';
-    }).join('');
+    });
+    const relics = relicHtml.join('');
     return '' +
       '<div class="hud">' +
         '<div class="hud-left">' +
@@ -86,7 +88,8 @@
         '<div class="hud-mid">' + relics + '</div>' +
         '<div class="hud-right">' +
           '<span class="goldchip" title="골드">' + icon('coin') + gold + '</span>' +
-          '<button class="iconbtn" data-act="deck" title="덱 보기" aria-label="덱 보기">' + icon('book') + '</button>' +
+          '<button class="iconbtn deckbtn" data-act="deck" title="덱 · 유물 보기" aria-label="덱 보기">' + icon('book') +
+            (r.relics.length ? '<i class="cntbadge" data-tip="유물 ' + r.relics.length + '개 — 눌러서 확인" data-tip-title="보유 유물">' + r.relics.length + '</i>' : '') + '</button>' +
           '<button class="iconbtn" data-act="sound" title="소리" aria-label="소리">' + icon(DC.Audio.isMuted() ? 'mute' : 'sound') + '</button>' +
           '<button class="iconbtn" data-act="settings" title="설정 · 도움말" aria-label="설정">' + icon('gear') + '</button>' +
         '</div>' +
@@ -562,6 +565,32 @@
       '</main>';
   }
 
+  /* v4.4 — boss relic 3-way choice after act 1·2 bosses */
+  function renderBossRelic(state) {
+    const br = state.ui.bossRelic;
+    if (!br) return hud(state);
+    const cards = br.options.map(function (id, i) {
+      const R = DC.RELICS[id];
+      return '' +
+        '<div class="br-card" data-act="pickbossrelic" data-i="' + i + '" style="--c:' + R.c + '" role="button" tabindex="0">' +
+          '<div class="br-tag">' + icon('crown') + 'ACT ' + br.act + ' 보스 유물</div>' +
+          '<div class="br-art">' + relicIcon(id, 'relic-art br-art-svg') + '</div>' +
+          '<div class="br-name">' + esc(R.name) + '</div>' +
+          '<div class="br-desc">' + esc(R.desc) + '</div>' +
+          '<div class="br-trade">' + icon('down') + '<span>' + esc(R.trade || '') + '</span></div>' +
+        '</div>';
+    }).join('');
+    return hud(state) + '' +
+      '<main class="bossrelic-screen">' +
+        '<div class="br-head">' +
+          '<h2>' + icon('crown') + ' 보스 유물</h2>' +
+          '<p class="sub">하나만 선택할 수 있습니다 — 굵은 힘에는 반드시 대가가 따릅니다</p>' +
+        '</div>' +
+        '<div class="br-list">' + cards + '</div>' +
+        '<button class="bigbtn ghost skipbtn" data-act="skipbossrelic">건너뛰기 (+50 골드)</button>' +
+      '</main>';
+  }
+
   function renderForge(state) {
     const f = state.ui.forge;
     const r = state.run;
@@ -626,14 +655,15 @@
   function renderShop(state) {
     const sh = state.ui.shop;
     const r = state.run;
+    const freeLeft = sh.free || 0;
     const items = sh.items.map(function (it, i) {
-      const afford = r.gold >= it.price;
+      const afford = r.gold >= it.price || freeLeft > 0;
       const sold = it.sold;
       return '<div class="shop-item ' + (sold ? 'sold' : '') + '" style="--c:' + it.c + '">' +
         '<div class="si-ic">' + (it.kind === 'relic' ? relicIcon(it.id, 'relic-art si-art') : icon(it.ic)) + '</div>' +
         '<div class="si-main"><div class="si-name">' + esc(it.name) + '</div><div class="si-desc">' + esc(it.desc) + '</div>' +
           (it.faces ? '<div class="si-faces">' + it.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' : '') + '</div>' +
-        '<button class="buybtn" data-act="buy" data-i="' + i + '" ' + (sold || !afford ? 'disabled' : '') + '>' + (sold ? '판매됨' : it.price + 'G') + '</button>' +
+        '<button class="buybtn" data-act="buy" data-i="' + i + '" ' + (sold || !afford ? 'disabled' : '') + '>' + (sold ? '판매됨' : (freeLeft > 0 ? '무료' : it.price + 'G')) + '</button>' +
       '</div>';
     }).join('');
     return hud(state) + '' +
@@ -642,7 +672,8 @@
           '<button class="reroll-btn sm" data-act="rerollshop" ' + ((sh.rerolls || 0) >= 2 ? 'disabled' : '') + '>' +
             icon('reroll') + '재고 20G' + ((sh.rerolls || 0) ? ' · ' + (2 - (sh.rerolls || 0)) : '') + '</button>' +
         '</div>' +
-        '<p class="sub">골드로 주사위·유물·단조를 삽니다' + (r.relics.indexOf('merchant') >= 0 ? ' (상인의 인장 -30%)' : '') + '</p>' +
+        '<p class="sub">골드로 주사위·유물·단조를 삽니다' + (r.relics.indexOf('merchant') >= 0 ? ' (상인의 인장 -30%)' : '') +
+          (freeLeft > 0 ? ' <b class="shop-free">· 황금 우상: 1개 무료</b>' : '') + '</p>' +
         '<div class="shop-list">' + items + '</div>' +
         '<div class="bottom-bar"><button class="bigbtn" data-act="leave">떠난다</button></div>' +
       '</main>';
@@ -823,8 +854,9 @@
     const relics = DC.RELIC_IDS.map(function (id) {
       const R = DC.RELICS[id];
       const got = seenRelic.indexOf(id) >= 0;
-      return '<div class="cx-relic' + (got ? '' : ' locked') + '" style="--c:' + R.c + '">' + (got ? relicIcon(id, 'relic-art cx-art') : icon('lock')) +
-        '<div><b>' + esc(got ? R.name : '???') + '</b><span>' + esc(got ? R.desc : '아직 발견하지 못했습니다') + '</span></div></div>';
+      return '<div class="cx-relic' + (got ? '' : ' locked') + (R.boss ? ' boss' : '') + '" style="--c:' + R.c + '">' + (got ? relicIcon(id, 'relic-art cx-art') : icon('lock')) +
+        '<div><b>' + esc(got ? R.name : '???') + (R.boss ? ' <i class="cx-boss">보스</i>' : '') + '</b><span>' + esc(got ? R.desc : '아직 발견하지 못했습니다') +
+        (got && R.trade ? ' <em class="cx-trade">' + esc(R.trade) + '</em>' : '') + '</span></div></div>';
     }).join('');
     const enemyList = [];
     [1, 2, 3].forEach(function (a) {
@@ -989,7 +1021,7 @@
         ['2', '주사위 → 스킬 슬롯', '주사위를 탭하고 슬롯을 탭하거나, 슬롯만 탭하면 조건에 맞는 눈이 자동 배치됩니다. 끌어다 놓아도 됩니다.'],
         ['3', '슬롯 조건', '짝수·홀수·4 이상·소수·6 등 조건이 맞아야 올릴 수 있습니다. 조건은 주사위 조작으로 맞춥니다.'],
         ['4', '기세로 조작', '재굴림·+1/-1·뒤집기(7-x)·복제로 눈을 바꿉니다. 기세는 매 턴 최대치까지 회복됩니다.'],
-        ['5', '연쇄 콤보', '한 턴에 스킬을 이어 쓸수록 배율이 오릅니다(최대 x3.5). 3·5·7연쇄에서 연출이 터집니다.'],
+        ['5', '연쇄 콤보', '한 턴에 스킬을 이어 쓸수록 배율이 오릅니다(기본 최대 x3.5). 3·5·7연쇄에서 연출이 터집니다.'],
         ['6', '단조', '단조 노드에서 주사위의 개별 면을 영구히 교체합니다. 면이 곧 빌드입니다.'],
       ],
       combat: [
@@ -1005,6 +1037,7 @@
         ['H', '휴식', '회복(40%)·단련(최대 체력 +8)·단조(면 1회) 중 하나를 고릅니다.'],
         ['I', '스킬 각성', '상점의 각성의 서나 보상으로 스킬 하나를 영구 강화합니다. 런이 끝나면 사라집니다.'],
         ['J', '유물', '런 내내 유지되는 패시브입니다. 22종이 있으며 조합에 따라 빌드가 달라집니다.'],
+        ['J2', '보스 유물', '1막·2막 보스를 쓰러뜨리면 세 장 중 하나를 고릅니다. 강력하지만 반드시 대가(최대 체력·골드·방어 등)가 붙습니다.'],
       ],
       meta: [
         ['K', '시드', '타이틀에서 시드를 입력하면 같은 맵·주사위·상점이 재현됩니다. 「오늘의 시드」는 날짜 기반 일일 런입니다.'],
@@ -1314,6 +1347,7 @@
         case 'map': html = renderMap(state); break;
         case 'combat': html = renderCombat(state); break;
         case 'reward': html = renderReward(state); break;
+        case 'bossrelic': html = renderBossRelic(state); break;
         case 'forge': html = renderForge(state); break;
         case 'shop': html = renderShop(state); break;
         case 'rest': html = renderRest(state); break;

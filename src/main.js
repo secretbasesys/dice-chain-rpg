@@ -170,6 +170,8 @@
         case 'endturn': this.endTurn(); break;
         case 'target': this.setTarget(parseInt(d.i, 10)); break;
         case 'reward': this.takeReward(parseInt(d.i, 10)); break;
+        case 'pickbossrelic': this.pickBossRelic(parseInt(d.i, 10)); break;
+        case 'skipbossrelic': this.skipBossRelic(); break;
         case 'rerollreward': this.rerollReward(); break;
         case 'skipreward': this.skipReward(); break;
         case 'fdiedie': this.forgeSelectDie(parseInt(d.i, 10)); break;
@@ -312,7 +314,7 @@
         DC.Dice.upgradeFace(d, fi);
       } else if (g.k === 'relic') {
         const owned = r.relics;
-        const pool = DC.RELIC_IDS.filter(function (id) { return owned.indexOf(id) < 0 && DC.RELICS[id].price <= 100; });
+        const pool = DC.POOL_RELIC_IDS.filter(function (id) { return owned.indexOf(id) < 0 && DC.RELICS[id].price <= 100; });
         if (pool.length) this.addRelic(pool[Math.floor(DC.rng() * pool.length)]);
         else r.gold += 40;
       } else if (g.k === 'dice') {
@@ -608,8 +610,14 @@
       gold += r.act * 4;
       if (r.relics.indexOf('contract') >= 0) gold = Math.round(gold * 1.4);
       if (r.relics.indexOf('miser') >= 0) gold = Math.round(gold * 1.25);
+      if (r.relics.indexOf('gildedIdol') >= 0) gold = Math.round(gold * 0.7);
+      if (r.relics.indexOf('soulHarvest') >= 0) gold = Math.round(gold * 0.75);
       if (r.cmod && r.cmod.gold) gold = Math.round(gold * r.cmod.gold);
       r.gold += gold;
+      if (r.relics.indexOf('soulHarvest') >= 0) {
+        r.maxHp += 4;
+        r.hp = Math.min(r.maxHp, r.hp + 4);
+      }
       const bossClear = c.kind === 'boss';
       s.combat = null;
       s.ui.reward = { gold: gold, options: this.makeRewardOptions(bossClear ? 4 : 3), boss: bossClear };
@@ -642,7 +650,7 @@
       const r = this.state.run;
       const out = [];
       const owned = r.relics.slice();
-      const relicPool = shuffle(DC.RELIC_IDS.filter(function (id) { return owned.indexOf(id) < 0; }));
+      const relicPool = shuffle(DC.POOL_RELIC_IDS.filter(function (id) { return owned.indexOf(id) < 0; }));
       const diePool = shuffle(DC.DICE_IDS.filter(function (id) { return DC.DICE[id].tier <= (r.act >= 3 ? 3 : r.act >= 2 ? 2 : 1) && DC.DICE[id].price > 0; }));
       const kinds = [];
       if (relicPool.length) kinds.push('relic');
@@ -695,8 +703,51 @@
       else if (o.kind === 'skill') { this.openSkills(false); return; }
       DC.Audio.play('coin');
       s.ui.reward = null;
-      if (rw.boss) this.advanceAct();
+      if (rw.boss) this.afterBossReward();
       else this.goMap();
+    },
+
+    /* v4.4 — act 1·2 boss reward becomes a 3-way boss relic choice */
+    afterBossReward: function () {
+      const r = this.state.run;
+      if (r.act <= 2 && DC.BOSS_RELIC_IDS.length) this.openBossRelic();
+      else this.advanceAct();
+    },
+
+    openBossRelic: function () {
+      const s = this.state;
+      const r = s.run;
+      const pool = shuffle(DC.BOSS_RELIC_IDS.filter(function (id) { return r.relics.indexOf(id) < 0; }));
+      if (!pool.length) { this.advanceAct(); return; }
+      s.ui.bossRelic = { options: pool.slice(0, 3), act: r.act };
+      s.screen = 'bossrelic';
+      s.ui.busy = false;
+      this.save();
+      DC.Audio.play('boss');
+      DC.UI.render();
+    },
+
+    pickBossRelic: function (i) {
+      const s = this.state;
+      const br = s.ui.bossRelic;
+      if (!br || !br.options[i]) return;
+      const id = br.options[i];
+      this.addRelic(id);
+      s.ui.bossRelic = null;
+      s.ui.modal = null;
+      DC.Audio.play('upgrade');
+      DC.UI.toast('보스 유물: ' + DC.RELICS[id].name);
+      this.advanceAct();
+    },
+
+    skipBossRelic: function () {
+      const s = this.state;
+      if (!s.ui.bossRelic) return;
+      s.ui.bossRelic = null;
+      s.run.gold += 50;
+      DC.Audio.play('coin');
+      DC.UI.toast('보스 유물을 건넜다 (+50 골드)');
+      this.advanceAct();
     },
 
     skipReward: function () {
@@ -705,7 +756,7 @@
       if (!rw) return;
       s.run.gold += 20;
       s.ui.reward = null;
-      if (rw.boss) this.advanceAct();
+      if (rw.boss) this.afterBossReward();
       else this.goMap();
     },
 
@@ -767,6 +818,9 @@
       r.relics.push(id);
       DC.Meta.noteRelic(id);
       if (id === 'contract') { r.maxHp = Math.max(20, r.maxHp - 12); r.hp = Math.min(r.hp, r.maxHp); }
+      /* boss relic trade-offs (v4.4) */
+      const hpCost = { eyeOfFate: 8, bloodPact: 12, timeLoop: 10 }[id];
+      if (hpCost) { r.maxHp = Math.max(12, r.maxHp - hpCost); r.hp = Math.min(r.hp, r.maxHp); }
       if (id === 'gamblersHand') r.extraSpark = 0; // handled per combat
       DC.UI.toast('유물 획득: ' + DC.RELICS[id].name);
     },
@@ -836,7 +890,7 @@
       const disc = (r.relics.indexOf('merchant') >= 0 ? 0.7 : 1) * ascPrice * (1 + ((r.cmod || {}).price || 0));
       const tierMax = r.act >= 3 ? 3 : r.act >= 2 ? 2 : 1;
       const diePool = shuffle(DC.DICE_IDS.filter(function (id) { return DC.DICE[id].price > 0 && DC.DICE[id].tier <= tierMax; }));
-      const relicPool = shuffle(DC.RELIC_IDS.filter(function (id) { return r.relics.indexOf(id) < 0; }));
+      const relicPool = shuffle(DC.POOL_RELIC_IDS.filter(function (id) { return r.relics.indexOf(id) < 0; }));
       const items = [];
       for (let i = 0; i < 2 && diePool.length; i++) {
         const id = diePool.pop();
@@ -853,7 +907,7 @@
       if (r.dice.length > 3) items.push({ kind: 'remove', name: '주사위 정리', desc: '주사위 하나를 버립니다 (최소 3개 유지)', price: Math.round(55 * disc), ic: 'trash', c: '#94a3b8' });
       const canSkill = (r.skills || []).some(function (v) { return v < 1; });
       if (canSkill) items.push({ kind: 'skill', name: '각성의 서', desc: '스킬 하나를 영구히 각성시킵니다', price: Math.round(78 * disc), ic: 'book', c: '#fbbf24' });
-      this.state.ui.shop = { items: items, node: node, rerolls: rerolls };
+      this.state.ui.shop = { items: items, node: node, rerolls: rerolls, free: (keep && prev) ? (prev.free || 0) : (r.relics.indexOf('gildedIdol') >= 0 ? 1 : 0) };
       this.state.screen = 'shop';
       DC.UI.render();
     },
@@ -876,8 +930,10 @@
       const sh = s.ui.shop;
       const it = sh && sh.items[i];
       if (!it || it.sold) return;
-      if (s.run.gold < it.price) { DC.UI.toast('골드 부족'); DC.Audio.play('error'); return; }
-      s.run.gold -= it.price;
+      const free = (sh.free || 0) > 0;
+      if (!free && s.run.gold < it.price) { DC.UI.toast('골드 부족'); DC.Audio.play('error'); return; }
+      if (free) { sh.free -= 1; DC.UI.toast('황금 우상 — 무료 구매'); }
+      else s.run.gold -= it.price;
       it.sold = true;
       if (it.kind === 'die') s.run.dice.push(DC.Dice.make(it.id));
       else if (it.kind === 'relic') this.addRelic(it.id);
@@ -939,7 +995,7 @@
       if (eff.forge) parts.push('무료 단조 ' + eff.forge + '회');
       if (eff.relic) {
         const owned = r.relics || [];
-        const pool = DC.RELIC_IDS.filter(function (id) { return owned.indexOf(id) < 0; });
+        const pool = DC.POOL_RELIC_IDS.filter(function (id) { return owned.indexOf(id) < 0; });
         if (pool.length) {
           const id = pick(pool);
           this.addRelic(id);
@@ -1093,6 +1149,7 @@
             seed: s.run.seed || null, challenge: s.run.challenge || 'none',
             cmod: s.run.cmod || {}, depth: s.run.depth || 3,
             atDeep: s.screen === 'deep',
+            atBossRelic: s.screen === 'bossrelic' && !!s.ui.bossRelic,
             maxCombo: s.run.maxCombo || 0, nodeSeq: s.run.nodeSeq || 0,
           },
           savedAt: Date.now(),
@@ -1122,6 +1179,13 @@
       this.state.run = rr;
       this.state.combat = null;
       if (rr.atDeep) { this.state.screen = 'deep'; this.state.ui.deep = { act: rr.act }; delete rr.atDeep; }
+      else if (rr.atBossRelic) {
+        this.state.screen = 'bossrelic';
+        this.openBossRelic();
+        delete rr.atBossRelic;
+        DC.UI.toast('이어서 진행합니다 — 보스 유물 선택');
+        return;
+      }
       else this.state.screen = 'map';
       this.state.ui.busy = false;
       this.state.ui.sel = null;
@@ -1254,6 +1318,7 @@
         }
         if (s.screen === 'gift') { Game.takeGift(0); continue; }
         if (s.screen === 'reward') { Game.takeReward(0); continue; }
+        if (s.screen === 'bossrelic') { Game.pickBossRelic(0); continue; }
         if (s.screen === 'deep') { if (goDeep && s.run.act < 9) Game.continueDeep(); else Game.finishRun(); continue; }
         if (s.screen === 'map') {
           const avail = DC.MapGen.available(s.run.map);

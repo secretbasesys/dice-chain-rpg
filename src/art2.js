@@ -223,6 +223,82 @@
       '<path d="M10.6 23.8L9 25.4l2.2 2.2 1.8-1.8" opacity=".7"/>' +
       '<path d="M13.4 12.2l5.2 3-5.2 3z" fill="currentColor" stroke="none" opacity=".8"/>' +
       '<circle cx="16" cy="15.2" r="4.6" opacity=".4" stroke-dasharray="1.6 2"/>',
+
+    /* ---- v4.4 boss relics ---- */
+    eyeOfFate:
+      glow(16, 16, 13, 0.1) +
+      '<path d="M3.6 16S8.6 25 16 25s12.4-9 12.4-9S23.4 7 16 7 3.6 16 3.6 16z" fill="currentColor" opacity=".16"/>' +
+      '<path d="M3.6 16S8.6 25 16 25s12.4-9 12.4-9S23.4 7 16 7 3.6 16 3.6 16z"/>' +
+      '<circle cx="16" cy="16" r="5.4" opacity=".5"/>' +
+      '<rect x="13.4" y="13.4" width="5.2" height="5.2" rx="1.2" transform="rotate(12 16 16)" fill="currentColor" stroke="none" opacity=".85"/>' +
+      '<circle cx="16" cy="16" r=".8" fill="#0d1424" stroke="none"/>' +
+      '<path d="M16 2.4v3M5.4 6.6l2.2 2.2M26.6 6.6l-2.2 2.2M16 29.6v-2.6" opacity=".5"/>',
+
+    rupture:
+      glow(16, 16, 12, 0.12) +
+      '<path d="M16 3.2c6.6 0 11.4 5.2 11.4 11.4S22 27 16 27 4.6 21.4 4.6 15.2 9.4 3.2 16 3.2z" fill="currentColor" opacity=".16"/>' +
+      '<path d="M16 3.2c6.6 0 11.4 5.2 11.4 11.4S22 27 16 27 4.6 21.4 4.6 15.2 9.4 3.2 16 3.2z"/>' +
+      '<path d="M17.4 5.6l-4 6.4 3.2 1.2-3.8 6.2 2.8.4-2.6 6" stroke-width="1.9"/>' +
+      '<path d="M6.6 12.2l4.8 1.6M25.4 12.2l-4.8 1.6M6.4 20.6l5-1.4M25.6 20.6l-5-1.4" opacity=".45"/>',
+
+    warDrum:
+      '<ellipse cx="16" cy="19.4" rx="9.6" ry="3.4" fill="currentColor" opacity=".2"/>' +
+      '<path d="M6.4 14.2h19.2v5.2c0 1.9-4.3 3.4-9.6 3.4s-9.6-1.5-9.6-3.4z"/>' +
+      '<ellipse cx="16" cy="14.2" rx="9.6" ry="3.4" fill="currentColor" opacity=".22"/>' +
+      '<ellipse cx="16" cy="14.2" rx="9.6" ry="3.4"/>' +
+      '<path d="M6.4 14.2L4.6 9.6M25.6 14.2l1.8-4.6M12.6 12.4l1-3.2M19.4 12.4l-1-3.2" stroke-width="1.5"/>' +
+      '<path d="M6.4 16.6l-2.6 1.6M25.6 16.6l2.6 1.6" opacity=".45"/>' +
+      '<circle cx="8" cy="19.6" r="1" fill="currentColor" stroke="none"/><circle cx="24" cy="19.6" r="1" fill="currentColor" stroke="none"/>',
+
+    gildedIdol:
+      glow(16, 15, 12, 0.16) +
+      '<ellipse cx="16" cy="26.6" rx="8.2" ry="2.4" fill="currentColor" opacity=".2"/>' +
+      '<ellipse cx="16" cy="26.6" rx="8.2" ry="2.4"/>' +
+      '<path d="M10.6 24.8c0-5 2.4-8.6 5.4-8.6s5.4 3.6 5.4 8.6z" fill="currentColor" opacity=".2"/>' +
+      '<path d="M10.6 24.8c0-5 2.4-8.6 5.4-8.6s5.4 3.6 5.4 8.6"/>' +
+      '<circle cx="16" cy="11.4" r="4.4" fill="currentColor" opacity=".26"/>' +
+      '<circle cx="16" cy="11.4" r="4.4"/>' +
+      '<path d="M10.8 8.6l1.6 2.6M21.2 8.6l-1.6 2.6M16 4.6v3.4" stroke-width="1.6"/>' +
+      '<circle cx="10.8" cy="7.4" r="1" fill="currentColor" stroke="none"/>' +
+      '<circle cx="21.2" cy="7.4" r="1" fill="currentColor" stroke="none"/>' +
+      '<circle cx="16" cy="3.6" r="1.2" fill="currentColor" stroke="none"/>' +
+      '<path d="M13.4 24.4v-3.2M18.6 24.4v-3.2" opacity=".5"/>',
+
+
+    bloodPact:
+      '<path d="M9 4.6h11.4c2 0 3.6 1.6 3.6 3.6v16.6c0 2-1.6 3.6-3.6 3.6H9c-1.6 0-2.8-1.2-2.8-2.8V7.4C6.2 5.8 7.4 4.6 9 4.6z" fill="currentColor" opacity=".14"/>' +
+      '<path d="M9 4.6h11.4c2 0 3.6 1.6 3.6 3.6v16.6c0 2-1.6 3.6-3.6 3.6H9c-1.6 0-2.8-1.2-2.8-2.8V7.4C6.2 5.8 7.4 4.6 9 4.6z"/>' +
+      '<path d="M10.4 9.6h8.6M10.4 12.6h6M10.4 22.2h5" opacity=".45"/>' +
+      '<path d="M16 13.8c1.9 2.4 3.4 4 3.4 5.8 0 1.9-1.5 3.4-3.4 3.4s-3.4-1.5-3.4-3.4c0-1.8 1.5-3.4 3.4-5.8z" fill="currentColor" stroke="none" opacity=".85"/>' +
+      '<path d="M20.4 19.4c1.9 1.2 2.6 3 1.6 4.6" opacity=".4"/>',
+
+    glassCannon:
+      '<path d="M7 14.6h12.4l5.6 2.6v3.2l-5.6 2.6H7z" fill="currentColor" opacity=".18"/>' +
+      '<path d="M7 14.6h12.4l5.6 2.6v3.2l-5.6 2.6H7z"/>' +
+      '<path d="M7 14.6l-3.2 2v3.2l3.2 2" />' +
+      '<circle cx="10.4" cy="22.4" r="2.2"/><circle cx="10.4" cy="14" r="2.2" opacity=".55"/>' +
+      '<path d="M25 20.2l2.6 2.4-2.6 2.4" opacity=".6"/>' +
+      '<path d="M17.6 12.2l1.6-2 1.4 1.6 1.6-2.4" stroke-width="1.4" opacity=".75"/>' +
+      '<path d="M14.4 17.4l2.2 1.4-2 1.6" stroke-width="1.3" opacity=".6"/>',
+
+    timeLoop:
+      glow(16, 16, 12, 0.1) +
+      '<path d="M16 4.4a11.6 11.6 0 1 1-8.4 3.6" stroke-width="1.9"/>' +
+      '<path d="M5.6 3.4l1.2 5 5-1.2" stroke-width="1.9"/>' +
+      '<circle cx="16" cy="16" r="7.4" opacity=".4"/>' +
+      '<path d="M16 11.4V16l3.4 2.2" stroke-width="1.8"/>' +
+      '<circle cx="16" cy="16" r="1.1" fill="currentColor" stroke="none"/>' +
+      '<path d="M21.4 8l2-2M10.6 8L8.6 6" opacity=".4"/>',
+
+    soulHarvest:
+      glow(16, 15, 13, 0.1) +
+      '<path d="M26.4 3.2L7.4 27.2" stroke-width="2.1"/>' +
+      '<path d="M26.4 3.2c-8.6-.8-15.4 3.2-18.2 9.4 5.8-2.4 12-1.8 16.4 1.4" fill="currentColor" opacity=".22"/>' +
+      '<path d="M26.4 3.2c-8.6-.8-15.4 3.2-18.2 9.4 5.8-2.4 12-1.8 16.4 1.4"/>' +
+      '<path d="M8.6 10.2c-2.2 1.6-3.6 3.6-4.2 6" opacity=".45"/>' +
+      '<circle cx="10.4" cy="5.4" r="1.1" fill="currentColor" stroke="none" opacity=".85"/>' +
+      '<circle cx="5.6" cy="8" r="1.4" opacity=".4"/>' +
+      '<circle cx="22.4" cy="24.6" r="1" fill="currentColor" stroke="none" opacity=".6"/>',
     vanguard:
       '<path d="M8.4 27.4V3.6" stroke-width="2.4"/>' +
       '<path d="M9 5.2h15l-3.4 4.8L24 14.8H9z" fill="currentColor" opacity=".3"/>' +
