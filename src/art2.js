@@ -299,6 +299,40 @@
       '<circle cx="10.4" cy="5.4" r="1.1" fill="currentColor" stroke="none" opacity=".85"/>' +
       '<circle cx="5.6" cy="8" r="1.4" opacity=".4"/>' +
       '<circle cx="22.4" cy="24.6" r="1" fill="currentColor" stroke="none" opacity=".6"/>',
+
+    /* ---- v4.7 relics ---- */
+    engine:
+      '<circle cx="16" cy="14.6" r="6.4" fill="currentColor" opacity=".18"/>' +
+      '<circle cx="16" cy="14.6" r="6.4"/>' +
+      '<circle cx="16" cy="14.6" r="2" fill="currentColor" stroke="none"/>' +
+      '<path d="M16 4.4v3.2M16 21.6v3.2M5.8 14.6h3.2M23 14.6h3.2M8.8 7.4l2.2 2.2M23.2 7.4l-2.2 2.2M8.8 21.8l2.2-2.2M23.2 21.8l-2.2-2.2" stroke-width="1.6"/>' +
+      '<path d="M11.2 26.4h9.6" opacity=".5"/>',
+
+    executioner:
+      '<path d="M20.4 4.6c3 2.4 4.6 6.4 4 10.4-3.6-.6-6.8-2.6-8.8-5.6 1.4-2.2 3-3.6 4.8-4.8z" fill="currentColor" opacity=".22"/>' +
+      '<path d="M20.4 4.6c3 2.4 4.6 6.4 4 10.4-3.6-.6-6.8-2.6-8.8-5.6 1.4-2.2 3-3.6 4.8-4.8z"/>' +
+      '<path d="M15.6 9.4L6.2 24.2" stroke-width="2.4"/>' +
+      '<path d="M20.8 8.4l1.8 1.6" opacity=".5"/>' +
+      '<path d="M5.2 27.6h6" stroke-width="2"/>' +
+      '<circle cx="8.4" cy="12.6" r="1" fill="currentColor" stroke="none" opacity=".7"/>',
+
+    sixGuard:
+      '<path d="M16 3.2l9 3.4v7.2c0 5.4-3.8 9.4-9 11.6-5.2-2.2-9-6.2-9-11.6V6.6z" fill="currentColor" opacity=".18"/>' +
+      '<path d="M16 3.2l9 3.4v7.2c0 5.4-3.8 9.4-9 11.6-5.2-2.2-9-6.2-9-11.6V6.6z"/>' +
+      '<circle cx="12.4" cy="10" r="1.2" fill="currentColor" stroke="none"/>' +
+      '<circle cx="19.6" cy="10" r="1.2" fill="currentColor" stroke="none"/>' +
+      '<circle cx="12.4" cy="15" r="1.2" fill="currentColor" stroke="none"/>' +
+      '<circle cx="19.6" cy="15" r="1.2" fill="currentColor" stroke="none"/>' +
+      '<circle cx="12.4" cy="20" r="1.2" fill="currentColor" stroke="none"/>' +
+      '<circle cx="19.6" cy="20" r="1.2" fill="currentColor" stroke="none"/>',
+
+    pact:
+      '<path d="M6.6 7.4h18.8v13.2l-3.4 4H6.6z" fill="currentColor" opacity=".14"/>' +
+      '<path d="M6.6 7.4h18.8v13.2l-3.4 4H6.6z"/>' +
+      '<path d="M22 20.6l3.4-0.02L22 24.6z" fill="currentColor" opacity=".4"/>' +
+      '<path d="M10 12.2h8.6M10 15.4h5.6" opacity=".5"/>' +
+      '<circle cx="20.4" cy="18.2" r="2.6" fill="currentColor" opacity=".85"/>' +
+      '<path d="M18.6 18.2l1.3 1.3 2.2-2.4" stroke="#0d1424" stroke-width="1.2"/>',
     vanguard:
       '<path d="M8.4 27.4V3.6" stroke-width="2.4"/>' +
       '<path d="M9 5.2h15l-3.4 4.8L24 14.8H9z" fill="currentColor" opacity=".3"/>' +
@@ -333,6 +367,24 @@
 
   /* ---------------- event illustrations (14) ---------------- */
   DC.EVENT_ART = {
+    /* ---- v4.7 events ---- */
+    ironVow:
+      glow(16, 17, 14, 0.12) +
+      '<path d="M6.4 26.6l4-4.6 3.2 2.6 2.6-3.4 3 2.6 4.4-5.2" stroke-width="2"/>' +
+      '<path d="M12.4 12.6l3.6-6.4 3.6 6.4z" fill="currentColor" opacity=".25"/>' +
+      '<path d="M12.4 12.6l3.6-6.4 3.6 6.4z"/>' +
+      '<path d="M9.6 14.4h12.8v4.2H9.6z" fill="currentColor" opacity=".2"/>' +
+      '<path d="M9.6 14.4h12.8v4.2H9.6z"/>' +
+      '<path d="M8.4 6.6l2.2 2M24 6.6l-2 2" opacity=".5"/>',
+    ghostGambler:
+      glow(16, 15, 14, 0.16) +
+      '<path d="M16 3.4c4.4 0 7.6 3.2 7.6 7.6 0 2.4-1.2 3.8-2.4 5.2-.8 1-.8 2-.8 3.4H11.6c0-1.4 0-2.4-.8-3.4-1.2-1.4-2.4-2.8-2.4-5.2 0-4.4 3.2-7.6 7.6-7.6z" fill="currentColor" opacity=".18"/>' +
+      '<path d="M16 3.4c4.4 0 7.6 3.2 7.6 7.6 0 2.4-1.2 3.8-2.4 5.2-.8 1-.8 2-.8 3.4H11.6c0-1.4 0-2.4-.8-3.4-1.2-1.4-2.4-2.8-2.4-5.2 0-4.4 3.2-7.6 7.6-7.6z"/>' +
+      '<path d="M12.2 21.4h7.6M13 24.6h6" opacity=".6"/>' +
+      '<circle cx="13.2" cy="10.4" r="1.4" fill="currentColor" stroke="none"/>' +
+      '<circle cx="18.8" cy="10.4" r="1.4" fill="currentColor" stroke="none"/>' +
+      '<path d="M13.6 15.2c1.6 1.2 3.2 1.2 4.8 0" opacity=".7"/>' +
+      '<path d="M23.4 26.6h5.2M24.6 23.6h2.8" opacity=".35"/>',
     altar:
       glow(16, 16, 14, 0.14) +
       '<path d="M5.4 27.6h21.2" stroke-width="2"/>' +

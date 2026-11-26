@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '4.6.0';
+  DC.VERSION = '4.7.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -300,6 +300,10 @@
       desc: '주는 피해가 50% 증가한다.', trade: '받는 피해 +50%' },
     timeLoop: { boss: true, name: '시간의 고리', ic: 'clock', c: '#93c5fd',
       desc: '매 턴 무료 재굴림 2회.', trade: '최대 체력 -10' },
+    engine: { name: '톱니 심장', ic: 'clock', c: '#67e8f9', desc: '매 턴 첫 방어 스킬을 쓰면 기세 +1.', price: 90 },
+    executioner: { name: '집행인의 도끼', ic: 'hammer', c: '#f87171', desc: '체력 30% 이하인 적에게 주는 피해가 40% 증가한다.', price: 105 },
+    sixGuard: { name: '여섯 수호', ic: 'shield', c: '#a5b4fc', desc: '6이 나올 때마다 방어도 4를 얻는다.', price: 85 },
+    pact: { name: '밀약의 문장', ic: 'blood', c: '#ef4444', desc: '전투 시작 시 기세 +2 · 최대 체력 6 감소.', price: 70 },
     soulHarvest: { boss: true, name: '영혼 수확', ic: 'skull', c: '#a78bfa',
       desc: '전투에서 이길 때마다 최대 체력 +4 (즉시 회복).', trade: '골드 획득 -25%' },
   };
@@ -413,6 +417,28 @@
       ],
     },
     {
+      id: 'ironVow', name: '무쇠의 맹세', ic: 'shield', tag: '거래',
+      text: '부서진 갑옷 조각이 언덕처럼 쌓여 있다. 아직 쓸 수 있는 판금이 보인다. 들어 올리면 몸이 찢어질 것 같다.',
+      choices: [
+        { label: '판금을 벗겨 낸다', desc: '최대 체력 +10 · 12 피해', eff: { maxHp: 10, selfDmgFlat: 12 },
+          result: '날카로운 모서리에 살점이 찢겼지만, 단단한 판금을 얻었다.' },
+        { label: '조각을 모아 판다', desc: '+40 골드', eff: { gold: 40 }, result: '고철상이 값을 쳐줬다.' },
+        { label: '지나간다', result: '갑옷 더미를 뒤로했다.' },
+      ],
+    },
+    {
+      id: 'ghostGambler', name: '유령 도박꾼', ic: 'skull', tag: '도박',
+      text: '안개 속에 앉은 유령이 주사위를 굴리고 있다. "한 판만, 살아 있는 친구."',
+      choices: [
+        { label: '한 판 받아준다', desc: '운에 맡긴다 — 유물이나 주사위, 혹은 저주',
+          chance: [ { p: 0.35, eff: { relic: 'random' }, result: '유령이 웃으며 유물을 밀어 줬다.' },
+                    { p: 0.35, eff: { dice: 1 }, result: '주사위 하나를 받았다. 아직 따뜻하다.' },
+                    { p: 0.30, eff: { maxHp: -6, gold: 0 }, result: '유령이 내 온기를 가져갔다. 몸이 차갑다.' } ] },
+        { label: '동전만 던져준다', desc: '+18 골드', eff: { gold: 18 }, result: '유령이 동전을 받고 사라졌다.' },
+        { label: '도망친다', result: '안개를 가르고 달아났다.' },
+      ],
+    },
+    {
       id: 'dicePile', name: '버려진 주사위 더미', ic: 'dice', tag: '탐색',
       text: '누군가 버린 주사위가 수북하다. 쓸 만한 것을 골라보자.',
       choices: [
@@ -454,8 +480,8 @@
       id: 'forgeSpirit', name: '단조의 정령', ic: 'anvil', tag: '단조',
       text: '불꽃으로 이루어진 정령이 주사위를 두드리고 있다. "한 면만 바꿔줄까? 두 번이면 조금 더 들지."',
       choices: [
-        { label: '한 면을 부탁한다', desc: '무료 단조 1회', eff: { forge: 1 }, thenForge: true },
-        { label: '두 면을 부탁한다', desc: '30 골드 · 단조 2회', need: { gold: 30 }, eff: { gold: -30, forge: 2 }, thenForge: true },
+        { label: '한 면을 부탁한다', desc: '무료 단조 1회', eff: { forge: 1 }, thenForge: true, result: '정령이 망치를 건네주었다. 이제 네가 두드려라.' },
+        { label: '두 면을 부탁한다', desc: '30 골드 · 단조 2회', need: { gold: 30 }, eff: { gold: -30, forge: 2 }, thenForge: true, result: '정령이 금화를 삼키고, 뜨거운 망치 두 자루를 남겼다.' },
         { label: '지나간다', result: '정령이 망치를 다시 들었다.' },
       ],
     },
@@ -610,6 +636,24 @@
     if (!up) return base;
     return Object.assign({}, base, { fx: Object.assign({}, base.fx, up.fx), desc: up.desc, up: true });
   };
+
+  /* ---------------- skill draft (v4.7) ----------------
+     Any class can swap one of its five skills for a universal one at a
+     combat reward. 스킬은 슬롯 인덱스에 저장되어 런 내내 유지된다. */
+  DC.DRAFT_SKILLS = [
+    { id: 'd_cleave', name: '가르기', req: 'any', ic: 'sword', fx: { type: 'attack', ratio: 2.0, status: { vuln: 1 } }, desc: '눈 × 2.0 피해 · 취약 1' },
+    { id: 'd_bulwark', name: '철벽 방패', req: 'even', ic: 'shield', fx: { type: 'block', ratio: 3.2, heal: 1 }, desc: '눈 × 3.2 방어도 · 1 회복' },
+    { id: 'd_sweep', name: '휩쓸기', req: 'gte4', ic: 'whirl', fx: { type: 'aoe', ratio: 1.9 }, desc: '모든 적에게 눈 × 1.9' },
+    { id: 'd_arc', name: '연쇄 톱니', req: 'odd', ic: 'bolt', fx: { type: 'chain', ratio: 2.0 }, desc: '눈 × 2.0 + 다른 적에게 연쇄' },
+    { id: 'd_focus', name: '집중', req: 'any', ic: 'mult', fx: { type: 'mult', add: 0.5, dmgRatio: 0.6 }, desc: '연쇄 배율 +0.5 · 눈 × 0.6 피해' },
+    { id: 'd_roar', name: '전투의 외침', req: 'prime', ic: 'up', fx: { type: 'buff', str: 3, block: 4 }, desc: '힘 +3 · 방어도 4' },
+    { id: 'd_breath', name: '숨고르기', req: 'lte2', ic: 'spark', fx: { type: 'spark', amount: 2, block: 4 }, desc: '기세 +2 · 방어도 4' },
+    { id: 'd_flurry', name: '연타', req: 'any', ic: 'sword', fx: { type: 'multi', ratio: 1.2 }, desc: '눈 × 1.2 피해를 콤보 수만큼' },
+    { id: 'd_execute', name: '처형', req: 'six', ic: 'skull', fx: { type: 'attack', ratio: 5.0, selfDmg: 2 }, desc: '눈 × 5.0 피해 · 자신 2 피해' },
+    { id: 'd_prayer', name: '기원', req: 'odd', ic: 'star', fx: { type: 'block', ratio: 2.2, heal: 2 }, desc: '눈 × 2.2 방어도 · 2 회복' },
+  ];
+  DC.DRAFT_BY_ID = {};
+  DC.DRAFT_SKILLS.forEach(function (s) { DC.DRAFT_BY_ID[s.id] = s; });
 
 
   /* ---------------- ascension & achievements ---------------- */

@@ -52,7 +52,10 @@
     };
   }
 
-  function skillOf(c, idx) { return DC.getSkill(c.cls, idx, (c.skillLv || [])[idx] || 0); }
+  function skillOf(c, idx) {
+    if (c.customSkills && c.customSkills[idx]) return c.customSkills[idx];
+    return DC.getSkill(c.cls, idx, (c.skillLv || [])[idx] || 0);
+  }
 
   function intentOf(e) {
     if (!e || e.hp <= 0) return null;
@@ -233,6 +236,7 @@
       if (has(c, 'duelist') && alive(c).length === 1) d *= 1.25;
       if (has(c, 'bloodPact')) d *= 1.35;
       if (has(c, 'glassCannon')) d *= 1.5;
+      if (has(c, 'executioner') && targetEnemy && targetEnemy.hp > 0 && targetEnemy.hp <= targetEnemy.maxHp * 0.3) d *= 1.4;
       let dmg = Math.max(1, Math.round(d));
       const hits = (has(c, 'karma') && c.combo >= 4 && !(opts && opts.noDouble)) ? 2 : 1;
       for (let i = 0; i < hits; i++) {
@@ -377,13 +381,23 @@
 
     /* relic: spark on 6 / even */
     if (v === 6 && has(c, 'sixBless')) { c.sparks += 1; ev.push({ t: 'spark', amount: 1 }); }
+    if (v === 6 && has(c, 'sixGuard')) {
+      const b6 = gainBlock(c, 4);
+      ev.push({ t: 'pblock', amount: b6 });
+    }
+    if (fx.type === 'block' && has(c, 'engine') && !c.engineUsed) {
+      c.engineUsed = true;
+      c.sparks += 1;
+      ev.push({ t: 'spark', amount: 1 });
+      ev.push({ t: 'msg', text: '톱니 심장 — 기세 +1' });
+    }
     if (v % 2 === 0 && has(c, 'luckyCoin') && c.luckyCoinUsed < 2) { c.luckyCoinUsed++; c.sparks += 1; ev.push({ t: 'spark', amount: 1 }); }
     return mainDone;
   }
 
   /* ---------- state snapshots (undo) ---------- */
   const SNAP_KEYS = ['enemies', 'hand', 'slots', 'combo', 'multBonus', 'sparks', 'block', 'hp',
-    'statuses', 'phase', 'totalDamage', 'rerollsThisTurn', 'luckyCoinUsed', 'turn', 'chainLog', 'flask', 'verdict'];
+    'statuses', 'phase', 'totalDamage', 'rerollsThisTurn', 'luckyCoinUsed', 'turn', 'chainLog', 'flask', 'verdict', 'engineUsed'];
 
   /* ---------- public API ---------- */
   const Combat = {
@@ -427,6 +441,7 @@
         maxCombo: 0,
         chainLog: [],
         skillLv: (run.skills || []).slice(),
+        customSkills: run.customSkills ? JSON.parse(JSON.stringify(run.customSkills)) : {},
         flask: { fire: 0, poison: 0, bolt: 0 },
         verdict: 0,
         seedNote: null,
@@ -434,6 +449,7 @@
       const cls = DC.CLASSES[run.cls];
       c.maxSparks = cls.sparks + (has(c, 'gamblersHand') ? 1 : 0);
       if (has(c, 'warDrum')) c.maxSparks += 2;
+      if (has(c, 'pact')) c.maxSparks += 2;
       if (has(c, 'rupture')) c.maxSparks = Math.max(0, c.maxSparks - 1);
       if (has(c, 'doubleRoll') || has(c, 'timeLoop')) c.freeRerolls = has(c, 'timeLoop') ? 2 : 1;
       if (run.extraSpark) c.maxSparks += run.extraSpark;
@@ -463,6 +479,7 @@
       c.prevV = null;
       c.rerollsThisTurn = 0;
       c.luckyCoinUsed = 0;
+      c.engineUsed = false;
       c.sparks = c.maxSparks;
       c.slots.forEach(function (s) { s.handIdx = null; s.resolved = false; });
       c.chainLog = [];

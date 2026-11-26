@@ -2034,3 +2034,32 @@ body.no-motion * { animation-duration: .001s !important; animation-iteration-cou
 }
 .class-new .ic { width: 10px; height: 10px; }
 .class-card.fresh { box-shadow: 0 0 0 1px rgba(253, 230, 138, .45), 0 8px 26px rgba(251, 191, 36, .14); }
+
+/* ---------------- v4.7 skill draft ---------------- */
+.draft-panel { max-width: 460px; }
+.dr-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
+.dr-card {
+  display: grid; grid-template-columns: 34px 1fr auto; grid-template-rows: auto auto;
+  gap: 0 9px; align-items: center; text-align: left; cursor: pointer;
+  background: linear-gradient(120deg, rgba(192, 132, 252, .14), #131b2b);
+  border: 1px solid rgba(192, 132, 252, .38); border-radius: 13px; padding: 9px 11px; color: inherit;
+}
+.dr-card:active { transform: scale(.985); }
+.dr-ic { grid-row: 1 / 3; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #c084fc; background: rgba(192, 132, 252, .14); }
+.dr-ic .ic { width: 18px; height: 18px; }
+.dr-card b { font-size: 14px; font-weight: 900; }
+.dr-req { font-size: 9.5px; font-weight: 800; color: #d8caff; background: rgba(192, 132, 252, .16); border-radius: 7px; padding: 1px 6px; justify-self: end; }
+.dr-desc { grid-column: 2 / 4; font-size: 11px; color: #b9c6de; }
+.ds-list { display: flex; flex-direction: column; gap: 6px; }
+.ds-row {
+  display: flex; align-items: center; gap: 9px; text-align: left; cursor: pointer; color: inherit;
+  background: #121a2a; border: 1px solid #24304a; border-radius: 12px; padding: 8px 10px;
+}
+.ds-row:active { transform: scale(.99); }
+.ds-ic { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; color: #9db0cd; background: #182135; flex: none; }
+.ds-ic .ic { width: 16px; height: 16px; }
+.ds-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ds-main b { font-size: 13px; font-weight: 800; }
+.ds-main span { font-size: 10.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-swap { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 800; color: #c084fc; }
+.ds-swap .ic { width: 12px; height: 12px; }

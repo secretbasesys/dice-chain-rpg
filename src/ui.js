@@ -752,17 +752,19 @@
 
   function renderSkills(state) {
     const r = state.run;
-    const rows = DC.CLASSES[r.cls].skills.map(function (sk, i) {
+    const rows = [0, 1, 2, 3, 4].map(function (i) {
+      const custom = r.customSkills && r.customSkills[i];
+      const sk = custom || DC.CLASSES[r.cls].skills[i];
       const up = DC.getSkill(r.cls, i, 1);
       const lv = (r.skills || [])[i] || 0;
-      return '<div class="sk-row' + (lv ? ' done' : '') + '">' +
+      return '<div class="sk-row' + (lv ? ' done' : '') + (custom ? ' swapped' : '') + '">' +
         '<div class="sk-ic">' + icon(sk.ic) + '</div>' +
         '<div class="sk-main">' +
-          '<div class="sk-name">' + esc(sk.name) + (lv ? ' <i class="upmark">각성</i>' : '') + '</div>' +
+          '<div class="sk-name">' + esc(sk.name) + (custom ? ' <i class="upmark swap">드래프트</i>' : '') + (lv ? ' <i class="upmark">각성</i>' : '') + '</div>' +
           '<div class="sk-now">' + esc(lv ? up.desc : sk.desc) + '</div>' +
-          (lv ? '' : '<div class="sk-up">' + icon('up') + esc(up.desc) + '</div>') +
+          (lv || custom ? '' : '<div class="sk-up">' + icon('up') + esc(up.desc) + '</div>') +
         '</div>' +
-        '<button class="sk-btn" data-act="upskill" data-i="' + i + '" ' + (lv ? 'disabled' : '') + '>' + (lv ? '완료' : '각성') + '</button>' +
+        '<button class="sk-btn" data-act="upskill" data-i="' + i + '" ' + (lv || custom ? 'disabled' : '') + '>' + (custom ? '교체됨' : lv ? '완료' : '각성') + '</button>' +
       '</div>';
     }).join('');
     return '<div class="overlay" data-act="closeskills"><div class="panel skill-panel" data-stop="1">' +
@@ -802,6 +804,45 @@
         icon('eye') + '모션 줄이기 <b>' + (st.motion ? '켜짐' : '꺼짐') + '</b></button>' +
       '<button class="set-toggle" data-act="help">' + icon('book') + '게임 방법 <b>열기</b></button>' +
       '<p class="set-foot">설정은 이 기기에 저장됩니다.</p>' +
+      '</div></div>';
+  }
+
+  function renderDraft(state) {
+    const d = state.ui.draft;
+    const r = state.run;
+    if (!d) return '';
+    const step = d.step || 'pick';
+    const REQP = { any: '아무 눈', even: '짝수', odd: '홀수', gte4: '4 이상', lte2: '2 이하', six: '6', prime: '소수' };
+    if (step === 'pick') {
+      const cards = d.options.map(function (sk, i) {
+        return '<button class="dr-card" data-act="draftskill" data-i="' + i + '" style="--c:#c084fc">' +
+          '<span class="dr-ic">' + icon(sk.ic) + '</span>' +
+          '<b>' + esc(sk.name) + '</b>' +
+          '<span class="dr-req">' + esc(REQP[sk.req] || sk.req) + '</span>' +
+          '<span class="dr-desc">' + esc(sk.desc) + '</span>' +
+        '</button>';
+      }).join('');
+      return '<div class="overlay" data-act="closedraft"><div class="panel draft-panel" data-stop="1">' +
+        '<div class="panel-head"><h3>' + icon('book') + ' 스킬 드래프트</h3><button class="iconbtn" data-act="closedraft">' + icon('close') + '</button></div>' +
+        '<p class="sub">새 스킬 3장 중 하나를 골라 슬롯 하나와 바꿉니다. 바꿔도 잃는 것은 없습니다.</p>' +
+        '<div class="dr-list">' + cards + '</div>' +
+        '<button class="bigbtn ghost skipbtn" data-act="skipdraft">건너뛰기</button>' +
+        '</div></div>';
+    }
+    const cur = [0, 1, 2, 3, 4].map(function (i) {
+      const sk = (r.customSkills && r.customSkills[i]) || DC.CLASSES[r.cls].skills[i];
+      const lv = (r.skills || [])[i] || 0;
+      return '<button class="ds-row" data-act="draftslot" data-i="' + i + '">' +
+        '<span class="ds-ic">' + icon(sk.ic) + '</span>' +
+        '<span class="ds-main"><b>' + esc(sk.name) + (lv ? ' <i class="upmark">각성</i>' : '') + '</b>' +
+          '<span>' + esc(sk.desc) + '</span></span>' +
+        '<span class="ds-swap">' + icon('reroll') + '교체</span>' +
+      '</button>';
+    }).join('');
+    return '<div class="overlay" data-act="closedraft"><div class="panel draft-panel" data-stop="1">' +
+      '<div class="panel-head"><h3>' + icon('book') + ' 어느 슬롯을 바꿀까요</h3><button class="iconbtn" data-act="closedraft">' + icon('close') + '</button></div>' +
+      '<p class="sub"><b style="color:#e9d5ff">' + esc(d.pick.name) + '</b> — ' + esc(d.pick.desc) + '</p>' +
+      '<div class="ds-list">' + cur + '</div>' +
       '</div></div>';
   }
 
@@ -1413,6 +1454,7 @@
       if (state.ui.modal === 'challenge') app.innerHTML += renderChallenge(state);
       if (state.ui.modal === 'remove' && state.run) app.innerHTML += renderRemove(state);
       if (state.ui.modal === 'settings') app.innerHTML += renderSettings(state);
+      if (state.ui.modal === 'draft' && state.ui.draft) app.innerHTML += renderDraft(state);
       if (!document.querySelector('.rotate-hint')) {
         const rh = document.createElement('div');
         rh.className = 'rotate-hint';

@@ -171,6 +171,10 @@
         case 'target': this.setTarget(parseInt(d.i, 10)); break;
         case 'reward': this.takeReward(parseInt(d.i, 10)); break;
         case 'pickbossrelic': this.pickBossRelic(parseInt(d.i, 10)); break;
+        case 'draftskill': this.pickDraft(parseInt(d.i, 10)); break;
+        case 'draftslot': this.applyDraft(d.i); break;
+        case 'closedraft': this.closeDraft(false); break;
+        case 'skipdraft': this.closeDraft(true); break;
         case 'skipbossrelic': this.skipBossRelic(); break;
         case 'rerollreward': this.rerollReward(); break;
         case 'skipreward': this.skipReward(); break;
@@ -255,6 +259,7 @@
         act: 1,
         dice: C.startDice.map(function (d) { return DC.Dice.make(d); }),
         skills: C.skills.map(function () { return 0; }),
+        customSkills: {},
         relics: [],
         seenEvents: [],
         map: null,
@@ -663,8 +668,10 @@
       if (diePool.length) kinds.push('die');
       kinds.push('forge');
       if ((r.skills || []).some(function (v) { return v < 1; })) kinds.push('skill');
+      if (DC.DRAFT_SKILLS && DC.DRAFT_SKILLS.length) kinds.push('draft');
+      const mixed = shuffle(kinds);
       for (let i = 0; i < n; i++) {
-        let kind = kinds[i % kinds.length];
+        let kind = mixed[i % mixed.length];
         if (kind === 'relic' && relicPool.length) {
           const id = relicPool.pop();
           const R = DC.RELICS[id];
@@ -675,6 +682,10 @@
           out.push({ kind: 'die', id: id, name: D.name, desc: D.tag + ' 주사위', faces: D.faces, ic: 'dice', c: D.c, kindLabel: '주사위' });
         } else if (kind === 'skill' && (r.skills || []).some(function (v) { return v < 1; })) {
           out.push({ kind: 'skill', name: '각성의 서', desc: '스킬 하나를 각성시킵니다', ic: 'book', c: '#fbbf24', kindLabel: '각성' });
+        } else if (kind === 'draft') {
+          const cand = this.draftCandidates(3);
+          out.push({ kind: 'draft', name: '스킬 교체', desc: '새 스킬 ' + (cand[0] ? cand[0].name : '...') + ' 등 3장 중 하나로 내 스킬 하나를 바꿉니다',
+            ic: 'book', c: '#c084fc', kindLabel: '드래프트', cand: cand.map(function (s) { return s.id; }) });
         } else {
           out.push({ kind: 'forge', name: '단조 도구', desc: '주사위 면을 1회 바꿉니다 (무료)', ic: 'anvil', c: '#fb923c', kindLabel: '단조' });
         }
@@ -697,6 +708,71 @@
       DC.UI.render();
     },
 
+    draftCandidates: function (n) {
+      const r = this.state.run;
+      const owned = {};
+      for (let i = 0; i < 5; i++) {
+        const sk = (r.customSkills && r.customSkills[i]) || DC.CLASSES[r.cls].skills[i];
+        if (sk) owned[sk.id] = true;
+      }
+      const pool = shuffle(DC.DRAFT_SKILLS.filter(function (s) { return !owned[s.id]; }));
+      return pool.slice(0, n);
+    },
+
+    openDraft: function (ids, next) {
+      const s = this.state;
+      const cand = (ids && ids.length ? ids.map(function (id) { return DC.DRAFT_BY_ID[id]; }).filter(Boolean) : this.draftCandidates(3));
+      if (!cand.length) { if (next === 'boss') this.afterBossReward(); else this.goMap(); return; }
+      s.ui.draft = { options: cand, step: 'pick', pick: null, next: next || 'map' };
+      s.ui.reward = null;
+      s.screen = 'map';
+      s.ui.modal = 'draft';
+      DC.Audio.play('click');
+      DC.UI.render();
+    },
+
+    pickDraft: function (i) {
+      const s = this.state;
+      const d = s.ui.draft;
+      if (!d || !d.options[i]) return;
+      d.pick = d.options[i];
+      d.step = 'slot';
+      DC.Audio.play('select');
+      DC.UI.render();
+    },
+
+    applyDraft: function (slot) {
+      const s = this.state;
+      const d = s.ui.draft;
+      if (!d || !d.pick) return;
+      const r = s.run;
+      const idx = parseInt(slot, 10);
+      if (isNaN(idx) || idx < 0 || idx > 4) return;
+      r.customSkills = r.customSkills || {};
+      r.customSkills[idx] = d.pick;
+      r.skills[idx] = 0;
+      s.ui.draft = null;
+      s.ui.modal = null;
+      DC.Audio.play('upgrade');
+      DC.UI.toast('스킬 교체: ' + d.pick.name);
+      this.save();
+      if (d.next === 'boss') this.afterBossReward();
+      else this.goMap();
+    },
+
+    closeDraft: function (force) {
+      const s = this.state;
+      const d = s.ui.draft;
+      if (!d) { s.ui.modal = null; DC.UI.render(); return; }
+      if (d.step === 'slot') { d.step = 'pick'; d.pick = null; DC.UI.render(); return; }
+      if (force) {
+        s.ui.draft = null; s.ui.modal = null;
+        if (d.next === 'boss') this.afterBossReward(); else this.goMap();
+        return;
+      }
+      DC.UI.toast('스킬을 하나 골라야 합니다');
+    },
+
     takeReward: function (i) {
       const s = this.state;
       const rw = s.ui.reward;
@@ -705,8 +781,9 @@
       const r = s.run;
       if (o.kind === 'relic') this.addRelic(o.id);
       else if (o.kind === 'die') r.dice.push(DC.Dice.make(o.id));
-      else if (o.kind === 'forge') { s.ui.reward = null; this.openForge(1, null); return; }
+      else if (o.kind === 'forge') { s.ui.reward = null; this.openForge(1, null, rw.boss); return; }
       else if (o.kind === 'skill') { this.openSkills(false); return; }
+      else if (o.kind === 'draft') { s.ui.reward = null; this.openDraft(o.cand, rw.boss ? 'boss' : 'map'); return; }
       DC.Audio.play('coin');
       s.ui.reward = null;
       if (rw.boss) this.afterBossReward();
@@ -825,17 +902,17 @@
       DC.Meta.noteRelic(id);
       if (id === 'contract') { r.maxHp = Math.max(20, r.maxHp - 12); r.hp = Math.min(r.hp, r.maxHp); }
       /* boss relic trade-offs (v4.4) */
-      const hpCost = { eyeOfFate: 8, bloodPact: 12, timeLoop: 10 }[id];
+      const hpCost = { eyeOfFate: 8, bloodPact: 12, timeLoop: 10, pact: 6 }[id];
       if (hpCost) { r.maxHp = Math.max(12, r.maxHp - hpCost); r.hp = Math.min(r.hp, r.maxHp); }
       if (id === 'gamblersHand') r.extraSpark = 0; // handled per combat
       DC.UI.toast('유물 획득: ' + DC.RELICS[id].name);
     },
 
     /* ---------------- forge ---------------- */
-    openForge: function (free, node) {
+    openForge: function (free, node, bossAfter) {
       const s = this.state;
       s.screen = 'forge';
-      s.ui.forge = { free: free, dieIdx: 0, faceIdx: null, options: [], node: node };
+      s.ui.forge = { free: free, dieIdx: 0, faceIdx: null, options: [], node: node, bossAfter: !!bossAfter };
       this.state.ui.busy = false;
       DC.UI.render();
     },
@@ -883,8 +960,10 @@
     },
 
     forgeExit: function () {
+      const f = this.state.ui.forge;
       this.state.ui.forge = null;
-      this.goMap();
+      if (f && f.bossAfter) this.afterBossReward();
+      else this.goMap();
     },
 
     /* ---------------- shop ---------------- */
@@ -1077,6 +1156,7 @@
         eff = hit.eff || {};
         result = hit.result || '';
       }
+      if (!result) result = ch.thenForge ? '망치가 준비되었다.' : '…그리고 아무 일도 일어나지 않았다.';
       const gains = this.applyEff(eff);
       r.seenEvents = (r.seenEvents || []).concat([holder.def.id || holder.def.name]);
       s.ui.event = {
@@ -1151,7 +1231,7 @@
             cls: s.run.cls, hp: s.run.hp, maxHp: s.run.maxHp, gold: s.run.gold, act: s.run.act,
             dice: s.run.dice, relics: s.run.relics, map: s.run.map, current: s.run.current,
             cleared: s.run.cleared, extraSpark: s.run.extraSpark, stats: s.run.stats, startedAt: s.run.startedAt,
-            skills: s.run.skills, seenEvents: s.run.seenEvents, asc: s.run.asc,
+            skills: s.run.skills, customSkills: s.run.customSkills || {}, seenEvents: s.run.seenEvents, asc: s.run.asc,
             seed: s.run.seed || null, challenge: s.run.challenge || 'none',
             cmod: s.run.cmod || {}, depth: s.run.depth || 3,
             atDeep: s.screen === 'deep',
@@ -1178,6 +1258,7 @@
       if (!data || !data.run) { DC.UI.toast('저장된 게임이 없습니다'); this.newRun(); return; }
       const rr = data.run;
       rr.skills = rr.skills || [0, 0, 0, 0, 0];
+      rr.customSkills = rr.customSkills || {};
       rr.seenEvents = rr.seenEvents || [];
       rr.asc = rr.asc || 0;
       rr.maxCombo = rr.maxCombo || 0;
@@ -1315,6 +1396,8 @@
       const log = [];
       while (steps++ < (maxSteps || 600)) {
         if (s.screen === 'win' || s.screen === 'gameover') break;
+        if (s.ui.modal === 'skills') { Game.finishSkill(); continue; }
+        if (s.ui.modal === 'draft') { Game.pickDraft(0); Game.applyDraft(2); continue; }
         if (s.screen === 'combat') {
           Test.autoCombat(50);
           const c = s.combat;
@@ -1323,7 +1406,17 @@
           continue;
         }
         if (s.screen === 'gift') { Game.takeGift(0); continue; }
-        if (s.screen === 'reward') { Game.takeReward(0); continue; }
+        if (s.screen === 'reward') {
+          const opts = (s.ui.reward && s.ui.reward.options) || [];
+          const pref = ['relic', 'die', 'draft', 'skill', 'forge'];
+          let idx = 0;
+          for (let p = 0; p < pref.length; p++) {
+            const k = opts.findIndex(function (o) { return o.kind === pref[p]; });
+            if (k >= 0) { idx = k; break; }
+          }
+          Game.takeReward(idx);
+          continue;
+        }
         if (s.screen === 'bossrelic') { Game.pickBossRelic(0); continue; }
         if (s.screen === 'deep') { if (goDeep && s.run.act < 9) Game.continueDeep(); else Game.finishRun(); continue; }
         if (s.screen === 'map') {
@@ -1336,7 +1429,7 @@
         if (s.screen === 'shop') { Game.leaveNode(); continue; }
         if (s.screen === 'rest') { Game.rest(0); continue; }
         if (s.screen === 'event') {
-          if (s.ui.event && s.ui.event.result) { Game.leaveNode(); continue; }
+          if (s.ui.event && (s.ui.event.result || s.ui.event.after)) { Game.leaveNode(); continue; }
           const def = s.ui.event && s.ui.event.def;
           let idx = 0;
           if (def) {
