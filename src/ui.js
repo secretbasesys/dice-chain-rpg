@@ -530,7 +530,14 @@
           '<button class="seed-btn" data-act="daily">' + icon('clock') + '오늘의 시드</button>' +
         '</div>' +
         '<div class="title-btns">' +
-          (hasSave ? '<button class="bigbtn primary" data-act="resume">이어하기</button>' : '') +
+          (hasSave && DC.Game.saveInfo() ? (function () {
+            const inf = DC.Game.saveInfo();
+            const CLS = (DC.classesShort || {})[inf.cls] || inf.cls;
+            return '<button class="bigbtn primary resume-card" data-act="resume">' +
+              '<span class="rc-main">이어하기 · ' + esc(CLS) + '</span>' +
+              '<span class="rc-sub">ACT ' + inf.act + (inf.depth > 3 ? ' · 깊이 ' + inf.depth : '') + ' · HP ' + inf.hp + '/' + inf.maxHp +
+              ' · 주사위 ' + inf.dice + ' · 유물 ' + inf.relics + '</span></button>';
+          })() : (hasSave ? '<button class="bigbtn primary" data-act="resume">이어하기</button>' : '')) +
           '<button class="bigbtn ' + (hasSave ? '' : 'primary') + '" data-act="newrun">새 게임</button>' +
           '<button class="bigbtn ghost" data-act="codex">도감 · 업적 <i class="badge-num">' + (prog.dice + prog.relics + prog.enemies) + '</i></button>' +
           '<button class="bigbtn ghost" data-act="history">런 기록 <i class="badge-num">' + DC.Meta.history().length + '</i></button>' +
@@ -823,6 +830,14 @@
           }).join('') +
         '</div></div>' +
       '<button class="set-toggle" data-act="help">' + icon('book') + '게임 방법 <b>열기</b></button>' +
+      '<div class="set-data">' +
+        '<div class="sd-head">' + icon('lock') + ' 게임 데이터</div>' +
+        (state.ui.confirmReset
+          ? '<p class="sd-warn">진행도(도감·업적·승천·기록)와 저장된 런이 모두 사라집니다.</p>' +
+            '<div class="sd-row"><button class="bigbtn ghost sm" data-act="cancelreset">취소</button>' +
+            '<button class="bigbtn danger sm" data-act="resetdata">정말 초기화</button></div>'
+          : '<div class="sd-row"><button class="bigbtn ghost sm" data-act="askreset">' + icon('trash') + ' 진행도 초기화</button></div>') +
+      '</div>' +
       '<p class="set-foot">설정은 이 기기에 저장됩니다.</p>' +
       '</div></div>';
   }

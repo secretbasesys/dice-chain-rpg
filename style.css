@@ -499,7 +499,7 @@ body[data-act="3"] .map-screen { --act-glow: rgba(167, 139, 250, .22); --scene-c
   padding: 16px; overflow-y: auto;
 }
 .title-screen { align-items: center; justify-content: safe center; text-align: center; gap: 6px; }
-.logo-dice { display: flex; gap: 10px; margin-bottom: 4px; }
+.logo-dice { display: flex; gap: 10px; margin-bottom: 8px; }
 .ld {
   width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
   background: linear-gradient(160deg, #202b44, #131a2a); border: 1px solid var(--line2);
@@ -2168,3 +2168,15 @@ body.fs-xl .die-val { font-size: 29px; }
 .end-goal span { display: block; font-size: 10px; color: var(--dim); }
 .eg-bar { display: block; height: 4px; border-radius: 2px; background: #232b40; margin-top: 4px; overflow: hidden; }
 .eg-bar u { display: block; height: 100%; background: linear-gradient(90deg, #fbbf24, #fde68a); }
+
+/* v5.8 — resume card + data management */
+.bigbtn.resume-card { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; height: auto; text-align: left; }
+.rc-main { font-size: 15px; font-weight: 900; }
+.rc-sub { font-size: 10.5px; font-weight: 700; opacity: .82; }
+.set-data { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.sd-head { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 900; color: #9db0cd; margin-bottom: 6px; }
+.sd-head .ic { width: 13px; height: 13px; }
+.sd-warn { font-size: 10.5px; color: #ff9d9d; margin-bottom: 6px; line-height: 1.45; }
+.sd-row { display: flex; gap: 6px; }
+.bigbtn.sm { height: 36px; font-size: 11.5px; padding: 0 12px; flex: 1; }
+.bigbtn.danger { background: linear-gradient(120deg, #7f1d1d, #b91c1c); color: #ffe4e4; border: 1px solid #ef4444; }

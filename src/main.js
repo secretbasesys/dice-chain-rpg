@@ -54,7 +54,7 @@
       screen: 'title',
       run: null,
       combat: null,
-      ui: { sel: null, busy: false, modal: null, set: { music: 0.6, sfx: 0.8, motion: false, hc: false, fs: 1 }, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1, asc: 0 },
+      ui: { sel: null, busy: false, modal: null, set: { music: 0.6, sfx: 0.8, motion: false, hc: false, fs: 0 }, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1, asc: 0 },
       lastCombat: null,
     },
 
@@ -216,6 +216,9 @@
           document.body.classList.toggle('no-motion', s.ui.set.motion);
           DC.FX.setReduced(s.ui.set.motion);
           this.saveSettings(); DC.UI.render(); break;
+        case 'askreset': this.askReset(); break;
+        case 'resetdata': this.resetData(); break;
+        case 'cancelreset': this.state.ui.confirmReset = false; DC.UI.render(); break;
         case 'sethc': this.setDisplay('hc'); break;
         case 'setfs': this.setDisplay('fs', parseInt(d.v, 10) || 0); break;
         case 'setspeed2':
@@ -1295,6 +1298,41 @@
 
     hasSave: function () {
       try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+    },
+
+    /* compact summary of the saved run for the title card (v5.8) */
+    saveInfo: function () {
+      try {
+        const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+        if (!d || !d.run) return null;
+        const r = d.run;
+        return {
+          cls: r.cls, act: r.act, hp: r.hp, maxHp: r.maxHp,
+          relics: (r.relics || []).length, dice: (r.dice || []).length,
+          asc: r.asc || 0, depth: r.depth || 3, at: d.savedAt || null,
+        };
+      } catch (e) { return null; }
+    },
+
+    /* settings > data: wipe progress (keeps nothing) */
+    resetData: function () {
+      try {
+        [SAVE_KEY, 'dicechain.meta.v2'].forEach(function (k) { localStorage.removeItem(k); });
+      } catch (e) {}
+      DC.Meta.save ? null : null;
+      this.state.run = null;
+      this.state.combat = null;
+      this.state.screen = 'title';
+      this.state.ui.modal = null;
+      this.state.ui.confirmReset = false;
+      DC.UI.toast('진행도를 초기화했습니다');
+      DC.UI.render();
+    },
+
+    askReset: function () {
+      this.state.ui.confirmReset = true;
+      DC.Audio.play('error');
+      DC.UI.render();
     },
 
     clearSave: function () {
