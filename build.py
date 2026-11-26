@@ -4,7 +4,7 @@ Output: downloads/dice-chain-rpg.html  (+ optional path argument)"""
 import re, sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent
-JS_ORDER = ["data.js", "art.js", "meta.js", "dice.js", "map.js", "combat.js", "audio.js", "fx.js", "ui.js", "main.js"]
+JS_ORDER = ["data.js", "art.js", "art2.js", "meta.js", "dice.js", "map.js", "combat.js", "audio.js", "fx.js", "ui.js", "main.js"]
 
 def build(out_path):
     html = (ROOT / "index.html").read_text(encoding="utf-8")

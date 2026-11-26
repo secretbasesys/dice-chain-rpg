@@ -42,6 +42,12 @@
     return '<span class="face-mini" style="--c:' + k.c + '">' + icon(k.ic) + '<b>' + f.v + '</b></span>';
   }
 
+  function relicIcon(id, cls) {
+    const R = DC.RELICS[id];
+    if (!R) return '';
+    return DC.relicArt ? DC.relicArt(id, cls || 'relic-art') : icon(R.ic);
+  }
+
   function statusChips(st, opts) {
     let out = '';
     ['burn', 'poison', 'weak', 'vuln', 'str'].forEach(function (s) {
@@ -62,7 +68,7 @@
     const gold = r.gold;
     const relics = r.relics.map(function (id) {
       const R = DC.RELICS[id];
-      return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc) + '" data-tip-title="' + esc(R.name) + '">' + icon(R.ic) + '</span>';
+      return '<span class="relic" style="--c:' + R.c + '" data-tip="' + esc(R.desc) + '" data-tip-title="' + esc(R.name) + '">' + relicIcon(id) + '</span>';
     }).join('');
     return '' +
       '<div class="hud">' +
@@ -234,66 +240,148 @@
       '</main>';
   }
 
-  /* ---------------- map ---------------- */
+  /* ---------------- map (v1.4 exploration map) ---------------- */
+  const ACT_NAMES = ['', '잿빛 폐허', '가라앉은 성소', '운명의 정점'];
+  const ACT_SCENES = {
+    1:
+      '<path d="M0 80V54h14v-8h8v20h10V46h6v-9h7v43h12V50h11v30h9V44h6v-7h5v43h13V52h10v28h12V47h7v33h14V57h12v23z" fill="currentColor" opacity=".5"/>' +
+      '<path d="M34 80V30l4-6 4 6v50zM128 80V26l3-5 3 5v54z" fill="currentColor" opacity=".35"/>' +
+      '<circle cx="58" cy="20" r="7" fill="currentColor" opacity=".18"/>',
+    2:
+      '<path d="M0 80V64c14 0 22-8 22-18S14 30 0 30V20h200v10c-14 0-22 6-22 16s8 18 22 18v16z" fill="currentColor" opacity=".22"/>' +
+      '<path d="M40 80V40a12 12 0 0 1 24 0v40zM88 80V36a12 12 0 0 1 24 0v44zM136 80V44a12 12 0 0 1 24 0v36z" fill="currentColor" opacity=".4"/>' +
+      '<path d="M0 72c20 0 40 6 60 0s40-6 60 0 40 6 80 0" opacity=".5" stroke-width="1.2"/>' +
+      '<path d="M0 78c24 0 44 4 68 0s44-4 66 0 40 4 66 0" opacity=".3" stroke-width="1.2"/>',
+    3:
+      '<path d="M0 80l22-30 12 12 16-26 14 20 10-8 18-30 12 24 14-10 16 28 10-6 20 26z" fill="currentColor" opacity=".35"/>' +
+      '<path d="M0 80l30-16 18 8 22-10 20 10 24-8 22 10 22-6 26 12z" fill="currentColor" opacity=".2"/>' +
+      '<path d="M96 18l3-8 3 8M40 34l2-6 2 6M150 30l2-7 2 7" stroke-width="1.2" opacity=".7"/>',
+  };
+
+  function jitter(id) {
+    const n = parseInt(String(id).replace(/\D/g, ''), 10) || 1;
+    return ((n * 37) % 13) - 6; // -6..6
+  }
+
+  function nodePos(n, map) {
+    const count = map.grid[n.row].length;
+    const base = count === 1 ? 50 : count === 2 ? 29 + n.col * 42 : 17 + n.col * 33;
+    const j = jitter(n.id + 'x') * 0.9;
+    if (n.type === 'boss') return { x: 50, y: 0 };
+    return { x: Math.max(9, Math.min(91, base + j)), y: 0 };
+  }
+
+  function actScene(act) {
+    return '<svg class="map-scene" viewBox="0 0 200 80" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">' +
+      (ACT_SCENES[act] || ACT_SCENES[1]) + '</svg>';
+  }
+
+  function mapMotes() {
+    let out = '';
+    for (let i = 0; i < 14; i++) {
+      const l = (i * 37 + 11) % 96 + 2, d = (i % 7) * 1.3, dur = 7 + (i % 5) * 2.2, sz = 1 + (i % 3);
+      out += '<i style="left:' + l + '%;animation-delay:-' + d + 's;animation-duration:' + dur + 's;width:' + sz + 'px;height:' + sz + 'px"></i>';
+    }
+    return out;
+  }
+
   function renderMap(state) {
     const r = state.run;
     const map = r.map;
     const avail = DC.MapGen.available(map);
-    let rows = '';
-    for (let ri = map.rows - 1; ri >= 0; ri--) {
-      const row = map.grid[ri].map(function (id) { return map.nodes[id]; });
-      rows += '<div class="map-row" data-row="' + ri + '">' + row.map(function (n) {
+    const rows = map.rows;
+    const curRow = map.current ? map.nodes[map.current].row : 0;
+    const visited = r.cleared || [];
+    const boss = DC.BOSSES[r.act];
+    const bossDone = map.current && map.nodes[map.current].type === 'boss';
+
+    let html = '';
+    for (let ri = rows - 1; ri >= 0; ri--) {
+      map.grid[ri].forEach(function (id) {
+        const n = map.nodes[id];
         const meta = DC.NODES[n.type];
+        const pos = nodePos(n, map);
         const isAvail = avail.indexOf(n.id) >= 0;
         const isCur = map.current === n.id;
-        const isPast = r.cleared && r.cleared.indexOf(n.id) >= 0;
-        return '<div class="node ' + (isAvail ? 'avail' : '') + ' ' + (isCur ? 'cur' : '') + ' ' + (isPast ? 'past' : '') + '" data-act="node" data-nid="' + n.id + '" data-type="' + n.type + '" style="--c:' + meta.c + '" role="button" tabindex="0" title="' + meta.n + '">' +
-          icon(meta.ic) + '<span class="node-l">' + (n.type === 'boss' ? 'BOSS' : meta.n) + '</span></div>';
-      }).join('') + '</div>';
+        const isPast = visited.indexOf(n.id) >= 0 && !isCur;
+        const yPct = rows === 1 ? 50 : 82 - (n.row / (rows - 1)) * 74;
+        const size = n.type === 'boss' ? ' boss' : '';
+        const label = n.type === 'boss' ? 'BOSS' : meta.n;
+        html += '<div class="node' + size + (isAvail ? ' avail' : '') + (isCur ? ' cur' : '') + (isPast ? ' past' : '') + (n.type === 'boss' && !isAvail && !isCur && !isPast ? ' looming' : '') + '"' +
+          ' data-act="node" data-nid="' + n.id + '" data-type="' + n.type + '"' +
+          ' style="--c:' + meta.c + ';left:' + pos.x.toFixed(2) + '%;top:' + yPct.toFixed(2) + '%" role="button" tabindex="0"' +
+          ' aria-label="' + (esc(meta.n)) + ' 노드' + (isPast ? ' (완료)' : isAvail ? ' (이동 가능)' : '') + '">' +
+          '<span class="node-halo"></span>' +
+          '<span class="node-face">' + DC.nodeArt(n.type) + '</span>' +
+          '<span class="node-l">' + esc(label) + '</span>' +
+          (isPast ? '<span class="node-done">' + icon('check') + '</span>' : '') +
+          (isAvail ? '<span class="node-cta">' + icon('right') + '</span>' : '') +
+        '</div>';
+      });
     }
-    return '' +
-      hud(state) +
+
+    return hud(state) +
       '<main class="map-screen">' +
+        '<div class="map-bg"><div class="map-haze"></div><div class="map-motes">' + mapMotes() + '</div>' +
+          '<div class="map-scene-wrap">' + actScene(r.act) + '</div></div>' +
         '<div class="map-head">' +
-          '<div class="act-title">ACT ' + r.act + ' <span>' + ['', '잿빛 폐허', '가라앉은 성소', '운명의 정점'][r.act] + '</span></div>' +
-          '<div class="map-sub">' + (r.maxFloor ? '' : '') + '다음 목적지를 선택하세요</div>' +
+          '<div class="mh-left"><span class="act-chip">ACT ' + r.act + '</span>' +
+            '<span class="act-title">' + ACT_NAMES[r.act] + '</span></div>' +
+          '<div class="map-prog"><b>층 ' + (curRow + 1) + '</b><span>/' + rows + '</span></div>' +
         '</div>' +
-        '<div class="map-wrap" id="map-wrap">' +
-          '<svg class="map-edges" id="map-edges"></svg>' +
-          rows +
-        '</div>' +
+        (boss && !bossDone ? '<div class="boss-preview" style="--c:' + boss.c + '">' +
+          '<div class="bp-art">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(boss.art, boss) + '</svg>' + '</div>' +
+          '<div class="bp-txt"><span>' + icon('crown') + '다가오는 보스</span><b>' + esc(boss.name) + '</b></div>' +
+          '<div class="bp-hp"><b>' + boss.hp + '</b><i>HP</i></div>' +
+        '</div>' : '') +
+        '<div class="map-wrap" id="map-wrap"><div class="map-canvas" id="map-canvas" style="--rows:' + rows + '">' +
+          '<svg class="map-edges" id="map-edges"></svg>' + html +
+        '</div></div>' +
         '<div class="map-legend">' +
-          '<span><i style="--c:#ff7b72">' + icon('sword') + '</i>전투</span>' +
-          '<span><i style="--c:#a78bfa">' + icon('skull') + '</i>정예</span>' +
-          '<span><i style="--c:#fb923c">' + icon('anvil') + '</i>단조</span>' +
-          '<span><i style="--c:#34d399">' + icon('shop') + '</i>상점</span>' +
-          '<span><i style="--c:#67e8f9">' + icon('mystery') + '</i>미지</span>' +
-          '<span><i style="--c:#fbbf24">' + icon('campfire') + '</i>휴식</span>' +
+          ['combat', 'elite', 'forge', 'shop', 'mystery', 'rest', 'boss'].map(function (t) {
+            const m = DC.NODES[t];
+            return '<span style="--c:' + m.c + '"><i>' + DC.nodeArt(t, 'leg-art') + '</i>' + m.n + '</span>';
+          }).join('') +
         '</div>' +
       '</main>';
   }
 
   function drawMapEdges() {
     const svg = document.getElementById('map-edges');
-    const wrap = document.getElementById('map-wrap');
-    if (!svg || !wrap || !DC.Game.state.run) return;
+    const canvas = document.getElementById('map-canvas');
+    if (!svg || !canvas || !DC.Game.state.run) return;
     const map = DC.Game.state.run.map;
-    const wr = wrap.getBoundingClientRect();
-    svg.setAttribute('viewBox', '0 0 ' + wrap.clientWidth + ' ' + wrap.clientHeight);
+    const visited = DC.Game.state.run.cleared || [];
+    const W = canvas.clientWidth, H = canvas.scrollHeight;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+    const pos = {};
+    canvas.querySelectorAll('[data-nid]').forEach(function (el) {
+      pos[el.getAttribute('data-nid')] = {
+        x: el.offsetLeft + el.offsetWidth / 2,
+        y: el.offsetTop + el.offsetHeight / 2,
+      };
+    });
     let out = '';
     Object.keys(map.nodes).forEach(function (id) {
       const n = map.nodes[id];
-      const a = wrap.querySelector('[data-nid="' + id + '"]');
+      const a = pos[id];
       if (!a) return;
-      const ar = a.getBoundingClientRect();
       n.next.forEach(function (nid) {
-        const b = wrap.querySelector('[data-nid="' + nid + '"]');
+        const b = pos[nid];
         if (!b) return;
-        const br = b.getBoundingClientRect();
-        const x1 = ar.left - wr.left + ar.width / 2, y1 = ar.top - wr.top;
-        const x2 = br.left - wr.left + br.width / 2, y2 = br.top - wr.top + br.height;
         const active = map.current === id;
-        out += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" class="' + (active ? 'edge active' : 'edge') + '"/>';
+        const done = visited.indexOf(id) >= 0 && visited.indexOf(nid) >= 0;
+        const cls = active ? 'edge active' : done ? 'edge done' : 'edge';
+        const up = b.y < a.y;
+        const dir = up ? -1 : 1;
+        const dy = Math.max(14, Math.abs(b.y - a.y) * 0.42);
+        const y1 = a.y + dir * 10, y2 = b.y - dir * 10;
+        const d = 'M' + a.x.toFixed(1) + ' ' + y1.toFixed(1) + ' C' + a.x.toFixed(1) + ' ' + (y1 + dir * dy).toFixed(1) + ',' +
+          b.x.toFixed(1) + ' ' + (y2 - dir * dy).toFixed(1) + ',' + b.x.toFixed(1) + ' ' + y2.toFixed(1);
+        out += '<path d="' + d + '" class="' + cls + '"/>';
+        if (active) out += '<path d="' + d + '" class="edge flow"/>';
       });
     });
     svg.innerHTML = out;
@@ -366,7 +454,7 @@
     const cards = rw.options.map(function (o, i) {
       const faces = o.faces ? '<div class="rw-faces">' + o.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' : '';
       return '<div class="rw-card" data-act="reward" data-i="' + i + '" style="--c:' + (o.c || '#fbbf24') + '" role="button" tabindex="0">' +
-        '<div class="rw-ic">' + icon(o.ic || 'star') + '</div>' +
+        '<div class="rw-ic">' + (o.kind === 'relic' ? relicIcon(o.id, 'relic-art rw-art') : icon(o.ic || 'star')) + '</div>' +
         '<div class="rw-kind">' + esc(o.kindLabel) + '</div>' +
         '<div class="rw-name">' + esc(o.name) + '</div>' +
         '<div class="rw-desc">' + esc(o.desc) + '</div>' +
@@ -443,7 +531,7 @@
       const afford = r.gold >= it.price;
       const sold = it.sold;
       return '<div class="shop-item ' + (sold ? 'sold' : '') + '" style="--c:' + it.c + '">' +
-        '<div class="si-ic">' + icon(it.ic) + '</div>' +
+        '<div class="si-ic">' + (it.kind === 'relic' ? relicIcon(it.id, 'relic-art si-art') : icon(it.ic)) + '</div>' +
         '<div class="si-main"><div class="si-name">' + esc(it.name) + '</div><div class="si-desc">' + esc(it.desc) + '</div>' +
           (it.faces ? '<div class="si-faces">' + it.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' : '') + '</div>' +
         '<button class="buybtn" data-act="buy" data-i="' + i + '" ' + (sold || !afford ? 'disabled' : '') + '>' + (sold ? '판매됨' : it.price + 'G') + '</button>' +
@@ -475,7 +563,13 @@
   function renderEvent(state) {
     const ev = state.ui.event;
     const def = ev.def;
-    const head = '<div class="ev-art">' + icon(def.ic) + '</div>' +
+    const TAG_C = { '도박': '#fbbf24', '저주': '#a78bfa', '탐색': '#67e8f9', '성소': '#34d399', '거래': '#34d399', '단조': '#fb923c', '위험': '#ff7b72' };
+    const tagC = TAG_C[def.tag] || '#67e8f9';
+    const head = '<div class="ev-art" style="--c:' + tagC + '">' +
+        '<div class="ev-art-glow"></div>' +
+        (DC.eventArt ? DC.eventArt(def.id, 'ev-art-svg') : icon(def.ic)) +
+      '</div>' +
+      '<span class="ev-tag" style="--c:' + tagC + '">' + esc(def.tag || '') + '</span>' +
       '<h2>' + esc(def.name) + '</h2>' +
       '<p class="ev-text">' + esc(ev.result ? ev.text : (def.text || ev.text)) + '</p>';
     if (ev.result) {
@@ -535,7 +629,7 @@
     const relics = DC.RELIC_IDS.map(function (id) {
       const R = DC.RELICS[id];
       const got = seenRelic.indexOf(id) >= 0;
-      return '<div class="cx-relic' + (got ? '' : ' locked') + '" style="--c:' + R.c + '">' + icon(got ? R.ic : 'lock') +
+      return '<div class="cx-relic' + (got ? '' : ' locked') + '" style="--c:' + R.c + '">' + (got ? relicIcon(id, 'relic-art cx-art') : icon('lock')) +
         '<div><b>' + esc(got ? R.name : '???') + '</b><span>' + esc(got ? R.desc : '아직 발견하지 못했습니다') + '</span></div></div>';
     }).join('');
     const enemyList = [];
@@ -598,7 +692,7 @@
     }).join('');
     const relics = r.relics.length ? r.relics.map(function (id) {
       const R = DC.RELICS[id];
-      return '<div class="deck-relic" style="--c:' + R.c + '">' + icon(R.ic) + '<div><b>' + esc(R.name) + '</b><span>' + esc(R.desc) + '</span></div></div>';
+      return '<div class="deck-relic" style="--c:' + R.c + '">' + relicIcon(id) + '<div><b>' + esc(R.name) + '</b><span>' + esc(R.desc) + '</span></div></div>';
     }).join('') : '<p class="empty">아직 유물이 없습니다.</p>';
     return '<div class="overlay" data-act="closedeck"><div class="panel deck-panel" data-stop="1">' +
       '<div class="panel-head"><h3>덱 & 유물</h3><button class="iconbtn" data-act="closedeck">' + icon('close') + '</button></div>' +

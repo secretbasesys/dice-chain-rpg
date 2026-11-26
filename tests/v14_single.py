@@ -1,0 +1,26 @@
+import sys, json
+sys.path.insert(0, '/workspace/work/dice-rpg/tests')
+from harness import *
+with sync_playwright() as p:
+    b = p.chromium.launch(executable_path=CHROME, args=["--no-sandbox","--allow-file-access-from-files"])
+    ctx = b.new_context(viewport={"width":390,"height":844}, is_mobile=True, has_touch=True)
+    page = ctx.new_page()
+    errs=[]
+    page.on("pageerror", lambda e: errs.append("pageerror: "+e.message))
+    page.on("console", lambda m: errs.append("console."+m.type+": "+m.text) if m.type == "error" else None)
+    page.goto("file:///workspace/downloads/dice-chain-rpg.html")
+    page.wait_for_timeout(400)
+    print("title:", page.title())
+    print("hasDC:", page.evaluate("() => typeof DC.VERSION === 'string' && DC.VERSION"))
+    page.evaluate("() => localStorage.clear()")
+    page.reload(); page.wait_for_timeout(300)
+    new_game(page, "mage")
+    page.wait_for_timeout(500)
+    page.screenshot(path="/workspace/work/dice-rpg/screenshots/v14_singlefile_map.png")
+    print("nodes:", page.evaluate("() => document.querySelectorAll('.node').length"))
+    page.click('.node.avail')
+    page.wait_for_timeout(700)
+    print("screen:", page.evaluate("() => DC.Game.state.screen"))
+    page.screenshot(path="/workspace/work/dice-rpg/screenshots/v14_singlefile_combat.png")
+    print("ERRORS", json.dumps(errs, ensure_ascii=False))
+    b.close()
