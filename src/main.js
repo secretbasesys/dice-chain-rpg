@@ -79,6 +79,7 @@
         case 'manip': this.manip(d.op); break;
         case 'undo': this.undo(); break;
         case 'speed': this.toggleSpeed(); break;
+        case 'log': s.ui.logOpen = !s.ui.logOpen; DC.Audio.play('click'); DC.UI.render(); break;
         case 'endturn': this.endTurn(); break;
         case 'target': this.setTarget(parseInt(d.i, 10)); break;
         case 'reward': this.takeReward(parseInt(d.i, 10)); break;

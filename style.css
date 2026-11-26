@@ -1267,3 +1267,41 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 @keyframes flaskFull { 0%, 100% { text-shadow: 0 0 0 rgba(110, 231, 183, 0); } 50% { text-shadow: 0 0 10px rgba(110, 231, 183, .8); } }
 .flask-chip.pop { animation: flaskPop .45s ease-out; }
 @keyframes flaskPop { 0% { transform: scale(1); } 40% { transform: scale(1.16); } 100% { transform: scale(1); } }
+
+/* ---------------- battle log (v1.6) ---------------- */
+.log-toggle {
+  display: inline-flex; align-items: center; gap: 3px; margin-left: auto;
+  background: #162034; border: 1px solid #26324c; border-radius: 8px;
+  color: #8fa2c2; padding: 3px 6px; min-height: 24px; cursor: pointer;
+}
+.log-toggle .ic { width: 13px; height: 13px; }
+.log-toggle b { font-size: 9px; color: var(--gold); }
+.log-toggle.on { color: var(--gold); border-color: rgba(251, 191, 36, .45); background: rgba(251, 191, 36, .10); }
+.battle-log {
+  max-height: 104px; overflow-y: auto; margin: 2px 0 4px;
+  background: rgba(10, 16, 27, .86); border: 1px solid #1e2a44; border-radius: 10px;
+  padding: 5px 7px; display: flex; flex-direction: column; gap: 2px;
+  animation: logIn .18s ease-out;
+  scrollbar-width: thin;
+}
+@keyframes logIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.bl-row { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #b9c7df; line-height: 1.5; }
+.bl-row.e { color: #e6b3ae; }
+.bl-turn { font-size: 8px; font-weight: 800; color: #5d6d88; min-width: 17px; }
+.bl-ic { color: var(--c, #8ea3c4); display: inline-flex; }
+.bl-ic .ic { width: 11px; height: 11px; }
+.bl-ic.foe { color: #ef8f86; }
+.bl-row b { font-size: 10px; font-weight: 800; color: #dfe8f8; }
+.bl-row i { font-style: normal; font-size: 9px; color: #6f809c; margin-left: -2px; }
+.bl-txt { margin-left: auto; font-size: 9.5px; color: #93a4c2; }
+.bl-row.e .bl-txt { color: #d99a94; }
+.bl-empty { font-size: 10px; color: #6b7d99; text-align: center; padding: 6px 0; }
+.enemy.crit { animation: critPop .38s ease-out; }
+@keyframes critPop {
+  0% { transform: scale(1); filter: brightness(1); }
+  30% { transform: scale(1.06); filter: brightness(1.6); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.combat.punch { animation: combatPunch .28s ease-out; }
+@keyframes combatPunch { 0% { transform: scale(1); } 35% { transform: scale(0.995); } 100% { transform: scale(1); } }

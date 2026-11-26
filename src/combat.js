@@ -163,6 +163,13 @@
 
   function faceColor(k) { return (DC.KINDS[k] || DC.KINDS.blank).c; }
 
+  /* ---------- battle log ---------- */
+  function pushLog(c, entry) {
+    if (!c.battleLog) c.battleLog = [];
+    c.battleLog.push(entry);
+    if (c.battleLog.length > 40) c.battleLog.shift();
+  }
+
   /* ---------- alchemist flask ---------- */
   const ESS = { fire: 'fire', venom: 'poison', bolt: 'bolt' };
   function flaskTotal(f) { return f ? (f.fire || 0) + (f.poison || 0) + (f.bolt || 0) : 0; }
@@ -471,6 +478,17 @@
       resolve(c, h, skill, ev);
       const after = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);
       c.totalDamage += Math.max(0, before - after);
+      (function () {
+        const dmg = ev.filter(function (e) { return e.t === 'edmg'; }).reduce(function (a, e) { return a + e.amount; }, 0);
+        const blk = ev.filter(function (e) { return e.t === 'pblock'; }).reduce(function (a, e) { return a + e.amount; }, 0);
+        const heal = ev.filter(function (e) { return e.t === 'heal'; }).reduce(function (a, e) { return a + e.amount; }, 0);
+        const msgs = ev.filter(function (e) { return e.t === 'msg'; }).map(function (e) { return e.text; });
+        const parts = [];
+        if (dmg) parts.push(dmg + ' 피해');
+        if (blk) parts.push('방어 ' + blk);
+        if (heal) parts.push('회복 ' + heal);
+        pushLog(c, { turn: c.turn, side: 'p', skill: skill.name, k: h.k, v: h.v, txt: parts.join(' · ') || msgs[0] || '' });
+      })();
       if (!alive(c).length) { c.phase = 'won'; ev.push({ t: 'won' }); }
       return { ok: true, events: ev, skill: skill };
     },
@@ -570,6 +588,7 @@
           for (let i = 0; i < hits; i++) { if (c.hp > 0) hitPlayer(c, it.v, ev, { kind: 'enemy' }); }
           if (it.apply === 'burn') c.statuses.burnOnPlayer = (c.statuses.burnOnPlayer || 0) + 2;
           if (it.apply === 'poison') c.statuses.poisonOnPlayer = (c.statuses.poisonOnPlayer || 0) + 2;
+          pushLog(c, { turn: c.turn, side: 'e', name: e.name, txt: intentText(it) });
         } else if (it.k === 'defend') {
           e.block += it.v; ev.push({ t: 'eblock', eid: e.id, amount: it.v });
         } else if (it.k === 'buff') {

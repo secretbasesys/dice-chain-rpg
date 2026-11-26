@@ -196,6 +196,24 @@
     let slots = '';
     for (let i = 0; i < c.slots.length; i++) slots += slotCard(c, i, canAct ? sel : null);
 
+    const logLen = (c.battleLog || []).length;
+    const logOpen = !!state.ui.logOpen;
+    let logHtml = '';
+    if (logOpen) {
+      logHtml = '<div class="battle-log">' +
+        ((c.battleLog || []).slice(-14).map(function (l) {
+          const k = DC.KINDS[l.k];
+          return '<div class="bl-row ' + l.side + '">' +
+            '<span class="bl-turn">T' + l.turn + '</span>' +
+            (l.side === 'p'
+              ? '<span class="bl-ic" style="--c:' + (k ? k.c : '#8ea3c4') + '">' + icon(k ? k.ic : 'dice') + '</span><b>' + esc(l.skill) + '</b><i>' + l.v + '</i>'
+              : '<span class="bl-ic foe">' + icon('skull') + '</span><b>' + esc(l.name) + '</b>') +
+            '<span class="bl-txt">' + esc(l.txt) + '</span>' +
+          '</div>';
+        }).join('') || '<div class="bl-empty">아직 기록이 없습니다</div>') +
+      '</div>';
+    }
+
     let tray = '';
     c.hand.forEach(function (h, i) { tray += dieChip(h, i, { sel: sel === i && canAct }); });
 
@@ -226,6 +244,7 @@
             '<span class="strip-item spark" data-tip="' + esc(DC.KEYWORDS.spark.t) + '" data-tip-title="기세">' + icon('spark') + '기세 <b id="spark-num">' + c.sparks + '</b></span>' +
             (c.cls === 'alchemist' ? flaskUi(c) : '') +
             '<span class="strip-item">' + icon('clock') + '턴 <b>' + c.turn + '</b></span>' +
+            '<button class="log-toggle' + (logOpen ? ' on' : '') + '" data-act="log" aria-label="전투 기록">' + icon('book') + (logLen ? '<b>' + logLen + '</b>' : '') + '</button>' +
             statusChips(c.statuses) +
           '</div>' +
           '<div class="strip-sub">' +
@@ -235,6 +254,7 @@
           '</div>' +
         '</div>' +
         forecast(c) +
+        logHtml +
         '<div class="slots">' + slots + '</div>' +
         '<div class="tray-wrap">' +
           '<div class="tray-label">' + icon('dice') + '주사위 <b>' + c.hand.length + '</b>' + (sel != null ? ' · <span class="pick">' + esc(DC.KINDS[c.hand[sel].k].n + ' ' + c.hand[sel].v) + ' 선택됨 — 슬롯을 탭하세요</span>' : '') + '</div>' +
@@ -777,7 +797,14 @@
               DC.FX.floatAt(el, '-' + ev.amount, ev.heavy ? 'dmg heavy' : 'dmg');
               DC.FX.burst(el, DC.Combat.faceColor(ev.kind || 'slash'), ev.heavy ? 16 : 8);
               DC.FX.shake(ev.heavy ? 10 : 3 + ev.amount / 6);
-              DC.Audio.play('hit', ev.heavy);
+              const comboPitch = 1 + Math.min(0.55, ((DC.Game.state.combat && DC.Game.state.combat.combo) || 1) * 0.045);
+              if (ev.amount >= 20 || ev.heavy) {
+                DC.Audio.play('crit'); el.classList.add('crit');
+                DC.FX.flash('rgba(255,210,120,.10)');
+                const cmb = q('.combat');
+                if (cmb) { cmb.classList.remove('punch'); void cmb.offsetWidth; cmb.classList.add('punch'); }
+                setTimeout(function () { el.classList.remove('crit'); }, 380);
+              } else DC.Audio.play('hit', ev.heavy, comboPitch);
               el.classList.remove('hurt'); void el.offsetWidth; el.classList.add('hurt');
             }
             delay = ev.heavy ? 190 : 110;
@@ -825,6 +852,11 @@
           }
           case 'status': {
             const el = targetEl(ev.eid);
+            if (!ev.eid) {
+              const hp = q('.hp');
+              if (hp && DC.STATUS[ev.s]) DC.FX.floatAt(hp, DC.STATUS[ev.s].n + ' +' + ev.amount, 'status', { size: 15 });
+              break;
+            }
             if (el && DC.STATUS[ev.s]) DC.FX.floatAt(el, DC.STATUS[ev.s].n + ' +' + ev.amount, 'status', { size: 15 });
             break;
           }
@@ -1030,6 +1062,15 @@
       if (state.ui.modal === 'codex') app.innerHTML += renderCodex(state);
       document.body.setAttribute('data-screen', state.screen);
       if (state.run) document.body.setAttribute('data-act', state.run.act);
+      if (DC.AudioMusic) {
+        let mode;
+        if (state.screen === 'combat') mode = (state.combat && state.combat.kind === 'boss') ? 'boss' : 'combat';
+        else if (state.screen === 'map') mode = 'map';
+        else if (state.screen === 'title' || state.screen === 'class') mode = 'title';
+        else if (state.screen === 'win' || state.screen === 'gameover') mode = null;
+        else mode = 'camp';
+        DC.AudioMusic.set(mode);
+      }
       if (state.screen === 'map') requestAnimationFrame(drawMapEdges);
       if (state.screen === 'combat') UI.bindDrag();
       if (state.ui.sel != null) UI.hideTip();
