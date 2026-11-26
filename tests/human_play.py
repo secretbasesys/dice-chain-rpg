@@ -36,7 +36,7 @@ with sync_playwright() as p:
                 played = False
                 for h in hand:
                     h.click(); step(page, 120)
-                    slots = page.query_selector_all('.slot.can')
+                    slots = page.query_selector_all('.slot.st-can')
                     if slots:
                         slots[0].click(); step(page, 500); played = True; break
                 if not played: break

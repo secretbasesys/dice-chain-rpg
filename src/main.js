@@ -54,7 +54,7 @@
       screen: 'title',
       run: null,
       combat: null,
-      ui: { sel: null, busy: false, modal: null, set: { music: 0.6, sfx: 0.8, motion: false, hc: false, fs: 0 }, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1, asc: 0 },
+      ui: { sel: null, arm: null, busy: false, modal: null, set: { music: 0.6, sfx: 0.8, motion: false, hc: false, fs: 0 }, reward: null, forge: null, shop: null, event: null, hist: [], tip: null, speed: 1, asc: 0 },
       lastCombat: null,
     },
 
@@ -501,6 +501,7 @@
       const snap = hist.pop();
       DC.Combat.restore(c, snap);
       s.ui.sel = null;
+      s.ui.arm = null;
       s.run.hp = c.hp;
       DC.Audio.play('reroll');
       DC.UI.render();
@@ -537,7 +538,10 @@
       if (!h) return;
       if (h.used) { DC.UI.toast('이미 사용한 주사위'); DC.Audio.play('error'); return; }
       if (h.locked) { DC.UI.toast('봉인된 주사위입니다'); DC.Audio.play('error'); return; }
+      // 슬롯을 먼저 골랐다면, 그 슬롯에 맞는 주사위를 탭하는 순간 낸다
+      if (s.ui.arm != null && DC.Combat.canPlay(c, i, s.ui.arm).ok) { this.play(i, s.ui.arm); return; }
       s.ui.sel = s.ui.sel === i ? null : i;
+      s.ui.arm = null;
       DC.Audio.play('clack', i);
       DC.UI.render();
     },
@@ -548,19 +552,25 @@
       if (!c || s.ui.busy || c.phase !== 'player') return;
       const sel = s.ui.sel;
       if (sel != null) { this.play(sel, slotIdx); return; }
-      // one-tap: auto-place the best valid die
-      const cands = [];
-      c.hand.forEach(function (h, i) {
-        if (DC.Combat.canPlay(c, i, slotIdx).ok) cands.push({ i: i, v: h.v, k: h.k });
-      });
-      if (!cands.length) {
-        const req = DC.REQ[DC.CLASSES[c.cls].skills[slotIdx].req];
-        DC.UI.toast(req.n + ' 조건에 맞는 주사위가 없습니다');
-        DC.Audio.play('error');
+      const slot = c.slots[slotIdx];
+      const sk = DC.Combat.skill(c, slotIdx);
+      if (slot.handIdx !== null) { DC.UI.toast('이 스킬은 이번 턴에 사용했습니다'); DC.Audio.play('error'); return; }
+      // 같은 슬롯을 두 번 탭하면 가장 좋은 주사위로 바로 낸다
+      if (s.ui.arm === slotIdx) {
+        const cands = [];
+        c.hand.forEach(function (h, i) { if (DC.Combat.canPlay(c, i, slotIdx).ok) cands.push({ i: i, v: h.v }); });
+        if (!cands.length) { DC.UI.toast(DC.REQ[sk.req].n + ' 조건에 맞는 주사위가 없습니다'); DC.Audio.play('error'); return; }
+        cands.sort(function (a, b) { return b.v - a.v; });
+        this.play(cands[0].i, slotIdx);
         return;
       }
-      cands.sort(function (a, b) { return b.v - a.v; });
-      this.play(cands[0].i, slotIdx);
+      // 슬롯을 먼저 고르면, 이 슬롯에 들어갈 주사위만 밝아진다
+      s.ui.arm = slotIdx;
+      s.ui.sel = null;
+      DC.Audio.play('select');
+      const okCount = c.hand.filter(function (h, i) { return DC.Combat.canPlay(c, i, slotIdx).ok; }).length;
+      if (!okCount) DC.UI.toast(sk.name + ' — ' + DC.REQ[sk.req].n + ' 조건의 주사위가 필요합니다');
+      DC.UI.render();
     },
 
     play: function (hIdx, sIdx, fast) {
@@ -573,6 +583,7 @@
       const res = DC.Combat.play(c, hIdx, sIdx);
       if (!res.ok) { DC.UI.toast(res.why); DC.Audio.play('error'); return false; }
       s.ui.sel = null;
+      s.ui.arm = null;
       if (fast) return true;
       s.ui.busy = true;
       DC.UI.render();
@@ -611,6 +622,7 @@
       if (!c || s.ui.busy || c.phase !== 'player') return;
       s.ui.busy = true;
       s.ui.sel = null;
+      s.ui.arm = null;
       s.ui.hist = [];
       const res = DC.Combat.enemyPhase(c);
       r.hp = c.hp;

@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.0.0';
+  DC.VERSION = '7.1.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -141,6 +141,14 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.1', t: '읽히는 전투 · 하나의 재료', items: [
+      '주사위를 고르면 쓸 수 있는 스킬은 초록빛으로 켜지고 실제 피해·방어 수치가 카드에 바로 계산됩니다.',
+      '조건이 맞지 않는 스킬은 잠금 표시와 이유가 뜨고, 쓸 주사위가 없는 스킬은 흐려집니다.',
+      '스킬을 먼저 누르면 그 스킬에 들어갈 주사위만 밝아집니다. 같은 스킬을 한 번 더 누르면 바로 나갑니다.',
+      '조작 버튼은 지금 쓸 수 있을 때만 켜지고, 기세 비용이 버튼에 표시됩니다.',
+      '상점·이벤트·휴식·보상 화면에 삽화를 채우고, 화면마다 따로 놀던 상자·버튼을 검은 철과 놋쇠 테두리로 통일했습니다.',
+      '표적 표시, 적 체력 표기, 안내 문장, 단위 표기를 전투 전 화면에서 정리했습니다.',
+    ] },
     { v: '7.0', t: '아트·UI·연출 전면 리뉴얼', items: [
       '36종의 실제 일러스트 추가 — 클래스 5 초상화, 적 31종, 막별 배경, 타이틀 키아트.',
       '전투 화면 재구성: 적(의도·HP) → 스킬(아이콘+배율) → 주사위 → 턴 종료의 4단 흐름.',
@@ -167,7 +175,7 @@
 
   /* ---------------- requirements ---------------- */
   DC.REQ = {
-    any: { n: '아무 눈', ic: 'dice', test: function () { return true; } },
+    any: { n: '제한 없음', ic: 'dice', test: function () { return true; } },
     even: { n: '짝수', ic: 'mult', test: function (v) { return v % 2 === 0; } },
     odd: { n: '홀수', ic: 'flip', test: function (v) { return v % 2 === 1; } },
     gte4: { n: '4 이상', ic: 'up', test: function (v) { return v >= 4; } },

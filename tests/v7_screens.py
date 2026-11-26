@@ -79,9 +79,9 @@ with sync_playwright() as p:
                     except Exception:
                         break
                     page.wait_for_timeout(100)
-                    if page.locator('.slot.can').count():
+                    if page.locator('.slot.st-can').count():
                         try:
-                            page.locator('.slot.can').first.click(timeout=1200)
+                            page.locator('.slot.st-can').first.click(timeout=1200)
                             page.wait_for_timeout(380); done = True
                         except Exception:
                             pass

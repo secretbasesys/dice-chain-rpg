@@ -60,9 +60,9 @@ def play_run(page, log, shots, limit=60):
                     except Exception:
                         break
                     page.wait_for_timeout(120)
-                    if page.locator('.slot.can').count():
+                    if page.locator('.slot.st-can').count():
                         try:
-                            page.locator('.slot.can').first.click(timeout=1500)
+                            page.locator('.slot.st-can').first.click(timeout=1500)
                             page.wait_for_timeout(430)
                             done = True
                         except Exception:

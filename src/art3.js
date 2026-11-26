@@ -40,7 +40,19 @@
     return url(BG_BY_ACT[act] || 'bg_abyss');
   };
 
-  DC.titleArt = function () { return url('title'); };
+  DC.titleArt = function () { return url('title_portrait'); };
+  DC.titleArtWide = function () { return url('title'); };
+
+  /* 이벤트 삽화 — 사건의 성격(tag)마다 한 장 */
+  const EVENT_ART = {
+    '도박': 'gamble', '저주': 'curse', '성소': 'shrine', '거래': 'trade',
+    '탐색': 'explore', '단조': 'forge', '위험': 'danger'
+  };
+  DC.eventArt = function (tag) {
+    return url('ev_' + (EVENT_ART[tag] || 'explore'));
+  };
+  DC.restArt = function () { return url('ev_rest'); };
+  DC.shopkeeperArt = function () { return url('shopkeeper'); };
 
   DC.preloadArt = function (files) {
     if (!files) return;

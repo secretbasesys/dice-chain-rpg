@@ -25,7 +25,7 @@
   function dieChip(h, i, opts) {
     opts = opts || {};
     const k = DC.KINDS[h.k] || DC.KINDS.blank;
-    const cls = ['die', h.used ? 'used' : '', h.locked ? 'locked' : '', opts.sel ? 'sel' : '', h.phantom ? 'phantom' : ''].join(' ');
+    const cls = ['die', h.used ? 'used' : '', h.locked ? 'locked' : '', opts.sel ? 'sel' : '', opts.can ? 'can' : '', opts.dim ? 'dim' : '', h.phantom ? 'phantom' : ''].join(' ');
     return '' +
       '<div class="' + cls + '" data-act="hand" data-idx="' + i + '" style="--c:' + k.c + ';--i:' + i + '" role="button" tabindex="0" aria-label="주사위 ' + h.v + ' ' + k.n + '">' +
         '<span class="die-face">' + pips(h.v) + '</span>' +
@@ -155,7 +155,7 @@
   function intentParts(it) {
     if (!it) return { big: '', small: '' };
     switch (it.k) {
-      case 'attack': return { big: String(it.v), small: (it.hits > 1 ? '×' + it.hits + ' 연타' : '피해') };
+      case 'attack': return { big: String(it.v) + (it.hits > 1 ? '×' + it.hits : ''), small: '피해' };
       case 'defend': return { big: String(it.v), small: '방어' };
       case 'buff': return { big: '+' + it.v, small: '힘' };
       case 'debuff': return { big: String(it.v), small: (DC.STATUS[it.s] ? DC.STATUS[it.s].n : '약화') };
@@ -191,12 +191,13 @@
         '</div>' +
         '<div class="e-foot">' +
           '<div class="e-line">' +
+            (c.enemies.length > 1 && c.target === idx ? '<span class="e-target-tag">' + icon('target') + '표적</span>' : '') +
             '<span class="e-name">' + esc(e.name) + '</span>' +
             (e.block > 0 ? '<span class="e-block" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + e.block + '</span>' : '') +
+            '<span class="e-hp-num">' + Math.max(0, e.hp) + '<i>/' + e.maxHp + '</i></span>' +
           '</div>' +
           '<div class="e-hp">' +
             '<div class="hpbar"><i class="hp-fill" style="width:' + pct(e.hp, e.maxHp) + '%"></i></div>' +
-            '<b>' + Math.max(0, e.hp) + '<i>/' + e.maxHp + '</i></b>' +
           '</div>' +
           (boss ? '<div class="e-title">' + esc(e.title) + '</div>' : '') +
         '</div>' +
@@ -204,8 +205,8 @@
       '</div>';
   }
 
-  /* 슬롯 카드: 아이콘 + 배율만 크게, 설명은 길게 누르기/호버 */
-  const REQ_SHORT = { any: '아무', even: '짝', odd: '홀', gte4: '4+', lte2: '2-', six: '6', prime: '소수' };
+  /* 슬롯 카드: 조건 배지 + 배율 + 지금 누르면 나오는 결과 */
+  const REQ_SHORT = { any: '조건 없음', even: '짝수', odd: '홀수', gte4: '4 이상', lte2: '2 이하', six: '6만', prime: '소수' };
 
   function skillHeadline(sk) {
     const fx = sk.fx || {};
@@ -225,31 +226,80 @@
     }
   }
 
-  function slotCard(c, idx, selHand) {
+  /* 지금 이 슬롯에 낼 수 있는 가장 좋은 주사위 */
+  function bestPlay(c, idx) {
+    const s = c.slots[idx];
+    if (!s || s.handIdx !== null) return null;
+    let best = null;
+    c.hand.forEach(function (h, i) {
+      if (h.used || h.locked) return;
+      if (!DC.Combat.canPlay(c, i, idx).ok) return;
+      const inf = DC.Combat.previewInfo(c, i, idx);
+      const score = (inf && inf.lethal ? 9999 : 0) + (inf ? (inf.dmg || 0) : 0) + h.v * 0.01;
+      if (!best || score > best.score) best = { i: i, h: h, info: inf, score: score };
+    });
+    return best;
+  }
+
+  /* 같은 뜻, 같은 표기 — 피해 8 / 방어 +12 / 힘 +2 */
+  function previewText(sk, info) {
+    if (!info) return '';
+    const fx = sk.fx || {};
+    switch (fx.type) {
+      case 'attack': return '피해 ' + info.dmg + (info.hits > 1 ? ' ×' + info.hits : '');
+      case 'aoe': return '전체 피해 ' + info.dmg;
+      case 'chain': return '피해 ' + info.dmg + ' 연쇄';
+      case 'multi': return '피해 ' + info.dmg + '×' + info.hits;
+      case 'block': return '방어 +' + info.dmg;
+      case 'buff': return '힘 +' + fx.str;
+      case 'mult': return '배율 +' + fx.add.toFixed(1);
+      case 'spark': return '기세 +' + fx.amount;
+      case 'verdict': return '심판 +' + (fx.gain || 1);
+      case 'mix': return info.dmg ? '피해 ' + info.dmg : '플라스크 비어 있음';
+      default: return '';
+    }
+  }
+
+  function slotCard(c, idx, selHand, armIdx) {
     const sk = DC.Combat.skill(c, idx);
     const slot = c.slots[idx];
     const filled = slot.handIdx !== null ? c.hand[slot.handIdx] : null;
     const canAny = selHand != null ? DC.Combat.canPlay(c, selHand, idx).ok : null;
     const info = (selHand != null && canAny) ? DC.Combat.previewInfo(c, selHand, idx) : null;
+    const armed = armIdx === idx;
+    const bp = (!filled && selHand == null) ? bestPlay(c, idx) : null;
     const justPlaced = slot.anim && Date.now() - slot.anim < 520;
     const hd = skillHeadline(sk);
     const req = REQ_SHORT[sk.req] || '';
+    let state;
+    if (filled) state = 'filled';
+    else if (canAny === true) state = 'can';
+    else if (canAny === false) state = 'cannot';
+    else if (armed) state = 'armed';
+    else state = bp ? 'ready' : 'dry';
+    let foot;
+    if (info) foot = previewText(sk, info);
+    else if (filled) foot = '사용 완료';
+    else if (armed) foot = '주사위를 고르세요';
+    else if (bp) { const pv = previewText(sk, bp.info); foot = (pv.length <= 6 ? '탭 ' : '') + pv; }
+    else foot = '낼 주사위 없음';
+    const tip = sk.desc + (sk.up ? ' (각성)' : '') + ' · 조건: ' + DC.REQ[sk.req].n +
+      (filled ? ' · 이번 턴 사용 완료' : (bp ? ' · 탭하면 주사위 ' + bp.h.v + '로 사용합니다' : ''));
     return '' +
-      '<button class="slot type-' + hd.k + (filled ? ' filled' : '') + (canAny ? ' can' : '') + (canAny === false ? ' cannot' : '') + (justPlaced ? ' landed' : '') + '"' +
+      '<button class="slot type-' + hd.k + ' st-' + state + (justPlaced ? ' landed' : '') + (info && info.lethal ? ' lethal' : '') + '"' +
         ' data-act="slot" data-idx="' + idx + '"' +
-        ' data-tip="' + esc(sk.desc + (sk.up ? ' (각성)' : '') + ' · 조건: ' + DC.REQ[sk.req].n) + '" data-tip-title="' + esc(sk.name) + '">' +
+        ' data-tip="' + esc(tip) + '" data-tip-title="' + esc(sk.name) + '">' +
         '<span class="sk-top">' +
-          '<span class="sk-req">' + esc(req) + '</span>' +
+          '<span class="sk-req req-' + sk.req + '">' + esc(req) + '</span>' +
           (sk.up ? '<span class="sk-up">각</span>' : '') +
         '</span>' +
         '<span class="sk-ic">' + icon(hd.ic) + '</span>' +
         '<span class="sk-val">' + esc(hd.main) + '</span>' +
         '<span class="sk-name">' + esc(sk.name) + '</span>' +
-        '<span class="sk-sub">' + esc(hd.sub) + '</span>' +
+        '<span class="sk-foot">' + (state === 'cannot' ? icon('lock') + ' 조건 밖' : esc(foot)) + '</span>' +
         (filled
           ? '<span class="sk-die" style="--c:' + (DC.KINDS[filled.k] || DC.KINDS.blank).c + '">' + filled.v + '</span>'
           : '') +
-        (info ? '<span class="sk-now' + (info.lethal ? ' lethal' : '') + '">' + esc(info.text.replace('≈', '')) + '</span>' : '') +
       '</button>';
   }
 
@@ -303,12 +353,30 @@
     const unused = c.hand.filter(function (h) { return !h.used && !h.locked; }).length;
     const m = DC.Combat.mult(c);
     const canUndo = canAct && (state.ui.hist || []).length > 0;
+    const selDie = sel != null ? c.hand[sel] : null;
+    const dieReady = canAct && !!selDie && !selDie.used && !selDie.locked;
+    const selV = selDie ? selDie.v : 0;
+    const freeReroll = c.freeRerolls != null ? (c.rerollsThisTurn || 0) < c.freeRerolls : false;
 
+    function maniBtn(act, op, label, on, cost, tip) {
+      return '<button class="mbtn' + (op === 'undo' ? ' undo' : '') + '" data-act="' + act + '"' +
+        (op !== 'undo' ? ' data-op="' + op + '"' : '') +
+        (on ? '' : ' disabled') + ' data-tip="' + esc(tip) + '" data-tip-title="' + esc(label) + '">' +
+        icon({ undo: 'reroll', reroll: 'dice', plus: 'plus', minus: 'minus', flip: 'flip', copy: 'copy' }[op]) +
+        '<span>' + esc(label) + '</span>' +
+        (cost > 0 ? '<i class="mcost">' + cost + '</i>' : '') +
+        '</button>';
+    }
+
+    const arm = canAct && sel == null && state.ui.arm != null ? state.ui.arm : null;
     let slots = '';
-    for (let i = 0; i < c.slots.length; i++) slots += slotCard(c, i, canAct ? sel : null);
+    for (let i = 0; i < c.slots.length; i++) slots += slotCard(c, i, canAct ? sel : null, arm);
 
     let tray = '';
-    c.hand.forEach(function (h, i) { tray += dieChip(h, i, { sel: sel === i && canAct }); });
+    c.hand.forEach(function (h, i) {
+      const ok = arm != null && !h.used && !h.locked && DC.Combat.canPlay(c, i, arm).ok;
+      tray += dieChip(h, i, { sel: sel === i && canAct, can: ok, dim: arm != null && !ok });
+    });
 
     let chain = '';
     (c.chainLog || []).slice(-7).forEach(function (l) {
@@ -316,9 +384,22 @@
       chain += '<i class="chain-dot" style="--c:' + k.c + '">' + icon(k.ic) + '</i>';
     });
 
-    const selText = sel != null
-      ? '<span class="pick">' + esc(DC.KINDS[c.hand[sel].k].n + ' ' + c.hand[sel].v) + ' 선택 — 슬롯을 탭</span>'
-      : '';
+    /* 지금 할 일 한 줄 — 상황이 바뀔 때마다 문장이 바뀐다 */
+    let hint = '';
+    let hintState = 'idle';
+    const anySlot = sel != null && c.slots.some(function (_, i) { return DC.Combat.canPlay(c, sel, i).ok; });
+    if (c.phase === 'enemy') { hint = '적의 턴입니다 — 잠시 기다리세요'; hintState = 'foe'; }
+    else if (state.ui.busy) { hint = ''; }
+    else if (sel != null) {
+      hint = '주사위 ' + c.hand[sel].v + ' 선택 — 쓸 스킬을 고르세요' + (anySlot ? '' : ' · 낼 수 있는 스킬이 없습니다');
+      hintState = anySlot ? 'pick' : 'none';
+    } else if (arm != null) {
+      const ask = DC.Combat.skill(c, arm);
+      hint = ask.name + ' — 넣을 주사위를 고르세요';
+      hintState = 'arm';
+    } else if (unused === 0) { hint = '주사위를 모두 썼습니다 — 턴을 종료하세요'; hintState = 'done'; }
+    else { hint = '주사위를 고르거나 스킬을 눌러 바로 냅니다'; }
+    const hintHtml = '<div class="hintbar ' + hintState + '">' + (hint ? '<span>' + esc(hint) + '</span>' : '') + '</div>';
 
     return '' +
       hud(state) +
@@ -343,19 +424,24 @@
             '<button class="logbtn' + (state.ui.logOpen ? ' on' : '') + '" data-act="log" aria-label="전투 기록" data-tip="최근 턴의 스킬·적 행동·피해 내역" data-tip-title="전투 기록">' + icon('book') + '</button>' +
           '</div>' +
         '</div>' +
-        (selText ? '<div class="sel-hint">' + selText + '</div>' : '') +
+        hintHtml +
         '<div class="slots">' + slots + '</div>' +
         '<div class="tray-wrap">' +
           '<div class="tray" id="tray">' + tray + '</div>' +
         '</div>' +
         '<div class="actions">' +
           '<div class="manip">' +
-            '<button class="mbtn undo" data-act="undo" ' + (canUndo ? '' : 'disabled') + ' data-tip="방금 배치나 주사위 조작을 되돌립니다 (Z)" data-tip-title="되돌리기">' + icon('reroll') + '<span>되돌</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="reroll" ' + (canAct ? '' : 'disabled') + ' data-tip="' + esc(DC.KEYWORDS.reroll.t) + '" data-tip-title="재굴림 (기세 1)">' + icon('dice') + '<span>재굴림</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="plus" ' + (canAct ? '' : 'disabled') + ' data-tip="기세 1을 쓰고 눈을 +1 합니다." data-tip-title="+1">' + icon('plus') + '<span>+1</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="minus" ' + (canAct ? '' : 'disabled') + ' data-tip="기세 1을 쓰고 눈을 -1 합니다." data-tip-title="-1">' + icon('minus') + '<span>-1</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="flip" ' + (canAct ? '' : 'disabled') + ' data-tip="' + esc(DC.KEYWORDS.flip.t) + '" data-tip-title="뒤집기 7-x">' + icon('flip') + '<span>뒤집기</span></button>' +
-            '<button class="mbtn" data-act="manip" data-op="copy" ' + (canAct ? '' : 'disabled') + ' data-tip="' + esc(DC.KEYWORDS.copy.t) + '" data-tip-title="복제 (기세 2)">' + icon('copy') + '<span>복제</span></button>' +
+            maniBtn('undo', 'undo', '되돌리기', canUndo, 0, canUndo ? '방금 한 배치나 조작을 되돌립니다 (Z)' : '되돌릴 동작이 없습니다') +
+            maniBtn('manip', 'reroll', '재굴림', dieReady && (freeReroll || c.sparks >= 1), freeReroll ? 0 : 1,
+              (dieReady ? (freeReroll ? '이번 턴 첫 재굴림은 무료입니다' : '기세 1을 써서 주사위를 다시 굴립니다') : '주사위를 먼저 고르세요')) +
+            maniBtn('manip', 'plus', '눈 +1', dieReady && selV < 6 && c.sparks >= 1, 1,
+              (!dieReady ? '주사위를 먼저 고르세요' : selV >= 6 ? '이미 6입니다' : c.sparks < 1 ? '기세가 부족합니다' : '기세 1을 써서 눈을 +1 합니다')) +
+            maniBtn('manip', 'minus', '눈 -1', dieReady && selV > 1 && c.sparks >= 1, 1,
+              (!dieReady ? '주사위를 먼저 고르세요' : selV <= 1 ? '이미 1입니다' : c.sparks < 1 ? '기세가 부족합니다' : '기세 1을 써서 눈을 -1 합니다')) +
+            maniBtn('manip', 'flip', '뒤집기', dieReady && c.sparks >= 1, 1,
+              (!dieReady ? '주사위를 먼저 고르세요' : c.sparks < 1 ? '기세가 부족합니다' : '기세 1을 써서 눈을 7-x로 뒤집습니다')) +
+            maniBtn('manip', 'copy', '복제', dieReady && c.sparks >= 2, 2,
+              (!dieReady ? '주사위를 먼저 고르세요' : c.sparks < 2 ? '기세 2가 필요합니다' : '기세 2를 써서 같은 면의 주사위를 하나 더 만듭니다')) +
           '</div>' +
           '<button class="endbtn" data-act="endturn" ' + (canAct ? '' : 'disabled') + '>' + icon('check') + '턴 종료</button>' +
         '</div>' +
@@ -574,7 +660,7 @@
     const prog = DC.Meta.progress();
     const clsnow = (state.ui.challenge && state.ui.challenge !== 'none') ? ' · ' + DC.challengeById(state.ui.challenge).short : '';
     return '' +
-      '<main class="title-screen" style="--title-art:url(&quot;' + DC.titleArt() + '&quot;)">' +
+      '<main class="title-screen" style="--title-art:url(&quot;' + DC.titleArt() + '&quot;);--title-art-wide:url(&quot;' + DC.titleArtWide() + '&quot;)">' +
         '<button class="title-gear" data-act="settings" aria-label="설정">' + icon('gear') + '</button>' +
         '<div class="t-logo">' +
           '<h1 class="logo">다이스 <em>체인</em></h1>' +
@@ -598,12 +684,12 @@
           '<button class="bigbtn ghost" data-act="help">방법</button>' +
         '</div>' +
         '<details class="title-opts">' +
-          '<summary>' + icon('flag') + '런 설정 · 승천 ' + (maxAsc ? asc : '잠김') + clsnow + '</summary>' +
+          '<summary>' + icon('flag') + '승천 난이도 · ' + (maxAsc ? (asc ? asc + '단계' : '보통') : '잠김') + clsnow + '</summary>' +
           '<div class="opt-body">' +
             '<div class="asc-row">' +
               '<button class="asc-btn" data-act="asc" data-dir="-1" ' + (asc <= 0 ? 'disabled' : '') + ' aria-label="승천 낮추기">' + icon('minus') + '</button>' +
               '<div class="asc-label' + (asc ? ' on' : '') + ' ' + (maxAsc ? '' : 'locked') + '">' +
-                '<b>' + (maxAsc ? '승천 ' + asc : '승천 잠김') + '</b>' +
+                '<b>' + (maxAsc ? (asc ? '승천 ' + asc + '단계' : '승천 없음') : '아직 잠김') + '</b>' +
                 '<span>' + (maxAsc ? esc(step.desc) : '한 번 승리하면 열립니다') + '</span>' +
               '</div>' +
               '<button class="asc-btn" data-act="asc" data-dir="1" ' + (asc >= maxAsc ? 'disabled' : '') + ' aria-label="승천 높이기">' + icon('plus') + '</button>' +
@@ -620,7 +706,7 @@
             dailyCard(state) +
           '</div>' +
         '</details>' +
-        '<p class="ver">v' + DC.VERSION + ' · 승리 ' + meta.wins + '회 · GitHub Pages</p>' +
+        '<p class="ver">v' + DC.VERSION + ' · 승리 ' + meta.wins + '회</p>' +
       '</main>';
   }
 
@@ -637,10 +723,10 @@
           '<div class="cc-info">' +
             '<div class="cc-name">' + C.name + '</div>' +
             '<div class="cc-en">' + C.en + '</div>' +
+            '<div class="cc-stats"><span><i>체력</i>' + C.hp + '</span><span><i>기세</i>' + C.sparks + '</span><span><i>주사위</i>' + C.startDice.length + '</span></div>' +
             '<p class="cc-desc">' + C.desc + '</p>' +
-            '<div class="cc-stats"><span>' + icon('heart') + C.hp + ' HP</span><span>' + icon('spark') + C.sparks + ' 기세</span></div>' +
             '<div class="cc-dice">' + dice + '</div>' +
-            '<div class="cc-passive">' + icon('star') + '<span><b>' + C.passive.n + '</b> ' + C.passive.tip + '</span></div>' +
+            '<div class="cc-passive"><span class="cc-passive-k">특성</span><span><b>' + C.passive.n + '</b> — ' + C.passive.tip + '</span></div>' +
           '</div>' +
         '</div>';
     }).join('');
@@ -674,12 +760,12 @@
           '<h2>전투 승리</h2>' +
           '<div class="scr-gold">' + icon('coin') + '+' + rw.gold + '</div>' +
         '</header>' +
-        '<p class="scr-sub">보상을 선택하세요</p>' +
+        '<p class="scr-sub">보상 하나를 고르세요</p>' +
         '<div class="rw-list">' + cards + '</div>' +
         '<div class="scr-foot">' +
           '<button class="ghostbtn" data-act="rerollreward" ' + (rw.rerolled ? 'disabled' : '') + '>' +
-            icon('reroll') + (rw.rerolled ? '변경 완료' : '다시 뽑기 · 15G') + '</button>' +
-          '<button class="ghostbtn" data-act="skipreward">건너뛰기 · +20G</button>' +
+            icon('reroll') + (rw.rerolled ? '변경 완료' : '다시 뽑기') + (rw.rerolled ? '' : icon('coin') + '15') + '</button>' +
+          '<button class="ghostbtn" data-act="skipreward">건너뛰기' + icon('coin') + '20</button>' +
         '</div>' +
       '</main>';
   }
@@ -703,7 +789,7 @@
       '<main class="bossrelic-screen">' +
         '<div class="br-head">' +
           '<h2>' + icon('crown') + ' 보스 유물</h2>' +
-          '<p class="sub">하나만 선택할 수 있습니다 — 굵은 힘에는 반드시 대가가 따릅니다</p>' +
+          '<p class="sub">하나만 고를 수 있습니다 — 큰 힘에는 반드시 대가가 따릅니다</p>' +
         '</div>' +
         '<div class="br-list">' + cards + '</div>' +
         '<button class="bigbtn ghost skipbtn" data-act="skipbossrelic">건너뛰기 (+50 골드)</button>' +
@@ -782,30 +868,35 @@
         '<div class="si-ic">' + (it.kind === 'relic' ? relicIcon(it.id, 'relic-art si-art') : icon(it.ic)) + '</div>' +
         '<div class="si-main"><div class="si-name">' + esc(it.name) + '</div><div class="si-desc">' + esc(it.desc) + '</div>' +
           (it.faces ? '<div class="si-faces">' + it.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' : '') + '</div>' +
-        '<button class="buybtn" data-act="buy" data-i="' + i + '" ' + (sold || !afford ? 'disabled' : '') + '>' + (sold ? '판매됨' : (freeLeft > 0 ? '무료' : it.price + 'G')) + '</button>' +
+        '<button class="buybtn" data-act="buy" data-i="' + i + '" ' + (sold || !afford ? 'disabled' : '') + '>' + (sold ? '판매됨' : (freeLeft > 0 ? '무료' : icon('coin') + it.price)) + '</button>' +
       '</div>';
     }).join('');
     return hud(state) + '' +
       '<main class="shop-screen">' +
-        '<div class="shop-head"><h2>' + icon('shop') + ' 상점</h2>' +
+        '<div class="shop-head">' +
+          '<div class="shop-portrait"><img src="' + DC.shopkeeperArt() + '" alt="" draggable="false" /></div>' +
+          '<div class="shop-title"><h2>상점</h2><p class="shop-quote">돈만 있으면 골라 드리지.</p></div>' +
           '<button class="reroll-btn sm" data-act="rerollshop" ' + ((sh.rerolls || 0) >= 2 ? 'disabled' : '') + '>' +
-            icon('reroll') + '재고 20G' + ((sh.rerolls || 0) ? ' · ' + (2 - (sh.rerolls || 0)) : '') + '</button>' +
+            icon('reroll') + '재고 교체<i class="rb-n">' + (2 - (sh.rerolls || 0)) + '</i>' +
+          '</button>' +
         '</div>' +
-        '<p class="sub">골드로 주사위·유물·단조를 삽니다' + (r.relics.indexOf('merchant') >= 0 ? ' (상인의 인장 -30%)' : '') +
-          (freeLeft > 0 ? ' <b class="shop-free">· 황금 우상: 1개 무료</b>' : '') + '</p>' +
+        '<p class="sub">' + (freeLeft > 0 ? '황금 우상의 힘 — 하나는 값 없이 가져갑니다' : '주사위 · 유물 · 단조 도구를 골드로 삽니다') + (r.relics.indexOf('merchant') >= 0 ? ' · 상인의 인장 −30%' : '') + '</p>' +
         '<div class="shop-list">' + items + '</div>' +
-        '<div class="bottom-bar"><button class="bigbtn" data-act="leave">떠난다</button></div>' +
+        '<div class="bottom-bar"><button class="bigbtn" data-act="leave">상점을 떠난다</button></div>' +
       '</main>';
   }
 
   function renderRest(state) {
     return hud(state) + '' +
       '<main class="rest-screen">' +
-        '<div class="campfire">' + icon('campfire') + '</div>' +
-        '<h2>모닥불</h2>' +
+        '<div class="rest-scene">' +
+          '<img src="' + DC.restArt() + '" alt="" draggable="false" />' +
+          '<span class="rest-veil"></span>' +
+          '<div class="rest-cap"><span class="scr-kicker">CAMPFIRE</span><h2>모닥불</h2></div>' +
+        '</div>' +
         '<p class="sub">잠시 쉬며 몸을 추스른다.</p>' +
         '<div class="rest-opts">' +
-          '<button class="rest-opt" data-act="rest" data-i="0">' + icon('heart') + '<b>회복</b><span>체력 40% 회복</span></button>' +
+          '<button class="rest-opt" data-act="rest" data-i="0">' + icon('heart') + '<b>회복</b><span>체력을 40% 회복합니다</span></button>' +
           '<button class="rest-opt" data-act="rest" data-i="1">' + icon('shield') + '<b>단련</b><span>최대 체력 +8</span></button>' +
           '<button class="rest-opt" data-act="rest" data-i="2">' + icon('anvil') + '<b>단조</b><span>주사위 면 1회 변경</span></button>' +
         '</div>' +
@@ -817,32 +908,36 @@
     const def = ev.def;
     const TAG_C = { '도박': '#fbbf24', '저주': '#a78bfa', '탐색': '#67e8f9', '성소': '#34d399', '거래': '#34d399', '단조': '#fb923c', '위험': '#ff7b72' };
     const tagC = TAG_C[def.tag] || '#67e8f9';
-    const head = '<div class="ev-art" style="--c:' + tagC + '">' +
-        '<div class="ev-art-glow"></div>' +
-        (DC.eventArt ? DC.eventArt(def.id, 'ev-art-svg') : icon(def.ic)) +
-      '</div>' +
-      '<span class="ev-tag" style="--c:' + tagC + '">' + esc(def.tag || '') + '</span>' +
-      '<h2>' + esc(def.name) + '</h2>' +
-      '<p class="ev-text">' + esc(ev.result ? ev.text : (def.text || ev.text)) + '</p>';
+    const head = '<div class="ev-scene" style="--c:' + tagC + '">' +
+        '<img class="ev-img" src="' + DC.eventArt(def.tag) + '" alt="" draggable="false" />' +
+        '<span class="ev-scene-veil"></span>' +
+        '<div class="ev-scene-cap">' +
+          '<span class="ev-tag" style="--c:' + tagC + '">' + esc(def.tag || '') + '</span>' +
+          '<h2>' + esc(def.name) + '</h2>' +
+        '</div>' +
+      '</div>';
     if (ev.result) {
       return hud(state) + '' +
         '<main class="event-screen">' + head +
+          '<p class="ev-text">' + esc(ev.text) + '</p>' +
           '<div class="ev-result"><span>' + icon('spark') + '</span><div><p>' + esc(ev.result) + '</p>' +
             ((ev.gains && ev.gains.length) ? '<div class="ev-gains">' + ev.gains.map(function (g) { return '<i>' + esc(g) + '</i>'; }).join('') + '</div>' : '') +
           '</div></div>' +
           '<button class="bigbtn primary ev-cont" data-act="leave">계속</button>' +
         '</main>';
     }
+    const leaveIdx = def.choices.findIndex(function (ch) { return !ch.eff && !ch.chance; });
     const choices = def.choices.map(function (ch, i) {
       const block = ch.need && ch.need.gold && state.run.gold < ch.need.gold;
       const risk = /피해|상실|감소|잃/.test((ch.desc || '') + (ch.label || ''));
-      return '<button class="ev-choice' + (risk ? ' risky' : '') + '" data-act="choice" data-i="' + i + '" ' + (block ? 'disabled' : '') + '>' +
-        '<b>' + esc(ch.label) + '</b><span>' + esc(ch.desc || '') + (block ? ' — 골드 부족' : '') + '</span></button>';
+      return '<button class="ev-choice' + (risk ? ' risky' : '') + (i === leaveIdx ? ' quiet' : '') + '" data-act="choice" data-i="' + i + '" ' + (block ? 'disabled' : '') + '>' +
+        '<b>' + esc(ch.label) + '</b><span>' + esc(ch.desc || '') + (block ? ' — 골드가 부족합니다' : '') + '</span></button>';
     }).join('');
     return hud(state) + '' +
       '<main class="event-screen">' + head +
+        '<p class="ev-text">' + esc(def.text || ev.text) + '</p>' +
         '<div class="ev-choices">' + choices + '</div>' +
-        '<button class="ev-skip" data-act="leave">' + icon('right') + '그냥 지나간다</button>' +
+        (leaveIdx < 0 ? '<button class="ev-skip" data-act="leave">' + icon('right') + '아무것도 하지 않고 떠난다</button>' : '') +
       '</main>';
   }
 
@@ -1167,8 +1262,9 @@
     const newAch = state.ui.newAch || [];
     return '' +
       '<main class="end-screen ' + kind + '">' +
+        '<span class="scr-kicker">' + (kind === 'win' ? 'VICTORY' : 'DEFEAT') + '</span>' +
         '<div class="end-ic">' + icon(kind === 'win' ? 'crown' : 'skull') + '</div>' +
-        '<h1>' + (kind === 'win' ? '정상에 서다' : '무너지다') + '</h1>' +
+        '<h1>' + (kind === 'win' ? '정상에 서다' : '여정의 끝') + '</h1>' +
         '<p class="sub">' + (kind === 'win' ? '주사위 군주를 쓰러뜨렸습니다.' : '여정은 여기서 끝났습니다.') + '</p>' +
         (kind === 'win' && winInfo && winInfo.unlocked ? '<div class="unlock-chip">' + icon('up') + ' 승천 ' + winInfo.level + ' 해금!</div>' : '') +
         (newAch.length ? '<div class="end-achs">' + newAch.map(function (a) { return '<span>' + icon('check') + esc(a.name) + '</span>'; }).join('') + '</div>' : '') +
@@ -1673,6 +1769,13 @@
         app.classList.remove('has-world');
       }
       app.innerHTML = html;
+      /* 화면이 바뀌면 이전 전투의 피해 숫자·배너가 새 화면 위에 남지 않게 한다 */
+      if (state.ui._lastScreen && state.ui._lastScreen !== state.screen) {
+        const fxLayer = document.getElementById('fx');
+        if (fxLayer) fxLayer.innerHTML = '';
+        if (DC.FX && DC.FX.clearBanners) DC.FX.clearBanners();
+      }
+      state.ui._lastScreen = state.screen;
       if (state.ui.modal === 'deck' && state.run) app.innerHTML += renderDeck(state);
       if (state.ui.modal === 'help') app.innerHTML += renderHelp();
       if (state.ui.modal === 'skills' && state.run) app.innerHTML += renderSkills(state);
