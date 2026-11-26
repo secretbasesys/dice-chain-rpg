@@ -322,6 +322,23 @@
     return out;
   }
 
+  function renderGift(state) {
+    const r = state.run;
+    const gifts = (r.gift || []).map(function (g, i) {
+      return '<button class="gift-card" data-act="gift" data-i="' + i + '" style="--c:' + g.c + '">' +
+        '<span class="gc-ic">' + icon(g.ic) + '</span>' +
+        '<b>' + esc(g.name) + '</b>' +
+        '<span class="gc-desc">' + esc(g.desc) + '</span>' +
+      '</button>';
+    }).join('');
+    return '<main class="gift-screen">' +
+      '<div class="gift-head"><span class="act-chip">START</span><h2>시작 선물</h2></div>' +
+      '<p class="sub">한 가지만 골라 여정을 시작하세요</p>' +
+      '<div class="gift-list">' + gifts + '</div>' +
+      '<p class="gift-foot">' + icon('eye') + '선물은 판마다 무작위로 3개가 제시됩니다</p>' +
+    '</main>';
+  }
+
   function renderMap(state) {
     const r = state.run;
     const map = r.map;
@@ -1248,6 +1265,7 @@
       switch (state.screen) {
         case 'title': html = renderTitle(state); break;
         case 'class': html = renderClass(state); break;
+        case 'gift': html = renderGift(state); break;
         case 'map': html = renderMap(state); break;
         case 'combat': html = renderCombat(state); break;
         case 'reward': html = renderReward(state); break;

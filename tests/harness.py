@@ -68,7 +68,21 @@ def new_game(page, cls="warrior"):
     page.click('[data-act="newrun"]')
     page.wait_for_timeout(120)
     page.click(f'[data-act="pickclass"][data-id="{cls}"]')
-    page.wait_for_timeout(200)
+    page.wait_for_timeout(250)
+    # start gift (v3.5)
+    try:
+        if page.locator('[data-act="gift"]').count():
+            page.click('[data-act="gift"][data-i="0"]')
+            page.wait_for_timeout(250)
+    except Exception:
+        pass
+    # first-run tutorial
+    try:
+        if page.locator('[data-act="closetut"]').count():
+            page.click('[data-act="closetut"]')
+            page.wait_for_timeout(150)
+    except Exception:
+        pass
 
 def no_save(page):
     page.evaluate("() => localStorage.clear()")

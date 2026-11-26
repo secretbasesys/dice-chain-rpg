@@ -1637,3 +1637,25 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
   display: inline-flex; align-items: center; justify-content: center; gap: 5px;
 }
 .help-tut-btn .ic { width: 13px; height: 13px; }
+
+/* ---------------- start gift (v3.5) ---------------- */
+.gift-screen {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: safe center;
+  gap: 10px; padding: 18px 14px; overflow-y: auto;
+}
+.gift-head { display: flex; align-items: center; gap: 7px; }
+.gift-head h2 { font-size: 24px; color: #eef3ff; }
+.gift-list { display: flex; flex-direction: column; gap: 9px; width: min(360px, 94%); }
+.gift-card {
+  display: grid; grid-template-columns: 40px 1fr; grid-template-rows: auto auto; column-gap: 10px;
+  align-items: center; text-align: left; min-height: 64px; padding: 10px 12px; border-radius: 14px; cursor: pointer;
+  background: linear-gradient(140deg, color-mix(in srgb, var(--c) 12%, #131c2d), #101725 72%);
+  border: 1px solid color-mix(in srgb, var(--c) 38%, #26324c);
+}
+.gift-card:active { transform: scale(.985); }
+.gc-ic { grid-row: 1 / 3; width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; color: var(--c); background: color-mix(in srgb, var(--c) 14%, #0e1522); }
+.gc-ic .ic { width: 21px; height: 21px; }
+.gift-card b { font-size: 14px; color: var(--c); }
+.gc-desc { font-size: 11px; color: #a9b8d1; }
+.gift-foot { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #7d8ea9; }
+.gift-foot .ic { width: 11px; height: 11px; }

@@ -1,0 +1,21 @@
+import sys, json; sys.path.insert(0,'/workspace/work/dice-rpg/tests')
+from harness import *
+serve()
+with sync_playwright() as p:
+    b,ctx,page,errors=launch(p,390,844,True)
+    page.goto(BASE); page.wait_for_timeout(300)
+    page.evaluate("() => localStorage.clear()"); page.reload(); page.wait_for_timeout(300)
+    page.click('[data-act="newrun"]'); page.wait_for_timeout(250)
+    page.click('[data-act="pickclass"][data-id="warrior"]'); page.wait_for_timeout(400)
+    print("screen:", page.evaluate("() => DC.Game.state.screen"))
+    page.screenshot(path=OUT + "/v35_gift.png")
+    print("gifts:", page.evaluate("() => DC.Game.state.run.gift.map(g=>g.k)"))
+    before = page.evaluate("() => { const r=DC.Game.state.run; return {gold:r.gold, hp:r.maxHp, dice:r.dice.length, relics:r.relics.length, spark:r.extraSpark}; }")
+    page.click('[data-act="gift"][data-i="0"]'); page.wait_for_timeout(450)
+    after = page.evaluate("() => { const r=DC.Game.state.run; return {gold:r.gold, hp:r.maxHp, dice:r.dice.length, relics:r.relics.length, spark:r.extraSpark, screen:DC.Game.state.screen}; }")
+    print("before:", json.dumps(before), "after:", json.dumps(after))
+    try: page.click('[data-act="closetut"]'); page.wait_for_timeout(200)
+    except Exception: pass
+    page.screenshot(path=OUT + "/v35_map.png")
+    print("ERRORS", json.dumps(errors, ensure_ascii=False))
+    b.close()

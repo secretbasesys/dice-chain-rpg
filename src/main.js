@@ -122,6 +122,7 @@
         case 'undo': this.undo(); break;
         case 'speed': this.toggleSpeed(); break;
         case 'log': s.ui.logOpen = !s.ui.logOpen; DC.Audio.play('click'); DC.UI.render(); break;
+        case 'gift': this.takeGift(parseInt(d.i, 10)); break;
         case 'dailyrun': {
           const cfg = DC.dailyConfig();
           s.ui.seed = cfg.seed;
@@ -247,9 +248,56 @@
       this.state.run = run;
       this.state.combat = null;
       this.state.ui.daily = false;
-      this.goMap();
+      run.gift = this.rollGifts();
+      this.state.screen = 'gift';
+      this.save();
+      DC.UI.render();
       DC.UI.toast(C.name + ' — 행운을 빈다');
-      if (!DC.Meta.tutSeen()) { this.state.ui.modal = 'tut'; DC.Meta.setTut(); DC.UI.render(); }
+    },
+
+    rollGifts: function () {
+      const r = this.state.run;
+      const pool = [
+        { k: 'gold', n: 35, name: '여행자의 지갑', desc: '골드 +35', ic: 'coin', c: '#fbbf24' },
+        { k: 'maxhp', n: 9, name: '단단한 뼈대', desc: '최대 체력 +9', ic: 'heart', c: '#f472b6' },
+        { k: 'face', name: '예리한 숫돌', desc: '무작위 주사위 면 하나 +1', ic: 'anvil', c: '#fb923c' },
+        { k: 'spark', n: 1, name: '숨결의 여유', desc: '매 턴 기세 +1', ic: 'spark', c: '#c084fc' },
+        { k: 'relic', name: '행운의 부적', desc: '무작위 유물 1개', ic: 'star', c: '#67e8f9' },
+        { k: 'dice', name: '여분 주사위', desc: '무작위 1등급 주사위 1개', ic: 'dice', c: '#6ee7b7' },
+      ];
+      const pickN = [];
+      const pool2 = pool.slice();
+      for (let i = 0; i < 3 && pool2.length; i++) {
+        pickN.push(pool2.splice(Math.floor(DC.rng() * pool2.length), 1)[0]);
+      }
+      return pickN;
+    },
+
+    takeGift: function (i) {
+      const s = this.state;
+      const r = s.run;
+      const g = r && r.gift && r.gift[i];
+      if (!g) return;
+      if (g.k === 'gold') r.gold += g.n;
+      else if (g.k === 'maxhp') { r.maxHp += g.n; r.hp = Math.min(r.maxHp, r.hp + g.n); }
+      else if (g.k === 'spark') r.extraSpark = (r.extraSpark || 0) + g.n;
+      else if (g.k === 'face') {
+        const d = r.dice[Math.floor(DC.rng() * r.dice.length)];
+        const fi = Math.floor(DC.rng() * d.faces.length);
+        DC.Dice.upgradeFace(d, fi);
+      } else if (g.k === 'relic') {
+        const owned = r.relics;
+        const pool = DC.RELIC_IDS.filter(function (id) { return owned.indexOf(id) < 0 && DC.RELICS[id].price <= 100; });
+        if (pool.length) this.addRelic(pool[Math.floor(DC.rng() * pool.length)]);
+        else r.gold += 40;
+      } else if (g.k === 'dice') {
+        const pool = DC.DICE_IDS.filter(function (id) { return DC.DICE[id].tier === 1; });
+        r.dice.push(DC.Dice.make(pool[Math.floor(DC.rng() * pool.length)]));
+      }
+      r.gift = null;
+      DC.Audio.play('upgrade');
+      this.goMap();
+      if (!DC.Meta.tutSeen()) { s.ui.modal = 'tut'; DC.Meta.setTut(); DC.UI.render(); }
     },
 
     goMap: function () {
@@ -1146,6 +1194,7 @@
           else if (c.phase === 'lost') Game.combatLost();
           continue;
         }
+        if (s.screen === 'gift') { Game.takeGift(0); continue; }
         if (s.screen === 'reward') { Game.takeReward(0); continue; }
         if (s.screen === 'deep') { if (goDeep && s.run.act < 9) Game.continueDeep(); else Game.finishRun(); continue; }
         if (s.screen === 'map') {
