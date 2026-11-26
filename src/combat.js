@@ -42,15 +42,27 @@
     return out;
   }
 
+  /* scaling (v6.1): acts 1-3 unchanged; the abyss now ramps on one gentle curve
+     instead of multiplying two separate factors (was ~5.4x by act 8, now ~3.0x). */
+  function actHpMul(act) {
+    const a = act || 1;
+    if (a <= 3) return 1 + 0.26 * (a - 1);
+    return 1.52 * (1 + 0.20 * (a - 3));
+  }
+  function actAtkMul(act) {
+    const a = act || 1;
+    if (a <= 3) return 1 + 0.15 * (a - 1);
+    return 1.30 * (1 + 0.12 * (a - 3));
+  }
+
   function mkEnemy(spawn, scale, act) {
-    const abyss = Math.max(0, (act || 1) - 3);
-    const hp = Math.max(1, Math.round(spawn.hp * (scale || 1) * (1 + 0.26 * ((act || 1) - 1)) * (1 + 0.18 * abyss)));
+    const hp = Math.max(1, Math.round(spawn.hp * (scale || 1) * actHpMul(act)));
     return {
       id: DC.uid('e'), key: spawn.id, name: spawn.name, art: spawn.art, c: spawn.c,
       hp: hp, maxHp: hp, block: 0,
       st: { burn: 0, poison: 0, weak: 0, vuln: 0, str: 0 },
       intents: spawn.intents,
-      actMul: (1 + 0.15 * ((act || 1) - 1)) * (1 + 0.12 * abyss),
+      actMul: actAtkMul(act),
       intentIdx: Math.floor(DC.rng() * spawn.intents.length),
       gimmick: spawn.gimmick || null,
       lines: spawn.lines || null,
