@@ -1098,7 +1098,7 @@
       s.run.stats.dmg += c.totalDamage;
     },
 
-    autoRun: function (cls, maxSteps) {
+    autoRun: function (cls, maxSteps, goDeep) {
       Game.newRun();
       Game.pickClass(cls || 'warrior');
       const s = Game.state;
@@ -1114,7 +1114,7 @@
           continue;
         }
         if (s.screen === 'reward') { Game.takeReward(0); continue; }
-        if (s.screen === 'deep') { Game.finishRun(); continue; }
+        if (s.screen === 'deep') { if (goDeep && s.run.act < 9) Game.continueDeep(); else Game.finishRun(); continue; }
         if (s.screen === 'map') {
           const avail = DC.MapGen.available(s.run.map);
           if (!avail.length) break;
