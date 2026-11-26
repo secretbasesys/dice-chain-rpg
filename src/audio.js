@@ -20,6 +20,27 @@
 
   function now() { return ctx.currentTime; }
 
+  /* detach finished nodes so the graph doesn't accumulate (v5.3 leak fix) */
+  function autoRelease(node, others) {
+    node.onended = function () {
+      try { node.disconnect(); } catch (e) {}
+      if (others) others.forEach(function (n) { try { n.disconnect(); } catch (e) {} });
+    };
+  }
+
+  /* small cache of noise buffers — avoids reallocating per hit */
+  const noiseCache = {};
+  function noiseBuf(dur, hp) {
+    const key = dur.toFixed(3) + '|' + (hp || 900);
+    if (noiseCache[key]) return noiseCache[key];
+    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.4);
+    noiseCache[key] = buf;
+    return buf;
+  }
+
   function tone(freq, dur, type, vol, slideTo, delay) {
     if (!ctx) return;
     const t0 = now() + (delay || 0);
@@ -32,16 +53,14 @@
     g.gain.exponentialRampToValueAtTime(vol == null ? 0.25 : vol, t0 + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.connect(g); g.connect(master);
+    autoRelease(o, [g]);
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
 
   function noise(dur, vol, hp, delay) {
     if (!ctx) return;
     const t0 = now() + (delay || 0);
-    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const buf = noiseBuf(dur, hp);
     const src = ctx.createBufferSource();
     src.buffer = buf;
     const f = ctx.createBiquadFilter();
@@ -50,6 +69,7 @@
     const g = ctx.createGain();
     g.gain.value = vol == null ? 0.2 : vol;
     src.connect(f); f.connect(g); g.connect(master);
+    autoRelease(src, [f, g]);
     src.start(t0);
   }
 
@@ -87,19 +107,18 @@
     g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t0 + Math.min(0.06, dur * 0.3));
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.connect(g); g.connect(busGain());
+    autoRelease(o, [g]);
     o.start(t0); o.stop(t0 + dur + 0.03);
   }
 
   function mNoise(t0, dur, vol, hp) {
     if (!ctx) return;
-    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+    const buf = noiseBuf(dur, hp || 6000);
     const src = ctx.createBufferSource(); src.buffer = buf;
     const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hp || 6000;
     const g = ctx.createGain(); g.gain.value = vol;
     src.connect(f); f.connect(g); g.connect(busGain());
+    autoRelease(src, [f, g]);
     src.start(t0);
   }
 
@@ -135,7 +154,7 @@
   }
 
   function tick() {
-    if (!ctx || !music.mode || muted) return;
+    if (!ctx || !music.mode || muted || ctx.state !== 'running') return;
     const T = TRACKS[music.mode];
     if (!T) return;
     const spb = 60 / T.bpm / 2;
@@ -234,7 +253,7 @@
     play: function (name, a) {
       if (muted) return;
       if (!ensure()) return;
-      if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} }
+      if (ctx.state !== 'running') { try { ctx.resume(); } catch (e) {} return; }
       const fn = SFX[name];
       if (fn) { try { fn(a); } catch (e) {} }
     },
@@ -259,6 +278,7 @@
       }
     },
     isMuted: function () { return muted; },
+    state: function () { return ctx ? ctx.state : 'none'; },
     available: function () { return !!(window.AudioContext || window.webkitAudioContext); },
   };
 })();

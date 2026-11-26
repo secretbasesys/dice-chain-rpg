@@ -1005,6 +1005,14 @@
       '<div class="cx-progress"><span>주사위 ' + pg.dice + '/' + pg.diceTotal + '</span><span>유물 ' + pg.relics + '/' + pg.relicTotal + '</span><span>적 ' + pg.enemies + '/' + pg.enemyTotal + '</span><span>이벤트 ' + pg.events + '/' + pg.eventTotal + '</span><span>업적 ' + pg.ach + '/' + pg.achTotal + '</span></div>' +
       '<h4>' + icon('dice') + ' 주사위</h4><div class="cx-dice-grid">' + dice + '</div>' +
       '<h4>' + icon('star') + ' 유물</h4><div class="cx-relics">' + relics + '</div>' +
+      '<h4>' + icon('spark') + ' 유물 시너지</h4><div class="syn-list">' +
+        (DC.SYNERGIES || []).map(function (sy) {
+          return '<div class="syn-row on" style="--c:' + sy.c + '">' +
+            '<span class="syn-ic">' + icon('spark') + '</span>' +
+            '<div><b>' + esc(sy.name) + '</b><span>' + esc(sy.desc) + '</span>' +
+            '<i>' + sy.relics.map(function (id) { return esc((DC.RELICS[id] || {}).name || id); }).join(' + ') + '</i></div>' +
+          '</div>';
+        }).join('') + '</div>' +
       '<h4>' + icon('skull') + ' 적</h4><div class="cx-enemies">' + enemies + '</div>' +
       evSection +
       '<h4>' + icon('crown') + ' 업적</h4><div class="cx-achs">' + achs + '</div>' +
@@ -1160,6 +1168,8 @@
         ['H', '휴식', '회복(40%)·단련(최대 체력 +8)·단조(면 1회) 중 하나를 고릅니다.'],
         ['I', '스킬 각성', '상점의 각성의 서나 보상으로 스킬 하나를 영구 강화합니다. 런이 끝나면 사라집니다.'],
         ['J', '유물', '런 내내 유지되는 패시브입니다. 일반 22종 + 보스 유물 8종. 조합에 따라 빌드가 달라집니다.'],
+        ['J3', '유물 시너지', '정해진 유물 두 개를 모으면 추가 효과가 발동합니다(예: 화염 심장 + 번개 도체 = 폭풍의 심장). 덱 화면과 도감에서 확인할 수 있습니다.'],
+        ['J4', '심연 변칙', '승리 후 더 깊이 들어가면 매 막 무작위 변칙이 걸립니다. 지도 상단의 칩을 눌러 확인하세요.'],
         ['J2', '보스 유물', '1막·2막 보스를 쓰러뜨리면 세 장 중 하나를 고릅니다. 강력하지만 반드시 대가(최대 체력·골드·방어 등)가 붙습니다.'],
       ],
       meta: [
