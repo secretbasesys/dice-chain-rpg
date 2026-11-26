@@ -251,6 +251,23 @@
       '<path d="M2.6 6.4c1.6 1.4 2 3.2 1.6 5M21.4 6.4c-1.6 1.4-2 3.2-1.6 5M4 19.6c1.4-.8 2.8-.6 4 .4M20 19.6c-1.4-.8-2.8-.6-4 .4" opacity=".55"/>' +
       '<circle cx="12" cy="12.4" r="1.4" fill="currentColor" stroke="none" opacity=".8"/>',
 
+    abyssEye:
+      '<path d="M12 4.6c5.6 0 9.8 4.6 9.8 7.8S17.6 20.2 12 20.2 2.2 15.4 2.2 12.4 6.4 4.6 12 4.6z" fill="currentColor" opacity=".14"/>' +
+      '<path d="M3.2 12.4C5.4 8.8 8.6 6.8 12 6.8s6.6 2 8.8 5.6c-2.2 3.6-5.4 5.6-8.8 5.6s-6.6-2-8.8-5.6z"/>' +
+      '<circle cx="12" cy="12.4" r="3.4" fill="currentColor" opacity=".55"/>' +
+      '<circle cx="12" cy="12.4" r="1.6" fill="currentColor" stroke="none"/>' +
+      '<path d="M5.4 5.4c1.4 1.6 1.8 3.4 1.4 5.4M18.6 5.4c-1.4 1.6-1.8 3.4-1.4 5.4M4.2 19.4c1.6-.8 3.2-.6 4.6.4M19.8 19.4c-1.6-.8-3.2-.6-4.6.4" opacity=".55"/>' +
+      '<path d="M12 2.2v1.8M12 20.6v1.8" opacity=".4"/>',
+
+    devourer:
+      '<path d="M3.4 8.6c2-2.6 5.2-4 8.6-4s6.6 1.4 8.6 4c1.4 1.8 1.4 6.2 0 8.2-2 2.8-5.2 4.6-8.6 4.6s-6.6-1.8-8.6-4.6c-1.4-2-1.4-6.4 0-8.2z" fill="currentColor" opacity=".16"/>' +
+      '<path d="M3.4 8.6c2-2.6 5.2-4 8.6-4s6.6 1.4 8.6 4c1.4 1.8 1.4 6.2 0 8.2-2 2.8-5.2 4.6-8.6 4.6s-6.6-1.8-8.6-4.6c-1.4-2-1.4-6.4 0-8.2z"/>' +
+      '<path d="M5.6 12.6h12.8l-1.8 2.6H7.4z" fill="#0b0f18" stroke="none"/>' +
+      '<path d="M6.6 12.6l1.4 2.4M9.6 12.6l1 2.4M12.6 12.6l-.4 2.4M15.4 12.6l-1 2.4M18 12.6l-1.4 2.4" stroke-width="1.2"/>' +
+      '<rect x="9.2" y="4.6" width="5.6" height="5.6" rx="1.2" fill="currentColor" opacity=".35" transform="rotate(-18 12 7.4)"/>' +
+      '<circle cx="10.8" cy="6.6" r=".7" fill="#0b0f18" stroke="none"/><circle cx="13.2" cy="8.2" r=".7" fill="#0b0f18" stroke="none"/>' +
+      '<path d="M2.4 6.4L.8 4.6M21.6 6.4l1.6-1.8" opacity=".5"/>',
+
   };
 
   /* act scenes: wide silhouettes behind the arena (viewBox 400x120) */

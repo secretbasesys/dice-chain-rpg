@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '3.1.0';
+  DC.VERSION = '3.2.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -310,6 +310,15 @@
     3: E('dicelord', '주사위 군주', 178, 'boss', '#fbbf24', [{ k: 'curse', n: 2 }, { k: 'attack', v: 30 }, { k: 'attack', v: 13, hits: 3 }, { k: 'buff', s: 'str', v: 5 }, { k: 'drain', v: 16 }]),
   };
 
+  DC.BOSSES[4] = E('abyssEye', '심연의 눈', 210, 'abyssEye', '#8b5cf6', [{ k: 'attack', v: 24 }, { k: 'debuff', s: 'vuln', v: 3 }, { k: 'attack', v: 9, hits: 3 }, { k: 'curse', n: 1 }]);
+  DC.BOSSES[5] = E('devourer', '주사위 포식자', 240, 'devourer', '#f472b6', [{ k: 'attack', v: 26 }, { k: 'drain', v: 14 }, { k: 'buff', s: 'str', v: 5 }, { k: 'attack', v: 11, hits: 2 }]);
+  DC.BOSSES[4].title = '끝을 보는 자';
+  DC.BOSSES[4].lines = { appear: '심연의 눈 — "너의 가능성은 모두 보인다."', half: '눈이 깜빡인다. "아직 하나가 남았군."', die: '"...다음 굴림에서 보자."' };
+  DC.BOSSES[4].gimmick = { kind: 'gaze', every: 3, once: false };
+  DC.BOSSES[5].title = '주사위를 삼키는 자';
+  DC.BOSSES[5].lines = { appear: '주사위 포식자 — "잘 익은 운이군."', half: '포식자가 입을 벌린다. "한 점 더."', die: '"배가... 고프다."' };
+  DC.BOSSES[5].gimmick = { kind: 'devour', every: 4, n: 2, once: false };
+
   /* boss personality: gimmicks + lines */
   DC.BOSSES[1].title = '군체의 어머니';
   DC.BOSSES[1].lines = {
@@ -588,6 +597,7 @@
   DC.GIMMICK_TXT = {
     split: '체력 50%에서 분열', revive: '한 번 부활', seal: '3턴마다 주사위 봉인',
     enrage: '체력 50%에서 격노', fortify: '매 턴 방어도 7', dive: '3턴마다 급강하',
+    gaze: '3턴마다 약화·취약 2', devour: '4턴마다 주사위 2개 삼킴',
   };
 
   DC.challengeById = function (id) {

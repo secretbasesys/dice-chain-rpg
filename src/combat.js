@@ -600,6 +600,14 @@
           e.st.str += (egm.str || 3); e.gUsed = true;
           ev.push({ t: 'bossline', text: e.name + ' 격노! 힘 +' + (egm.str || 3) });
         }
+        if (egm && egm.kind === 'gaze' && c.turn % (egm.every || 3) === 0) {
+          c.statuses.weak += 2; c.statuses.vuln += 2;
+          ev.push({ t: 'bossline', text: e.name + ' — 시선이 운명을 묶는다 (약화 2 · 취약 2)' });
+        }
+        if (egm && egm.kind === 'devour' && c.turn % (egm.every || 4) === 0) {
+          c.pendingSeal = (c.pendingSeal || 0) + (egm.n || 2);
+          ev.push({ t: 'bossline', text: e.name + ' — 주사위를 삼킨다 (봉인 ' + (egm.n || 2) + ')' });
+        }
         if (egm && egm.kind === 'fortify') {
           e.block += (egm.block || 6);
           ev.push({ t: 'eblock', eid: e.id, amount: (egm.block || 6) });

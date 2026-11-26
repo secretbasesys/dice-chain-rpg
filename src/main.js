@@ -290,7 +290,10 @@
     spawnsFor: function (kind) {
       const r = this.state.run;
       const actK = Math.min(3, r.act);
-      if (kind === 'boss') return [DC.BOSSES[actK]];
+      if (kind === 'boss') {
+        if (r.act <= 3) return [DC.BOSSES[actK]];
+        return [DC.BOSSES[4 + (r.act % 2)]];
+      }
       if (kind === 'elite') return [DC.ELITES[actK][0]];
       const pool = DC.ENEMIES[actK];
       const n = r.act === 1 ? (DC.rng() < 0.3 ? 2 : 1) : (DC.rng() < 0.55 ? 2 : 1);
@@ -323,7 +326,7 @@
       DC.UI.render();
       DC.Audio.play('turn');
       if (kind === 'boss') {
-        const bossDef = DC.BOSSES[Math.min(3, r.act)];
+        const bossDef = DC.BOSSES[r.act <= 3 ? Math.min(3, r.act) : 4 + (r.act % 2)];
         const lines = (bossDef && bossDef.lines) || { appear: '보스 등장!' };
         DC.Audio.play('boss');
         setTimeout(function () { DC.FX.banner(lines.appear, 'boss'); }, 350);
