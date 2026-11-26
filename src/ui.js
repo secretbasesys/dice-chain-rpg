@@ -363,7 +363,7 @@
     const rows = map.rows;
     const curRow = map.current ? map.nodes[map.current].row : 0;
     const visited = r.cleared || [];
-    const boss = DC.BOSSES[r.act <= 3 ? r.act : 4 + (r.act % 2)];
+    const boss = r.act <= 3 ? DC.BOSSES[r.act] : (DC.abyssBossFor ? DC.abyssBossFor(r.act) : DC.BOSSES[4 + (r.act % 2)]);
     const bossDone = map.current && map.nodes[map.current].type === 'boss';
 
     let html = '';
@@ -968,7 +968,7 @@
       (DC.ENEMIES[a] || []).forEach(function (e) { enemyList.push(e); });
       (DC.ELITES[a] || []).forEach(function (e) { enemyList.push(e); });
     });
-    enemyList.push(DC.BOSSES[1], DC.BOSSES[2], DC.BOSSES[3], DC.BOSSES[4], DC.BOSSES[5]);
+    [1, 2, 3, 4, 5, 6].forEach(function (k) { if (DC.BOSSES[k]) enemyList.push(DC.BOSSES[k]); });
     const enemies = enemyList.map(function (e) {
       const got = seenEnemy.indexOf(e.id) >= 0;
       const gtxt = e.gimmick && DC.GIMMICK_TXT[e.gimmick.kind];

@@ -129,6 +129,12 @@
       if (e.lines) ev.push({ t: 'bossline', text: e.lines.die, soft: true });
       if (has(c, 'grail')) { c.hp = Math.min(c.maxHp, c.hp + 6); ev.push({ t: 'heal', amount: 6 }); }
     }
+    /* boss: mirror — reflects a share of the damage back at the player */
+    if (g && g.kind === 'mirror' && real > 0) {
+      const back = Math.max(1, Math.round(real * (g.pct || 0.2)));
+      hitPlayer(c, back, ev, { kind: 'mirror' });
+      ev.push({ t: 'msg', text: '거울 반사 — ' + back + ' 피해' });
+    }
     /* boss: split at threshold */
     if (g && g.kind === 'split' && !e.gSplit && e.hp > 0 && e.hp <= e.maxHp * g.at) {
       e.gSplit = true;

@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '5.3.0';
+  DC.VERSION = '5.4.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -404,6 +404,23 @@
   DC.BOSSES[5].lines = { appear: '주사위 포식자 — "잘 익은 운이군."', half: '포식자가 입을 벌린다. "한 점 더."', die: '"배가... 고프다."' };
   DC.BOSSES[5].gimmick = { kind: 'devour', every: 4, n: 2, once: false };
 
+  /* v5.4 — third abyss boss */
+  DC.BOSSES[6] = E('gamblerKing', '무한의 노름꾼', 265, 'boss', '#fde68a', [
+    { k: 'attack', v: 25 }, { k: 'buff', s: 'str', v: 4 }, { k: 'curse', n: 2 }, { k: 'attack', v: 10, hits: 3 }, { k: 'drain', v: 15 }
+  ]);
+  DC.BOSSES[6].title = '끝나지 않는 판';
+  DC.BOSSES[6].lines = {
+    appear: '무한의 노름꾼 — "한 판 더? 넌 아직 칩이 남았잖아."',
+    half: '노름꾼이 카드를 섞는다. "딜은 내가 한다."',
+    die: '"...이번 판은 네 것이군."',
+  };
+  DC.BOSSES[6].gimmick = { kind: 'mirror', pct: 0.22, once: false };
+
+  DC.abyssBossFor = function (act) {
+    const i = Math.max(0, (act || 4) - 4) % 3;
+    return DC.BOSSES[4 + i];
+  };
+
   /* boss personality: gimmicks + lines */
   DC.BOSSES[1].title = '군체의 어머니';
   DC.BOSSES[1].lines = {
@@ -742,7 +759,7 @@
   DC.GIMMICK_TXT = {
     split: '체력 50%에서 분열', revive: '한 번 부활', seal: '3턴마다 주사위 봉인',
     enrage: '체력 50%에서 격노', fortify: '매 턴 방어도 7', dive: '3턴마다 급강하',
-    gaze: '3턴마다 약화·취약 2', devour: '4턴마다 주사위 2개 삼킴',
+    gaze: '3턴마다 약화·취약 2', devour: '4턴마다 주사위 2개 삼킴', mirror: '받은 피해의 22%를 되돌려줌',
   };
 
   DC.challengeById = function (id) {

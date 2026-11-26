@@ -383,7 +383,7 @@
       const actK = Math.min(3, r.act);
       if (kind === 'boss') {
         if (r.act <= 3) return [DC.BOSSES[actK]];
-        return [DC.BOSSES[4 + (r.act % 2)]];
+        return [DC.abyssBossFor ? DC.abyssBossFor(r.act) : DC.BOSSES[4 + (r.act % 2)]];
       }
       if (kind === 'elite') return [DC.ELITES[actK][0]];
       const pool = DC.ENEMIES[actK];
@@ -417,7 +417,7 @@
       DC.UI.render();
       DC.Audio.play('turn');
       if (kind === 'boss') {
-        const bossDef = DC.BOSSES[r.act <= 3 ? Math.min(3, r.act) : 4 + (r.act % 2)];
+        const bossDef = r.act <= 3 ? DC.BOSSES[Math.min(3, r.act)] : (DC.abyssBossFor ? DC.abyssBossFor(r.act) : DC.BOSSES[4 + (r.act % 2)]);
         const lines = (bossDef && bossDef.lines) || { appear: '보스 등장!' };
         const bossName = (c.enemies[0] && c.enemies[0].title) || 'BOSS';
         DC.Audio.play('boss');

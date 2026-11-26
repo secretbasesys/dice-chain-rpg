@@ -175,7 +175,7 @@
     enemyTotal: function () {
       let n = 0;
       [1, 2, 3].forEach(function (a) { n += (DC.ENEMIES[a] || []).length + (DC.ELITES[a] || []).length; });
-      return n + 5;
+      return n + 6;
     },
 
     seen: function (kind, id) { return load().seen[kind].indexOf(id) >= 0; },
