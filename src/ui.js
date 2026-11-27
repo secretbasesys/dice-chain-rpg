@@ -1187,6 +1187,7 @@
         '<div class="tn-row"><span style="--c:#fde68a">' + icon('crown') + '</span><div><b>보스 유물</b><p>1·2막 보스를 잡으면 큰 힘과 대가가 함께 있는 유물 3장 중 하나를 고릅니다.</p></div></div>' +
         '<div class="tn-row"><span style="--c:#c084fc">' + icon('book') + '</span><div><b>스킬 드래프트</b><p>보상에서 새 스킬을 골라 내 슬롯 하나와 바꿀 수 있습니다.</p></div></div>' +
         '<div class="tn-row"><span style="--c:#67e8f9">' + icon('spark') + '</span><div><b>유물 시너지</b><p>정해진 유물 두 개를 모으면 추가 효과가 발동합니다(덱 화면에서 확인).</p></div></div>' +
+        '<div class="tn-row"><span style="--c:#f0a07a">' + icon('dice') + '</span><div><b>클래스 · 도전 모드 · 승천</b><p>클래스 6종은 시작 주사위와 스킬이 모두 다릅니다. 타이틀에서 도전 모드(쌍둥이 등)를 고를 수 있고, 한 번 이기면 승천 난이도가 열립니다.</p></div></div>' +
       '</div>' +
       '<p class="tut-goal">' + icon('crown') + '<span>목표: <b>ACT 3의 주사위 군주</b>를 쓰러뜨리면 승리. 그 뒤에는 끝없는 심연이 기다립니다.</span></p>' +
       '<p class="tut-foot">' + icon('eye') + '모든 적의 다음 행동은 화면에 그대로 보입니다 — 완전 정보 전투.</p>' +
@@ -1780,12 +1781,15 @@
             DC.FX.banner('분열!', 'bad');
             delay = 200;
             break;
-          case 'won':
+          case 'won': {
             DC.Audio.play('win');
+            const cc = DC.Game.state.combat;
+            if (cc && cc.combo >= 3) setTimeout(function () { DC.FX.banner(cc.combo + '연쇄 마무리', 'good'); }, 320);
             if (q('.combat')) q('.combat').classList.remove('heat');
             if (DC.VFX) DC.VFX.clear(); else DC.FX.banner('VICTORY', 'good');
             delay = 260;
             break;
+          }
           case 'lost':
             DC.Audio.play('lose');
             DC.FX.banner('DEFEAT', 'bad');

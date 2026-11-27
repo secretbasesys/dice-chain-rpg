@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.16.0';
+  DC.VERSION = '7.17.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -146,6 +146,11 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.17', t: '첫 판에서 길을 보여 준다', items: [
+      '첫 판 안내에 「클래스 6종 · 도전 모드 · 승천」 항목을 추가했습니다 — 이기는 순간 열리는 것들을 미리 알려 줍니다.',
+      '승리할 때 3연쇄 이상이면 「N연쇄 마무리」 배너로 한 판의 끝을 정리합니다.',
+      '균열의 핵 설명을 실제 수치에 맞췄습니다(연쇄 배율 상한 3.5 → 5.5).',
+    ] },
     { v: '7.16', t: '재의 제단과 봉인된 주사위', items: [
       '새 이벤트 2종: 「재의 제단」(체력 10을 바쳐 유물 / 최대 체력 -6·최대 기세 +1 / +10 골드), 「봉인된 주사위」(전설 주사위+저주 면 / +45 골드 / 도끼로 부수기 도박).',
       '두 이벤트 모두 전용 삽화가 있습니다(이벤트 25종, 고유 삽화 15종).',
@@ -459,7 +464,7 @@
     eyeOfFate: { boss: true, name: '운명의 눈', ic: 'eye', c: '#67e8f9',
       desc: '매 턴 그림자 주사위 1개를 더 굴린다.', trade: '최대 체력 -8' },
     rupture: { boss: true, name: '균열의 핵', ic: 'mult', c: '#f472b6',
-      desc: '연쇄 배율 상한이 3.0에서 5.0이 된다.', trade: '매 턴 기세 -1' },
+      desc: '연쇄 배율 상한이 3.5에서 5.5가 된다.', trade: '매 턴 기세 -1' },
     warDrum: { boss: true, name: '전쟁의 북', ic: 'spark', c: '#fbbf24',
       desc: '매 턴 기세를 2 더 얻는다.', trade: '방어도 획득 -25%' },
     gildedIdol: { boss: true, name: '황금 우상', ic: 'crown', c: '#fde68a',
