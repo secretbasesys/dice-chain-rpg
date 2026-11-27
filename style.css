@@ -4983,3 +4983,18 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
 /* v7.16 — 한국어 어절 단위 줄바꿈: 단어 중간에서 끊기지 않게 */
 #app { word-break: keep-all; overflow-wrap: anywhere; }
 .ev-text, .rw-desc, .cc-desc, .cc-passive, .deck-skill span, .shop-item span, .tut-body p, .help-sec p { word-break: keep-all; }
+/* v7.21 — 오늘의 도전 카드: 초상화·시드 */
+.dc-body { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.dc-portrait {
+  width: 30px; height: 30px; flex: none; border-radius: 7px;
+  background-size: cover; background-position: 50% 18%;
+  border: 1px solid rgba(199, 154, 82, .35);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .5);
+}
+.dc-line { font-size: 11px; }
+.dc-seed {
+  margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: .06em;
+  color: #a89a86; background: rgba(0, 0, 0, .35); border: 1px solid rgba(199, 154, 82, .22);
+  border-radius: 4px; padding: 1px 5px;
+}
+.dc-result b { color: #f4dcab; font-weight: 900; }

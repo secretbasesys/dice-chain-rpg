@@ -693,19 +693,25 @@
     const doneToday = last && last.day === cfg.seed;
     const ch = DC.challengeById(cfg.challenge);
     const cls = DC.classesShort[cfg.cls] || cfg.cls;
+    /* 승천이 잠겨 있으면 실제 적용되는 단계로 표시한다 */
+    const effAsc = Math.min(cfg.asc, Math.min(10, DC.Meta.get().unlockedAsc || 0));
     const streak = DC.Meta.dailyStreak ? DC.Meta.dailyStreak() : 0;
     const log = DC.Meta.dailyLog ? DC.Meta.dailyLog() : [];
     const today = log.filter(function (d) { return d.day === cfg.seed; })[0];
     const best = log.reduce(function (a, d) { return Math.max(a, d.score || 0); }, 0);
     return '<div class="daily-card' + (doneToday ? ' done' : '') + '">' +
       '<div class="dc-head"><span>' + icon('star') + '오늘의 도전</span><b>' + esc(cfg.day) + '</b></div>' +
-      '<div class="dc-body">' + esc(cls) + ' · ' + esc(ch.short) + ' · 승천 ' + cfg.asc + '</div>' +
+      '<div class="dc-body">' +
+        '<span class="dc-portrait" style="background-image:url(&quot;' + DC.classArt(cfg.cls) + '&quot;)"></span>' +
+        '<span class="dc-line">' + esc(cls) + ' · ' + esc(ch.short) + ' · 승천 ' + effAsc + (effAsc < cfg.asc ? '(잠김)' : '') + '</span>' +
+        '<span class="dc-seed" data-tip="같은 시드로 다시 도전하면 같은 지도·주사위가 나옵니다" data-tip-title="오늘의 시드">' + esc(String(cfg.seed).replace('DAILY-', '')) + '</span>' +
+      '</div>' +
       '<div class="dc-meta">' +
         (streak ? '<span class="dc-streak">' + icon('flame') + streak + '일 연속 클리어</span>' : '<span>연속 클리어 없음</span>') +
         (best ? '<span>최고 ' + best + '점</span>' : '') +
       '</div>' +
       (doneToday
-        ? '<div class="dc-result">' + (last.win ? '오늘 클리어 · ACT ' + last.act : '오늘 기록 · ACT ' + last.act) +
+        ? '<div class="dc-result"><b>' + (last.win ? '클리어' : '패배') + '</b> · ACT ' + last.act +
           (today ? ' · ' + today.score + '점' : '') + '</div>' +
           '<button class="dc-btn ghost" data-act="dailyrun">다시 도전</button>'
         : '<button class="dc-btn" data-act="dailyrun">도전 시작</button>') +
