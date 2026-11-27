@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.19.0';
+  DC.VERSION = '7.20.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -146,6 +146,11 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.20', t: '저주받은 성배 · 20번째 버전', items: [
+      '새 유물 「저주받은 성배」: 저주 면으로 스킬을 쓰면 기세 +1, 그 피해 +10% — 저주 면을 자원으로 바꾸는 빌드.',
+      '유물 42종 · 시너지 7쌍 · 클래스 6종 · 주사위 32종 · 적 34종 · 이벤트 25종 · 업적 24종 · 심연 변칙 7종.',
+      'v7.20 마일스톤: 5해상도·클래스 전 조합 실제 클릭 점검, 소크 30런 힙 평탄, 승천 0~10 곡선 재측정.',
+    ] },
     { v: '7.19', t: '승천을 읽히게', items: [
       '타이틀의 승천 설명이 그 단계의 누적 효과를 한 줄로 보여 줍니다 — 무엇이 얼마나 어려워지는지 바로 읽힙니다.',
       '승천 4·5단계의 시작 골드 -20이 중복 적용되던 것을 정리하고, 7~10단계 상승폭을 완만하게 조정했습니다.',
@@ -469,6 +474,7 @@
     oathkeeper: { name: '맹세의 인장', ic: 'shield', c: '#93c5fd', desc: '방어도가 10 이상이면 주는 피해가 20% 증가한다.', price: 100 },
     ashRosary: { name: '잿빛 묵주', ic: 'flame', c: '#e08c6a', desc: '체력이 절반 이하일 때 매 턴 시작에 기세 +1.', price: 90 },
     emberBrand: { name: '불씨 낙인', ic: 'blood', c: '#f97316', desc: '체력이 절반 이하일 때 받는 피해가 20% 줄어든다.', price: 95 },
+    hexChalice: { name: '저주받은 성배', ic: 'skull', c: '#a78bfa', desc: '저주 면으로 스킬을 쓰면 기세 +1, 그 피해가 10% 증가한다.', price: 90 },
 
     /* -------- boss relics (v4.4): 1·2막 보스 보상 전용, 굵직한 대가 -------- */
     eyeOfFate: { boss: true, name: '운명의 눈', ic: 'eye', c: '#67e8f9',

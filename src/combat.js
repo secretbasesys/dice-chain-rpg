@@ -278,6 +278,7 @@
       if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 3;
       /* v7.12 — 잿빛 수도승: 잃은 체력에 비례해 최대 +60% */
       if (c.cls === 'monk') d *= 1 + Math.min(0.6, (1 - c.hp / c.maxHp) * 0.6);
+      if (has(c, 'hexChalice') && k === 'curse') d *= 1.1;
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
       if (synOn(c, 'storm') && (k === 'fire' || k === 'bolt' || (opts && opts.fire))) d *= 1.15;
       if (c.prevV != null && c.prevV === v) d *= 1.25;
@@ -632,6 +633,8 @@
       c.skillUse[skill.name] = (c.skillUse[skill.name] || 0) + 1;
       s.anim = Date.now();
       ev.push({ t: 'combo', n: c.combo, mult: mult(c), face: h.k, value: h.v, skill: skill.name });
+      /* v7.20 — 저주받은 성배: 저주 면으로 스킬을 쓰면 기세 +1 */
+      if (h.k === 'curse' && has(c, 'hexChalice')) { c.sparks += 1; ev.push({ t: 'spark', amount: 1 }); }
       const before = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);
       const pair = (c.prevV != null && c.prevV === h.v);
       c.sameVal = pair ? (c.sameVal || 1) + 1 : 1;
