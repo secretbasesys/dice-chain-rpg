@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.17.0';
+  DC.VERSION = '7.18.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -146,6 +146,11 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.18', t: '종소리와 독', items: [
+      '새 적 「심연의 종」(3막): 매 턴 방어도 6을 얻는 단단한 적. 방어도를 깎는 화상·중독이 유효합니다.',
+      '중독 상호작용: 중독된 적이 쓰러지면 독이 번져 다른 적 하나가 중독 +2가 됩니다.',
+      '30런 연속 소크에서 힙 5.4~6.3MB로 평탄(누수 없음), 콘솔 에러 0.',
+    ] },
     { v: '7.17', t: '첫 판에서 길을 보여 준다', items: [
       '첫 판 안내에 「클래스 6종 · 도전 모드 · 승천」 항목을 추가했습니다 — 이기는 순간 열리는 것들을 미리 알려 줍니다.',
       '승리할 때 3연쇄 이상이면 「N연쇄 마무리」 배너로 한 판의 끝을 정리합니다.',
@@ -548,6 +553,7 @@
       E('voidmaw', '공허의 아귀', 66, 'voidmaw', '#8b5cf6', [{ k: 'drain', v: 10 }, { k: 'curse', n: 2 }, { k: 'attack', v: 14 }]),
       E('hound', '심연 사냥개', 56, 'beast', '#fb7185', [{ k: 'attack', v: 9, hits: 2 }, { k: 'buff', s: 'str', v: 3 }, { k: 'attack', v: 16 }]),
       E('chainHunter', '사슬 사냥꾼', 64, 'humanoid', '#fbbf24', [{ k: 'attack', v: 13 }, { k: 'attack', v: 8, hits: 2 }, { k: 'curse', n: 1 }], { gimmick: { kind: 'seal', every: 3, n: 1 } }),
+      E('abyssBell', '심연의 종', 60, 'construct', '#a78bfa', [{ k: 'defend', v: 10 }, { k: 'attack', v: 12 }, { k: 'curse', n: 1 }], { gimmick: { kind: 'fortify', block: 6 } }),
     ],
   };
   DC.ELITES = {

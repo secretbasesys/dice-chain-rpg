@@ -7,7 +7,7 @@ from cutout import cutout
 
 RAW = pathlib.Path("/workspace/assets_raw/dc3")
 OUT = pathlib.Path("/workspace/work/dice-rpg/assets")
-NAMES = {"mirrorGolem": False, "chainHunter": False}
+NAMES = {"mirrorGolem": False, "chainHunter": False, "abyssBell": False}
 CLASSES = ["monk"]
 
 

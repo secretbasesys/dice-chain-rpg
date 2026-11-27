@@ -146,6 +146,15 @@
     if (e.hp <= 0 && !e.dead) {
       e.dead = true;
       ev.push({ t: 'kill', eid: e.id });
+      /* v7.18 — 중독된 적이 쓰러지면 독이 옆 적에게 번진다 */
+      if (e.st.poison > 0) {
+        const other = alive(c).filter(function (x) { return x !== e && x.hp > 0; })[0];
+        if (other) {
+          other.st.poison += 2;
+          ev.push({ t: 'status', eid: other.id, s: 'poison', amount: 2 });
+          ev.push({ t: 'msg', text: '독이 번진다 — ' + other.name + ' 중독 +2' });
+        }
+      }
       if (e.lines) ev.push({ t: 'bossline', text: e.lines.die, soft: true });
       if (has(c, 'grail')) { c.hp = Math.min(c.maxHp, c.hp + 6); ev.push({ t: 'heal', amount: 6 }); }
     }
