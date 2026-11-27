@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.9.0';
+  DC.VERSION = '7.10.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -141,6 +141,11 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.10', t: '새로운 적', items: [
+      '2막에 「거울 골렘」 — 가슴의 거울이 받은 피해의 12%를 되돌려줍니다. 큰 한 방을 넣기 전에 한 번 더 생각하게 됩니다.',
+      '3막에 「사슬 사냥꾼」 — 3턴마다 주사위를 하나 봉인합니다. 기세를 남겨 두는 편이 안전합니다.',
+      '두 적 모두 고유 일러스트와 도감 항목을 가집니다(적 33종).',
+    ] },
     { v: '7.9', t: '보스의 격노', items: [
       '보스 페이즈: 주사위 군주와 심연 보스들이 체력 절반에서 격노합니다 — 대사가 터지고 힘이 2 오르며 화면이 붉게 물듭니다.',
       '이벤트 고유 삽화 4종 추가 — 주사위 경매, 마른 등대, 잊혀진 무기고, 뼈 무덤. 고유 삽화는 모두 10종입니다.',
@@ -469,6 +474,7 @@
       E('wraith', '망령', 33, 'flyer', '#67e8f9', [{ k: 'attack', v: 10 }, { k: 'drain', v: 6 }, { k: 'debuff', s: 'weak', v: 1 }]),
       E('cultist', '심연 광신도', 40, 'cultist', '#a78bfa', [{ k: 'buff', s: 'str', v: 2 }, { k: 'attack', v: 9 }, { k: 'curse', n: 1 }]),
       E('sentry', '석상 파수꾼', 48, 'construct', '#cbd5e1', [{ k: 'defend', v: 10 }, { k: 'attack', v: 11 }, { k: 'debuff', s: 'vuln', v: 2 }]),
+      E('mirrorGolem', '거울 골렘', 54, 'construct', '#a5b4fc', [{ k: 'defend', v: 12 }, { k: 'attack', v: 14 }, { k: 'debuff', s: 'vuln', v: 2 }], { gimmick: { kind: 'mirror', pct: 0.12 } }),
     ],
     3: [
       E('knight', '심연 기사', 58, 'humanoid', '#f87171', [{ k: 'attack', v: 21 }, { k: 'defend', v: 14 }, { k: 'attack', v: 10, hits: 3 }]),
@@ -478,6 +484,7 @@
       E('berserker', '광전사', 72, 'berserker', '#f87171', [{ k: 'attack', v: 18 }, { k: 'buff', s: 'str', v: 4 }, { k: 'attack', v: 8, hits: 3 }]),
       E('voidmaw', '공허의 아귀', 66, 'voidmaw', '#8b5cf6', [{ k: 'drain', v: 10 }, { k: 'curse', n: 2 }, { k: 'attack', v: 14 }]),
       E('hound', '심연 사냥개', 56, 'beast', '#fb7185', [{ k: 'attack', v: 9, hits: 2 }, { k: 'buff', s: 'str', v: 3 }, { k: 'attack', v: 16 }]),
+      E('chainHunter', '사슬 사냥꾼', 64, 'humanoid', '#fbbf24', [{ k: 'attack', v: 13 }, { k: 'attack', v: 8, hits: 2 }, { k: 'curse', n: 1 }], { gimmick: { kind: 'seal', every: 3, n: 1 } }),
     ],
   };
   DC.ELITES = {
@@ -897,7 +904,7 @@
   DC.GIMMICK_TXT = {
     split: '체력 50%에서 분열', revive: '한 번 부활', seal: '3턴마다 주사위 봉인',
     enrage: '체력 50%에서 격노', fortify: '매 턴 방어도 7', dive: '3턴마다 급강하',
-    gaze: '3턴마다 약화·취약 2', devour: '4턴마다 주사위 2개 삼킴', mirror: '받은 피해의 22%를 되돌려줌',
+    gaze: '3턴마다 약화·취약 2', devour: '4턴마다 주사위 2개 삼킴', mirror: '받은 피해의 일부를 되돌려줌',
   };
 
   DC.challengeById = function (id) {
