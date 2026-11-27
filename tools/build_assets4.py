@@ -10,7 +10,7 @@ RAW = pathlib.Path("/workspace/assets_raw/dc3")
 OUT = pathlib.Path("/workspace/work/dice-rpg/assets")
 NAMES = ["altar", "mirror", "spring", "forgespirit", "cursedsword", "starfall",
          "auction", "lighthouse", "armory", "bonepile",
-         "caravan", "thief", "maze"]
+         "caravan", "thief", "maze", "ashaltar", "sealeddie"]
 
 
 def cover(im, w, h, anchor=0.5):

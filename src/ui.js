@@ -207,8 +207,10 @@
     const dead = e.hp <= 0;
     const boss = !!e.title;
     const kill = !dead && pred > 0 && pred >= e.hp + (e.block || 0);
+    const gtxt = boss && e.gimmick && DC.GIMMICK_TXT[e.gimmick.kind] ? DC.GIMMICK_TXT[e.gimmick.kind] : '';
     return '' +
-      '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + (boss ? ' is-boss' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '">' +
+      '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + (boss ? ' is-boss' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '"' +
+      (gtxt ? ' data-tip="' + esc(gtxt) + '" data-tip-title="' + esc(e.name) + ' · 기믹"' : '') + '>' +
         intentBadge(c, e) +
         '<div class="e-art-wrap">' +
           '<img class="e-art" src="' + DC.enemyArt(e) + '" alt="" draggable="false" />' +

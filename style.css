@@ -4980,3 +4980,6 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
   animation: blazePulse 1.4s ease-in-out infinite;
 }
 @keyframes blazePulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+/* v7.16 — 한국어 어절 단위 줄바꿈: 단어 중간에서 끊기지 않게 */
+#app { word-break: keep-all; overflow-wrap: anywhere; }
+.ev-text, .rw-desc, .cc-desc, .cc-passive, .deck-skill span, .shop-item span, .tut-body p, .help-sec p { word-break: keep-all; }

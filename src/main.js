@@ -476,6 +476,8 @@
         }, 260);
         setTimeout(function () { if (!DC.VFX) DC.FX.banner(lines.appear, 'boss'); }, 2100);
         if (!DC.VFX) DC.UI.toast('보스 등장!');
+        const _bgm = c.enemies[0] && c.enemies[0].gimmick && DC.GIMMICK_TXT[c.enemies[0].gimmick.kind];
+        if (_bgm) setTimeout(function () { DC.UI.toast('기믹 — ' + _bgm); }, 3200);
       } else if (kind === 'elite') DC.UI.toast('정예 조우!');
       const syns = DC.synergiesFor ? DC.synergiesFor(r.relics) : [];
       if (syns.length) {

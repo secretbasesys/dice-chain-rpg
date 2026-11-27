@@ -52,7 +52,8 @@
     altar: 'altar', mirror: 'mirror', spring: 'spring',
     forgeSpirit: 'forgespirit', cursedSword: 'cursedsword', starfall: 'starfall',
     auction: 'auction', lighthouse: 'lighthouse', armory: 'armory', bonePile: 'bonepile',
-    caravan: 'caravan', thief: 'thief', maze: 'maze'
+    caravan: 'caravan', thief: 'thief', maze: 'maze',
+    ashAltar: 'ashaltar', sealedDie: 'sealeddie'
   };
   DC.eventArt = function (tag, id) {
     if (id && EVENT_ID_ART[id]) return url('ev2_' + EVENT_ID_ART[id]);
