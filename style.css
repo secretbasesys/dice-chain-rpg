@@ -4947,3 +4947,15 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
   38% { transform: translateY(1px) scale(.99); }
   100% { transform: none; }
 }
+/* v7.11 — 보스 보상 4장이 390x844에 한 번에 들어오도록 압축 */
+@media (min-width: 380px) and (max-height: 900px) {
+  .reward-screen.boss .rw-hero { height: 108px; margin-bottom: 9px; }
+  .reward-screen.boss .rw-card { padding: 9px 10px 8px; gap: 2px; }
+  .reward-screen.boss .rw-ic { width: 46px; height: 46px; margin: 1px 0 0; }
+  .reward-screen.boss .rw-ic .ic { width: 22px; height: 22px; }
+  .reward-screen.boss .rw-ic .relic-art, .reward-screen.boss .rw-ic .rw-art { width: 34px; height: 34px; }
+  .reward-screen.boss .rw-name { font-size: 14.5px; }
+  .reward-screen.boss .rw-desc { font-size: 10.5px; }
+  .reward-screen.boss .rw-list { gap: 6px; }
+  .reward-screen.boss .scr-foot { margin-top: 7px; }
+}

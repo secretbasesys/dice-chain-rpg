@@ -60,9 +60,22 @@
       save();
     },
 
-    noteDie: function (id) { const m = load(); if (once(m.seen.dice, id)) save(); },
+    /* v7.11 — 새로 발견한 주사위·유물은 한 줄로 알려 준다(도감 등록) */
+    noteDie: function (id) {
+      const m = load();
+      if (once(m.seen.dice, id)) {
+        save();
+        if (typeof DC.UI !== 'undefined' && DC.UI.toast && DC.DICE[id]) DC.UI.toast('도감 등록 · ' + DC.DICE[id].name);
+      }
+    },
     noteEvent: function (id) { const m = load(); if (once(m.seen.events, id)) save(); },
-    noteRelic: function (id) { const m = load(); if (once(m.seen.relics, id)) save(); },
+    noteRelic: function (id) {
+      const m = load();
+      if (once(m.seen.relics, id)) {
+        save();
+        if (typeof DC.UI !== 'undefined' && DC.UI.toast && DC.RELICS[id]) DC.UI.toast('도감 등록 · ' + DC.RELICS[id].name);
+      }
+    },
     noteEnemy: function (key) { const m = load(); if (once(m.seen.enemies, key)) save(); },
 
     noteRunEnd: function (entry) {

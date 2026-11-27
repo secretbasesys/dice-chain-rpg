@@ -9,7 +9,8 @@ from PIL import Image
 RAW = pathlib.Path("/workspace/assets_raw/dc3")
 OUT = pathlib.Path("/workspace/work/dice-rpg/assets")
 NAMES = ["altar", "mirror", "spring", "forgespirit", "cursedsword", "starfall",
-         "auction", "lighthouse", "armory", "bonepile"]
+         "auction", "lighthouse", "armory", "bonepile",
+         "caravan", "thief", "maze"]
 
 
 def cover(im, w, h, anchor=0.5):
