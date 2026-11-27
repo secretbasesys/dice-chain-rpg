@@ -191,7 +191,7 @@
         '</div>' +
         '<div class="e-foot">' +
           '<div class="e-line">' +
-            (c.enemies.length > 1 && c.target === idx ? '<span class="e-target-tag">' + icon('target') + '표적</span>' : '') +
+            (c.enemies.length > 1 && c.target === idx ? '<span class="e-target-tag">' + icon('target') + '<span>표적</span></span>' : '') +
             '<span class="e-name">' + esc(e.name) + '</span>' +
             (e.block > 0 ? '<span class="e-block" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + e.block + '</span>' : '') +
             '<span class="e-hp-num">' + Math.max(0, e.hp) + '<i>/' + e.maxHp + '</i></span>' +
@@ -817,9 +817,11 @@
       const on = f.dieIdx === di;
       strip += '<button class="fd-chip ' + (on ? 'on' : '') + '" data-act="fdiedie" data-i="' + di + '" style="--c:' + d.c + '">' +
         '<span class="fd-chip-name">' + esc(d.name) + '</span>' +
-        '<span class="fd-chip-faces">' + d.faces.map(function (fc) {
-          const k = DC.KINDS[fc.k];
-          return '<i style="--c:' + k.c + '">' + icon(k.ic) + fc.v + '</i>';
+        '<span class="fd-bar">' + d.faces.map(function (fc) {
+          return '<i style="--c:' + (DC.KINDS[fc.k] || DC.KINDS.blank).c + '"></i>';
+        }).join('') + '</span>' +
+        '<span class="fd-nums">' + d.faces.map(function (fc) {
+          return '<b style="--c:' + (DC.KINDS[fc.k] || DC.KINDS.blank).c + '">' + fc.v + '</b>';
         }).join('') + '</span>' +
       '</button>';
     });
@@ -853,7 +855,7 @@
 
     return hud(state) + '' +
       '<main class="forge-screen">' +
-        head + strip + body +
+        head + strip + '<div class="forge-body">' + body + '</div>' +
         '<div class="bottom-bar"><button class="bigbtn" data-act="forgeexit">단조 완료</button></div>' +
       '</main>';
   }
@@ -973,20 +975,20 @@
       const sk = custom || DC.CLASSES[r.cls].skills[i];
       const up = DC.getSkill(r.cls, i, 1);
       const lv = (r.skills || [])[i] || 0;
-      return '<div class="sk-row' + (lv ? ' done' : '') + (custom ? ' swapped' : '') + '">' +
-        '<div class="sk-ic">' + icon(sk.ic) + '</div>' +
-        '<div class="sk-main">' +
-          '<div class="sk-name">' + esc(sk.name) + (custom ? ' <i class="upmark swap">드래프트</i>' : '') + (lv ? ' <i class="upmark">각성</i>' : '') + '</div>' +
-          '<div class="sk-now">' + esc(lv ? up.desc : sk.desc) + '</div>' +
-          (lv || custom ? '' : '<div class="sk-up">' + icon('up') + esc(up.desc) + '</div>') +
+      return '<div class="skm-row' + (lv ? ' done' : '') + (custom ? ' swapped' : '') + '">' +
+        '<div class="skm-ic">' + icon(sk.ic) + '</div>' +
+        '<div class="skm-main">' +
+          '<div class="skm-name">' + esc(sk.name) + (custom ? ' <i class="upmark swap">드래프트</i>' : '') + (lv ? ' <i class="upmark">각성</i>' : '') + '</div>' +
+          '<div class="skm-now">' + esc(lv ? up.desc : sk.desc) + '</div>' +
+          (lv || custom ? '' : '<div class="skm-up">' + icon('up') + esc(up.desc) + '</div>') +
         '</div>' +
-        '<button class="sk-btn" data-act="upskill" data-i="' + i + '" ' + (lv || custom ? 'disabled' : '') + '>' + (custom ? '교체됨' : lv ? '완료' : '각성') + '</button>' +
+        '<button class="skm-btn" data-act="upskill" data-i="' + i + '" ' + (lv || custom ? 'disabled' : '') + '>' + (custom ? '교체됨' : lv ? '완료' : '각성') + '</button>' +
       '</div>';
     }).join('');
     return '<div class="overlay" data-act="closeskills"><div class="panel skill-panel" data-stop="1">' +
       '<div class="panel-head"><h3>' + icon('book') + ' 스킬 각성</h3><button class="iconbtn" data-act="closeskills">' + icon('close') + '</button></div>' +
       '<p class="sub">스킬 하나를 영구히 강화합니다. 런이 끝나면 사라집니다.</p>' +
-      '<div class="sk-list">' + rows + '</div>' +
+      '<div class="skm-list">' + rows + '</div>' +
       '</div></div>';
   }
 
@@ -1110,14 +1112,14 @@
       '<div class="panel-head"><h3>' + icon('book') + ' 세 가지 규칙</h3></div>' +
       '<div class="tut-steps">' +
         '<div class="tut-step"><span class="tut-n" style="--c:#fbbf24">1</span>' +
-          '<div><b>굴리고, 조건에 맞춰 놓는다</b><p>매 턴 주사위가 전부 굴려집니다. 슬롯의 조건(짝수·홀수·4 이상…)에 맞는 주사위만 올릴 수 있습니다.</p></div></div>' +
+          '<div><b>굴리고, 조건에 맞춰 놓는다</b><p>매 턴 주사위가 전부 굴려집니다. 주사위를 고르면 낼 수 있는 스킬이 켜지고 예상 피해가 보입니다. 슬롯의 조건(짝수·홀수·4 이상…)에 맞는 주사위만 올릴 수 있습니다.</p></div></div>' +
         '<div class="tut-step"><span class="tut-n" style="--c:#67e8f9">2</span>' +
-          '<div><b>이어 쓰면 배율이 오른다</b><p>한 턴에 스킬을 연달아 쓰면 콤보가 쌓이고 피해 배율이 최대 x3.5까지 상승합니다. 배율은 턴이 끝나면 초기화됩니다.</p></div></div>' +
+          '<div><b>이어 쓰면 배율이 오른다</b><p>한 턴에 스킬을 연달아 쓰면 콤보가 쌓이고 피해 배율이 최대 ×3.5까지 상승합니다. 배율은 턴이 끝나면 초기화됩니다.</p></div></div>' +
         '<div class="tut-step"><span class="tut-n" style="--c:#34d399">3</span>' +
           '<div><b>면을 바꾸는 것이 성장이다</b><p>단조 노드에서 주사위의 면 하나를 영구 교체합니다. 같은 눈 두 개를 연달아 쓰면 <b>페어</b> 보너스가 붙습니다.</p></div></div>' +
       '</div>' +
       '<div class="tut-new">' +
-        '<div class="tn-row"><span style="--c:#fde68a">' + icon('crown') + '</span><div><b>보스 유물</b><p>1·2막 보스를 잡으면 굵은 힘과 대가가 함께 있는 유물 3장 중 하나를 고릅니다.</p></div></div>' +
+        '<div class="tn-row"><span style="--c:#fde68a">' + icon('crown') + '</span><div><b>보스 유물</b><p>1·2막 보스를 잡으면 큰 힘과 대가가 함께 있는 유물 3장 중 하나를 고릅니다.</p></div></div>' +
         '<div class="tn-row"><span style="--c:#c084fc">' + icon('book') + '</span><div><b>스킬 드래프트</b><p>보상에서 새 스킬을 골라 내 슬롯 하나와 바꿀 수 있습니다.</p></div></div>' +
         '<div class="tn-row"><span style="--c:#67e8f9">' + icon('spark') + '</span><div><b>유물 시너지</b><p>정해진 유물 두 개를 모으면 추가 효과가 발동합니다(덱 화면에서 확인).</p></div></div>' +
       '</div>' +
@@ -1281,7 +1283,7 @@
       '<main class="end-screen ' + kind + '">' +
         '<span class="scr-kicker">' + (kind === 'win' ? 'VICTORY' : 'DEFEAT') + '</span>' +
         '<div class="end-ic">' + icon(kind === 'win' ? 'crown' : 'skull') + '</div>' +
-        '<h1>' + (kind === 'win' ? '정상에 서다' : '여정의 끝') + '</h1>' +
+        '<h1>' + (kind === 'win' ? '정상에 섰다' : '무너졌다') + '</h1>' +
         '<p class="sub">' + (kind === 'win' ? '주사위 군주를 쓰러뜨렸습니다.' : '여정은 여기서 끝났습니다.') + '</p>' +
         (kind === 'win' && winInfo && winInfo.unlocked ? '<div class="unlock-chip">' + icon('up') + ' 승천 ' + winInfo.level + ' 해금!</div>' : '') +
         (newAch.length ? '<div class="end-achs">' + newAch.map(function (a) { return '<span>' + icon('check') + esc(a.name) + '</span>'; }).join('') + '</div>' : '') +
@@ -1405,7 +1407,7 @@
         ['2', '주사위 → 스킬', '주사위를 탭해 고르면 낼 수 있는 스킬이 초록으로 켜지고 예상 수치가 보입니다. 그 스킬을 탭하면 바로 나갑니다. 스킬을 먼저 탭하면 그 스킬에 맞는 주사위만 밝아집니다. 끌어다 놓아도 됩니다.'],
         ['3', '슬롯 조건', '짝수·홀수·4 이상·소수·6 등 조건이 맞아야 올릴 수 있습니다. 조건이 안 맞는 스킬은 잠금 표시와 이유가 뜨고, 조건은 주사위 조작으로 맞춥니다.'],
         ['4', '기세로 조작', '재굴림·+1/-1·뒤집기(7-x)·복제로 눈을 바꿉니다. 기세는 매 턴 최대치까지 회복됩니다.'],
-        ['5', '연쇄 콤보', '한 턴에 스킬을 이어 쓸수록 배율이 오릅니다(기본 최대 x3.5). 3·5·7연쇄에서 연출이 터집니다.'],
+        ['5', '연쇄 콤보', '한 턴에 스킬을 이어 쓸수록 배율이 오릅니다(기본 최대 ×3.5). 3·5·7연쇄에서 연출이 터집니다.'],
         ['6', '단조', '단조 노드에서 주사위의 개별 면을 영구히 교체합니다. 면이 곧 빌드입니다.'],
       ],
       combat: [

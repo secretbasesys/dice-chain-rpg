@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.2.0';
+  DC.VERSION = '7.3.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -94,8 +94,8 @@
 
   /* keyword glossary for tap tooltips */
   DC.KEYWORDS = {
-    combo: { n: '연쇄 콤보', t: '한 턴에 스킬을 쓸 때마다 콤보가 1씩 오릅니다. 콤보 1당 배율이 +0.2 (가면 유물은 +0.3), 최대 x3.5까지.' },
-    mult: { n: '배율', t: '모든 피해에 곱해지는 값입니다. 위쪽 x1.0 배지가 현재 배율. 콤보를 쌓을수록 커집니다.' },
+    combo: { n: '연쇄 콤보', t: '한 턴에 스킬을 쓸 때마다 콤보가 1씩 오릅니다. 콤보 1당 배율이 +0.2 (가면 유물은 +0.3), 최대 ×3.5까지.' },
+    mult: { n: '배율', t: '모든 피해에 곱해지는 값입니다. 위쪽 ×1.0 배지가 현재 배율. 콤보를 쌓을수록 커집니다.' },
     spark: { n: '기세', t: '주사위 조작에 쓰는 자원입니다. 매 턴 최대치까지 회복됩니다.' },
     reroll: { n: '재굴림', t: '기세 1을 쓰고 주사위를 다시 굴립니다. 면은 그대로입니다.' },
     flip: { n: '뒤집기', t: '기세 1을 쓰고 눈을 7-x로 바꿉니다. 홀수↔짝수 전환이나 조건 맞추기에 유용합니다.' },
@@ -141,6 +141,12 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.3', t: '세부 정리', items: [
+      '적이 셋일 때 이름·체력이 잘리지 않게 이름줄을 정리했습니다(표적 표시는 바닥 링으로).',
+      '단조 화면의 주사위 목록을 면 색 띠 + 숫자로 바꿔 한눈에 읽히게 했습니다.',
+      '스킬 각성 창을 전투와 같은 재료로 다시 만들고, 전투 슬롯 스타일과 섞이던 문제를 고쳤습니다.',
+      '승리/패배 제목과 안내 문구, 배율·단위 표기(×, 체력, 골드)를 전 화면에서 맞췄습니다.',
+    ] },
     { v: '7.2', t: '화면마다 같은 손길', items: [
       '이벤트 선택지에 결과 아이콘(유물·체력·골드·주사위·단조)을 붙여 무엇을 얻는지 먼저 보입니다.',
       '도감·덱·설정·도움말 창을 전투와 같은 철/놋쇠 재료로 다시 입혔습니다. 잠긴 도감 항목도 의도된 자리로 보입니다.',
@@ -295,7 +301,7 @@
         { id: 'acid', name: '산성 플라스크', req: 'any', ic: 'venom', fx: { type: 'attack', ratio: 1.7, status: { poison: 2 } }, desc: '눈 × 1.7 피해 · 중독 2' },
         { id: 'distill', name: '증류', req: 'odd', ic: 'flame', fx: { type: 'attack', ratio: 2.4, burn: true }, desc: '눈 × 2.4 피해 · 화상' },
         { id: 'solidify', name: '응고', req: 'even', ic: 'shield', fx: { type: 'block', ratio: 2.8, heal: 1 }, desc: '눈 × 2.8 방어도 · 1 회복' },
-        { id: 'catalyze', name: '촉매', req: 'any', ic: 'flask', fx: { type: 'mix' }, desc: '정수 1개당 눈×1.0 피해·방어 2' },
+        { id: 'catalyze', name: '촉매', req: 'any', ic: 'flask', fx: { type: 'mix' }, desc: '정수 1개당 눈 × 1.0 피해 · 방어 +2' },
         { id: 'elixir', name: '대비약', req: 'gte4', ic: 'star', fx: { type: 'aoe', ratio: 1.7, burn: 2 }, desc: '모든 적에게 눈 × 1.7 · 화상 2' },
       ],
     },
@@ -763,7 +769,7 @@
       { fx: { ratio: 1.9, status: { poison: 3 } }, desc: '눈 × 1.9 피해 · 중독 3' },
       { fx: { ratio: 2.7, burn: true }, desc: '눈 × 2.7 피해 · 화상' },
       { fx: { ratio: 3.3, heal: 3 }, desc: '눈 × 3.3 방어도 · 3 회복' },
-      { fx: { ratio: 1.3, block: 3 }, desc: '정수 1개당 눈×1.3 피해·방어 3' },
+      { fx: { ratio: 1.3, block: 3 }, desc: '정수 1개당 눈 × 1.3 피해 · 방어 +3' },
       { fx: { ratio: 1.9, burn: 3 }, desc: '모든 적에게 눈 × 1.9 · 화상 3' },
     ],
   };

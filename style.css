@@ -4303,3 +4303,101 @@ body[data-screen="map"] #toast { bottom: auto; top: 56px; }
     linear-gradient(to bottom, rgba(7, 6, 10, .62), rgba(7, 6, 10, .88)),
     var(--world);
 }
+
+/* 적이 셋일 때 이름줄이 뭉개지지 않게 */
+.e-name { min-width: 0; flex: 0 1 auto; }
+.e-hp-num { flex: none; }
+.enemy-row[data-n="3"] .e-line { gap: 3px; }
+.enemy-row[data-n="3"] .e-name { font-size: 10.5px; letter-spacing: -.01em; }
+.enemy-row[data-n="3"] .e-hp-num { font-size: 10px; }
+.enemy-row[data-n="3"] .e-hp-num i { font-size: 8px; }
+.enemy-row[data-n="3"] .e-target-tag { padding: 1px 3px; }
+.enemy-row[data-n="3"] .e-target-tag > span { display: none; }
+.enemy-row[data-n="3"] .e-target-tag .ic { width: 10px; height: 10px; }
+.enemy-row[data-n="3"] .e-foot { padding-left: 2px; padding-right: 2px; }
+.enemy-row[data-n="3"] .e-hp { width: 100%; }
+.enemy-row[data-n="2"] .e-name { font-size: 12px; }
+
+/* 표적 표시는 이름줄에서 빼고 아트 모서리로 */
+.e-target-tag {
+  position: absolute; top: 0; left: 0; z-index: 4;
+  align-self: auto; margin: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .55);
+}
+.enemy-row[data-n="3"] .e-name { font-size: 11px; }
+.enemy-row[data-n="3"] .e-hp-num { font-size: 10px; }
+.enemy-row[data-n="3"] .e-target-tag { display: none; }
+.e-target-tag { position: static; top: auto; left: auto; align-self: center; }
+.enemy-row[data-n="3"] .e-line { justify-content: center; }
+
+/* ---------- 단조 화면 ---------- */
+.forge-screen { display: flex; flex-direction: column; gap: 0; }
+.forge-head .sub { text-align: center; color: #a2947f; font-size: 10.5px; margin: 4px 0 2px; }
+.forge-steps span {
+  font-size: 9px; padding: 2px 8px; border-radius: 4px;
+  border: 1px solid rgba(199, 154, 82, .2); color: #8d8073; background: rgba(0, 0, 0, .25);
+}
+.forge-steps span.on { color: #1d1206; border-color: #e8cf9e; background: linear-gradient(180deg, #f0d49a, #cf9d4f); }
+.forge-strip { gap: 6px; margin: 8px 0 10px; }
+.fd-chip {
+  border: 1px solid rgba(199, 154, 82, .22); border-radius: 8px; padding: 7px 8px 6px;
+  background-image: var(--grain), linear-gradient(180deg, rgba(34, 27, 32, .86), rgba(9, 7, 11, .92));
+  box-shadow: inset 0 1px 0 rgba(255, 240, 214, .07), 0 2px 0 rgba(0, 0, 0, .4);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.fd-chip.on { border-color: var(--brass-hi); box-shadow: 0 0 0 1px rgba(244, 220, 171, .3), 0 0 16px rgba(232, 180, 90, .25); }
+.fd-chip-name { font-size: 10px; font-weight: 800; color: color-mix(in srgb, var(--c) 70%, #f0e2c8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fd-bar { display: flex; gap: 2px; }
+.fd-bar i { flex: 1; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--c) 70%, #1a1418); box-shadow: 0 0 4px color-mix(in srgb, var(--c) 40%, transparent); }
+.fd-nums { display: flex; justify-content: space-between; }
+.fd-nums b { font-size: 10px; font-weight: 900; color: color-mix(in srgb, var(--c) 75%, #fff); }
+.forge-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.forge-body .forge-hint { margin: 0; }
+.forge-faces { gap: 7px; }
+.ff {
+  border: 1px solid rgba(199, 154, 82, .22); border-radius: 9px;
+  background-image: var(--grain), linear-gradient(180deg, rgba(34, 27, 32, .86), rgba(9, 7, 11, .92));
+  box-shadow: inset 0 1px 0 rgba(255, 240, 214, .07), 0 3px 0 rgba(0, 0, 0, .4);
+}
+.ff.on { border-color: var(--brass-hi); box-shadow: 0 0 0 1px rgba(244, 220, 171, .35), 0 0 18px rgba(232, 180, 90, .28); }
+.ff b { font-size: 20px; }
+.ff i { font-size: 9px; color: #a2947f; }
+.forge-opts { gap: 6px; }
+.forge-opt {
+  border: 1px solid rgba(199, 154, 82, .25); border-radius: 7px;
+  background-image: var(--grain), linear-gradient(180deg, rgba(34, 27, 32, .9), rgba(9, 7, 11, .94));
+}
+.forge-opt span { display: inline-flex; align-items: center; gap: 2px; }
+.forge-opt span .ic { width: 10px; height: 10px; }
+.forge-opt:not(:disabled) { border-color: rgba(244, 220, 171, .45); }
+
+/* ---------- 스킬 각성 모달 (전투 slot 클래스와 분리) ---------- */
+.skill-panel .sub { color: #a2947f; font-size: 11px; }
+.skm-list { display: flex; flex-direction: column; gap: 7px; }
+.skm-row {
+  display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 8px;
+  background-image: var(--grain), linear-gradient(180deg, rgba(34, 27, 32, .86), rgba(9, 7, 11, .93));
+  border: 1px solid rgba(199, 154, 82, .2);
+  box-shadow: inset 0 1px 0 rgba(255, 240, 214, .07), 0 2px 0 rgba(0, 0, 0, .35);
+}
+.skm-row.done { border-color: rgba(244, 220, 171, .42); background-image: var(--grain), linear-gradient(180deg, rgba(60, 45, 24, .5), rgba(12, 9, 8, .93)); }
+.skm-ic {
+  width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 50%;
+  background: rgba(0, 0, 0, .35); border: 1px solid rgba(199, 154, 82, .3); color: #e3c892;
+}
+.skm-ic .ic { width: 16px; height: 16px; }
+.skm-main { flex: 1; min-width: 0; }
+.skm-name { font-family: var(--serif); font-size: 13px; font-weight: 800; color: #f0e2c8; }
+.skm-now { font-size: 10.5px; color: #a2947f; line-height: 1.4; }
+.skm-up { font-size: 10px; color: #9fe0b6; display: flex; align-items: center; gap: 3px; margin-top: 2px; }
+.skm-up .ic { width: 10px; height: 10px; }
+.skm-btn {
+  flex: none; height: 36px; min-width: 58px; border-radius: 6px; border: 1px solid #f0d49a; cursor: pointer;
+  background: linear-gradient(180deg, #f2d69c, #cf9d4f); color: #241503; font-weight: 900; font-size: 12px;
+  box-shadow: 0 2px 0 #55370f, inset 0 1px 0 rgba(255, 250, 235, .6);
+}
+.skm-btn:disabled { background: rgba(30, 24, 24, .8); color: #6f6355; border-color: rgba(199, 154, 82, .18); box-shadow: none; }
+.upmark { font-style: normal; font-size: 8px; font-weight: 800; padding: 0 4px; border-radius: 3px; background: var(--gold); color: #241503; vertical-align: 1px; }
+.upmark.swap { background: #b394ea; color: #1a1030; }
+.ff-pick { top: 3px; right: 3px; bottom: auto; left: auto; padding: 0 3px; font-size: 7px; border-radius: 3px; }
+.ff.on { box-shadow: 0 0 0 1px rgba(244, 220, 171, .35), 0 0 16px color-mix(in srgb, var(--c) 35%, transparent); }
