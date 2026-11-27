@@ -154,8 +154,15 @@
       });
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') { self.state.ui.modal = null; DC.UI.hideTip(); DC.UI.render(); }
+        /* v7.22 — 포커스된 카드·주사위는 Enter/Space로 그 동작을 실행한다 */
+        const onAct = e.target && e.target.closest ? e.target.closest('[data-act]') : null;
+        if (onAct && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onAct.click();
+          return;
+        }
         if (self.state.screen === 'combat' && !self.state.ui.busy) {
-          if (e.key === 'Enter') self.endTurn();
+          if (e.key === 'Enter' && !onAct) self.endTurn();
           if (e.key === 'z' || e.key === 'Z') self.undo();
           if (e.key >= '1' && e.key <= '9') self.tapDie(parseInt(e.key, 10) - 1);
           const sk = 'qwert'.indexOf((e.key || '').toLowerCase());

@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.21.0';
+  DC.VERSION = '7.22.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -146,6 +146,11 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.22', t: '키보드로 한 판', items: [
+      '포커스된 주사위·스킬·버튼에서 Enter 또는 Space로 바로 실행됩니다(주사위 → 스킬 순서로 누르면 한 수가 나갑니다).',
+      'Enter가 카드 위에서 턴 종료로 새어 나가던 충돌을 없앴습니다.',
+      '1~9 주사위 선택, QWERT 스킬, Z 되돌리기, Enter 턴 종료는 그대로입니다.',
+    ] },
     { v: '7.21', t: '오늘의 도전 카드', items: [
       '오늘의 도전 카드에 클래스 초상화와 오늘의 시드를 표시합니다.',
       '승천이 잠겨 있으면 실제 적용 단계(0)와 「잠김」을 함께 보여 줍니다 — 표시와 실제 난이도가 어긋나지 않게.',
