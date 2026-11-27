@@ -14,7 +14,7 @@
     return path;
   };
 
-  DC.assetVer = '7.0';
+  DC.assetVer = '7.7';
 
   const CLASS_ART = { warrior: 1, mage: 1, gambler: 1, alchemist: 1, paladin: 1 };
   const BG_BY_ACT = { 1: 'bg_act1', 2: 'bg_act2', 3: 'bg_act3' };
@@ -53,6 +53,20 @@
   };
   DC.restArt = function () { return url('ev_rest'); };
   DC.shopkeeperArt = function () { return url('shopkeeper'); };
+
+  /* v7.7 — 보상 화면 배너: 전리품 상자 / 제단 */
+  DC.rewardArt = function (kind) {
+    return url(kind === 'boss' ? 'rw_altar' : 'rw_chest');
+  };
+
+  /* v7.7 — 주사위 재질(1 뼈 · 2 흑요석 · 3 황동) */
+  DC.MATERIALS = ['', '뼈', '흑요석', '황동'];
+  DC.materialUrl = function (tier) {
+    return url('tex_' + (['', 'bone', 'obsidian', 'brass'][tier] || 'bone'));
+  };
+  DC.materialClass = function (tier) {
+    return 'mat-' + (['', 'bone', 'obsidian', 'brass'][tier] || 'bone');
+  };
 
   DC.preloadArt = function (files) {
     if (!files) return;

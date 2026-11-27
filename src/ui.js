@@ -22,16 +22,25 @@
     return out + '</span>';
   }
 
+  /* 주사위 재질 등급 — 런의 주사위를 찾아 1 뼈 / 2 흑요석 / 3 황동 */
+  function dieTier(h) {
+    const run = DC.Game && DC.Game.state && DC.Game.state.run;
+    const d = run && run.dice && run.dice[h.dieIdx];
+    return (d && d.tier) || (h.phantom ? 2 : 1);
+  }
+
   function dieChip(h, i, opts) {
     opts = opts || {};
     const k = DC.KINDS[h.k] || DC.KINDS.blank;
-    const cls = ['die', h.used ? 'used' : '', h.locked ? 'locked' : '', opts.sel ? 'sel' : '', opts.can ? 'can' : '', opts.dim ? 'dim' : '', h.phantom ? 'phantom' : ''].join(' ');
+    const tier = dieTier(h);
+    const cls = ['die', 'tier-' + tier, DC.materialClass ? DC.materialClass(tier) : '', h.used ? 'used' : '', h.locked ? 'locked' : '', opts.sel ? 'sel' : '', opts.can ? 'can' : '', opts.dim ? 'dim' : '', h.phantom ? 'phantom' : ''].join(' ');
     return '' +
-      '<div class="' + cls + '" data-act="hand" data-idx="' + i + '" style="--c:' + k.c + ';--i:' + i + '" role="button" tabindex="0" aria-label="주사위 ' + h.v + ' ' + k.n + '">' +
+      '<div class="' + cls + '" data-act="hand" data-idx="' + i + '" style="--c:' + k.c + ';--i:' + i + ';--tex:url(&quot;' + DC.materialUrl(tier) + '&quot;)" role="button" tabindex="0" aria-label="주사위 ' + h.v + ' ' + k.n + '">' +
         '<span class="die-face">' + pips(h.v) + '</span>' +
         '<span class="die-ic">' + icon(k.ic) + '</span>' +
         '<span class="die-val">' + h.v + '</span>' +
         '<span class="die-kind">' + k.n + '</span>' +
+        '<span class="die-mat" aria-hidden="true"></span>' +
         (h.locked ? '<span class="die-lock">' + icon('lock') + '</span>' : '') +
         (h.used ? '<span class="die-used">' + icon('check') + '</span>' : '') +
         (h.shadowEye ? '<span class="die-eye" data-tip="운명의 눈 — 매 턴 추가로 굴린 그림자 주사위" data-tip-title="그림자 주사위">' + icon('eye') + '</span>' : '') +
@@ -386,6 +395,26 @@
         '</button>';
     }
 
+    /* v7.7 — 데스크톱 우측 레일: 스킬 옆 빈 공간을 보유 유물·시너지로 채운다 */
+    function sideRail() {
+      const rel = r.relics.map(function (id) {
+        const R = DC.RELICS[id];
+        if (!R) return '';
+        return '<div class="cs-row" style="--c:' + R.c + '">' +
+          '<span class="cs-ic">' + relicIcon(id, 'relic-art cs-art') + '</span>' +
+          '<div><b>' + esc(R.name) + '</b><span>' + esc(R.desc) + '</span></div></div>';
+      }).join('');
+      const syns = (DC.synergiesFor ? DC.synergiesFor(r.relics) : []).map(function (sy) {
+        return '<span class="cs-syn" style="--c:' + sy.c + '" data-tip="' + esc(sy.desc) + '" data-tip-title="' + esc(sy.name) + '">' +
+          icon('spark') + esc(sy.name) + '</span>';
+      }).join('');
+      return '<aside class="combat-side">' +
+        '<div class="cs-head">' + icon('star') + '유물 <b>' + r.relics.length + '</b></div>' +
+        (rel || '<div class="cs-empty">아직 없습니다</div>') +
+        (syns ? '<div class="cs-head">' + icon('spark') + '시너지 <b>' + (DC.synergiesFor ? DC.synergiesFor(r.relics).length : 0) + '</b></div><div class="cs-syns">' + syns + '</div>' : '') +
+        '</aside>';
+    }
+
     const arm = canAct && sel == null && state.ui.arm != null ? state.ui.arm : null;
     let slots = '';
     for (let i = 0; i < c.slots.length; i++) slots += slotCard(c, i, canAct ? sel : null, arm);
@@ -448,6 +477,7 @@
         '</div>' +
         hintHtml +
         '<div class="slots">' + slots + '</div>' +
+        sideRail() +
         '<div class="tray-wrap">' +
           '<div class="tray" id="tray">' + tray + '</div>' +
         '</div>' +
@@ -777,13 +807,17 @@
       '</button>';
     }).join('');
     return hud(state) + '' +
-      '<main class="reward-screen">' +
-        '<header class="scr-head">' +
-          '<span class="scr-kicker">VICTORY</span>' +
-          '<h2>전투 승리</h2>' +
+      '<main class="reward-screen' + (rw.boss ? ' boss' : '') + '">' +
+        '<header class="rw-hero" style="--art:url(&quot;' + DC.rewardArt(rw.boss ? 'boss' : 'loot') + '&quot;)">' +
+          '<div class="rw-hero-art"></div>' +
+          '<div class="rw-hero-veil"></div>' +
+          '<div class="rw-hero-txt">' +
+            '<span class="scr-kicker">' + (rw.boss ? 'TREASURE' : 'VICTORY') + '</span>' +
+            '<h2>' + (rw.boss ? '보스를 쓰러뜨렸다' : '전투 승리') + '</h2>' +
+            '<p class="scr-sub">보상 하나를 고르세요</p>' +
+          '</div>' +
           '<div class="scr-gold">' + icon('coin') + '+' + rw.gold + '</div>' +
         '</header>' +
-        '<p class="scr-sub">보상 하나를 고르세요</p>' +
         '<div class="rw-list">' + cards + '</div>' +
         '<div class="scr-foot">' +
           '<button class="ghostbtn" data-act="rerollreward" ' + (rw.rerolled ? 'disabled' : '') + '>' +
@@ -1204,54 +1238,105 @@
       '</div></div>';
   }
 
+  /* v7.7 — 도감: 잠금 항목을 벽이 아니라 '실루엣'으로.
+     등급·막·유형 힌트는 열고, 이름과 수치는 발견 후에. */
+  const CX_TIER = { 1: '기본', 2: '고급', 3: '전설' };
+  const CX_TIER_HINT = { 1: '상점·보상', 2: '상점·정예', 3: '보상·보스' };
+
+  function cxMeter(label, got, total, c) {
+    const p = total ? Math.round((got / total) * 100) : 0;
+    return '<span class="cxp" style="--c:' + c + '"><b>' + label + '</b><em>' + got + '<i>/' + total + '</i></em>' +
+      '<u><s style="width:' + p + '%"></s></u></span>';
+  }
+
+  function cxSilDie(tier, ic, c) {
+    return '<span class="cxd-silo tier-' + tier + (ic ? ' has-ic' : '') + '" aria-hidden="true" style="--fc:' + (c || '#b9a88f') + '">' +
+      (ic ? icon(ic) : '<i></i><i></i><i></i>') + '</span>';
+  }
+
   function renderCodex(state) {
     const meta = DC.Meta.get();
     const pg = DC.Meta.progress();
     const seenDice = meta.seen.dice || [], seenRelic = meta.seen.relics || [], seenEnemy = meta.seen.enemies || [];
+
     const dice = DC.DICE_IDS.map(function (id) {
       const D = DC.DICE[id];
       const got = seenDice.indexOf(id) >= 0;
-      if (!got) return '<div class="cx-die locked">' + icon('lock') + '<span>???</span></div>';
-      return '<div class="cx-die" style="--c:' + D.c + '">' +
-        '<b>' + esc(D.name) + '</b><div class="cx-faces">' + D.faces.map(function (f) { return faceMini(f); }).join('') + '</div></div>';
+      const tier = D.tier || 1;
+      if (!got) {
+        // 실루엣 힌트: 가장 강한 면의 계열만 흐리게 보여 준다 (이름·수치는 숨김)
+        const top = D.faces.slice().sort(function (a, b) { return b.v - a.v; })[0];
+        const tk = DC.KINDS[top.k] || DC.KINDS.blank;
+        return '<div class="cx-die locked tier-' + tier + '" style="--c:' + D.c + '">' +
+          '<span class="cx-tier t' + tier + '">' + CX_TIER[tier] + '</span>' +
+          cxSilDie(tier, tk.ic, tk.c) +
+          '<b>???</b>' +
+          '<span class="cx-hint">' + CX_TIER_HINT[tier] + '</span>' +
+          '<span class="cx-lock">' + icon('lock') + '</span></div>';
+      }
+      return '<div class="cx-die tier-' + tier + '" style="--c:' + D.c + '">' +
+        '<span class="cx-tier t' + tier + '">' + CX_TIER[tier] + '</span>' +
+        '<b>' + esc(D.name) + '</b><div class="cx-faces">' + D.faces.map(function (f) { return faceMini(f); }).join('') + '</div>' +
+        '<span class="cx-hint">' + esc(D.tag || CX_TIER[tier]) + '</span></div>';
     }).join('');
-    const relics = DC.RELIC_IDS.map(function (id) {
+
+    const relicCard = function (id) {
       const R = DC.RELICS[id];
       const got = seenRelic.indexOf(id) >= 0;
-      return '<div class="cx-relic' + (got ? '' : ' locked') + (R.boss ? ' boss' : '') + '" style="--c:' + R.c + '">' + (got ? relicIcon(id, 'relic-art cx-art') : icon('lock')) +
-        '<div><b>' + esc(got ? R.name : '???') + (R.boss ? ' <i class="cx-boss">보스</i>' : '') + '</b><span>' + esc(got ? R.desc : '아직 발견하지 못했습니다') +
-        (got && R.trade ? ' <em class="cx-trade">' + esc(R.trade) + '</em>' : '') + '</span></div></div>';
-    }).join('');
-    const enemyList = [];
-    [1, 2, 3].forEach(function (a) {
-      (DC.ENEMIES[a] || []).forEach(function (e) { enemyList.push(e); });
-      (DC.ELITES[a] || []).forEach(function (e) { enemyList.push(e); });
-    });
-    [1, 2, 3, 4, 5, 6].forEach(function (k) { if (DC.BOSSES[k]) enemyList.push(DC.BOSSES[k]); });
-    const enemies = enemyList.map(function (e) {
+      return '<div class="cx-relic' + (got ? '' : ' locked') + (R.boss ? ' boss' : '') + '" style="--c:' + R.c + '">' +
+        relicIcon(id, 'relic-art cx-art') +
+        '<div><b>' + esc(got ? R.name : '???') + (R.boss ? ' <i class="cx-boss">보스</i>' : '') + '</b>' +
+        '<span>' + (got ? esc(R.desc) + (R.trade ? ' <em class="cx-trade">' + esc(R.trade) + '</em>' : '') : '<i class="cx-dim">' + (R.boss ? '보스 유물' : '상점 · 보상') + '</i>') + '</span></div>' +
+        (got ? '' : '<span class="cx-lock">' + icon('lock') + '</span>') +
+        '</div>';
+    };
+    const normalRelics = DC.RELIC_IDS.filter(function (id) { return !DC.RELICS[id].boss; });
+    const bossRelics = DC.RELIC_IDS.filter(function (id) { return DC.RELICS[id].boss; });
+    const relics = normalRelics.map(relicCard).join('') +
+      '<div class="cx-sub">' + icon('crown') + '보스 유물</div><div class="cx-relics boss-grid">' + bossRelics.map(relicCard).join('') + '</div>';
+
+    const enemyCard = function (e) {
       const got = seenEnemy.indexOf(e.id) >= 0;
       const gtxt = e.gimmick && DC.GIMMICK_TXT[e.gimmick.kind];
-      const intents = got ? (e.intents || []).map(function (it) {
+      const intents = got && e.intents ? e.intents.map(function (it) {
         return '<i title="' + esc(DC.Combat.intentText(it)) + '">' + icon(DC.Combat.intentIcon(it)) + '</i>';
       }).join('') : '';
       return '<div class="cx-enemy' + (got ? '' : ' locked') + '" style="--c:' + e.c + '">' +
-        (got ? '<img class="cx-enemy-art" src="' + DC.enemyArt({ key: e.id }) + '" alt="" draggable="false">' : '<span class="cx-q">?</span>') +
+        '<img class="cx-enemy-art' + (got ? '' : ' sil') + '" src="' + DC.enemyArt({ key: e.id }) + '" alt="" draggable="false">' +
         '<b>' + esc(got ? e.name : '???') + '</b>' +
-        '<span>' + (got ? '체력 ' + e.hp : '미발견') + '</span>' +
+        '<span>' + (got ? '체력 ' + e.hp : (e.title ? '보스' : '미발견')) + '</span>' +
         (got && intents ? '<div class="cx-intents">' + intents + '</div>' : '') +
         (got && gtxt ? '<div class="cx-gimmick">' + esc(gtxt) + '</div>' : '') +
-      '</div>';
-    }).join('');
+        (got ? '' : '<span class="cx-lock sm">' + icon('lock') + '</span>') +
+        '</div>';
+    };
+    const enemyBlock = function (label, list, cls) {
+      if (!list.length) return '';
+      const seenN = list.filter(function (e) { return seenEnemy.indexOf(e.id) >= 0; }).length;
+      return '<div class="cx-enemy-group"><div class="cx-sub">' + esc(label) +
+        '<em>' + seenN + '/' + list.length + '</em></div>' +
+        '<div class="cx-enemies ' + (cls || '') + '">' + list.map(enemyCard).join('') + '</div></div>';
+    };
+    let enemyHtml = '';
+    [1, 2, 3].forEach(function (a) {
+      const all = (DC.ENEMIES[a] || []).concat(DC.ELITES[a] || []);
+      enemyHtml += enemyBlock(a + '막 · ' + (DC.ACTS[a] ? DC.ACTS[a].name : ''), all);
+    });
+    const abyssBosses = [4, 5, 6].map(function (k) { return DC.BOSSES[k]; }).filter(Boolean);
+    enemyHtml += enemyBlock('심연 보스', abyssBosses, 'boss-grid');
+    const normalBosses = [1, 2, 3].map(function (k) { return DC.BOSSES[k]; }).filter(Boolean);
+    enemyHtml = enemyBlock('막 보스', normalBosses, 'boss-grid') + enemyHtml;
+
     const seenEv = meta.seen.events || [];
     const events = DC.EVENTS.map(function (ev) {
       const got = seenEv.indexOf(ev.id) >= 0;
       return '<div class="cx-event' + (got ? '' : ' locked') + '">' +
-        (got ? '<img class="cx-ev-art" src="' + DC.eventArt(ev.tag) + '" alt="" draggable="false">' : '<span class="cx-ev-q">?</span>') +
+        '<img class="cx-ev-art' + (got ? '' : ' sil') + '" src="' + DC.eventArt(ev.tag) + '" alt="" draggable="false">' +
         '<b>' + esc(got ? ev.name : '???') + '</b>' +
-        '<span>' + esc(got ? (ev.tag || '') : '미발견') + '</span>' +
-      '</div>';
+        '<span>' + (got ? esc(ev.tag || '') : '<i class="cx-dim">미발견</i>') + '</span>' +
+        '</div>';
     }).join('');
-    const evSection = '<h4>' + icon('mystery') + ' 이벤트</h4><div class="cx-events">' + events + '</div>';
+
     const achs = DC.Meta.achList().map(function (a) {
       const pct = a.prog ? Math.min(100, Math.round(a.prog[0] / Math.max(1, a.prog[1]) * 100)) : 0;
       return '<div class="cx-ach' + (a.done ? ' done' : '') + '">' + icon(a.done ? 'check' : 'lock') +
@@ -1259,21 +1344,31 @@
         (a.prog ? '<span class="ach-prog"><i style="width:' + pct + '%"></i></span><u>' + a.prog[0] + ' / ' + a.prog[1] + '</u>' : '') +
         '</div></div>';
     }).join('');
+
     return '<div class="overlay" data-act="closecodex"><div class="panel codex-panel" data-stop="1">' +
       '<div class="panel-head"><h3>' + icon('book') + ' 도감 · 업적</h3><button class="iconbtn" data-act="closecodex">' + icon('close') + '</button></div>' +
-      '<div class="cx-progress"><span>주사위 ' + pg.dice + '/' + pg.diceTotal + '</span><span>유물 ' + pg.relics + '/' + pg.relicTotal + '</span><span>적 ' + pg.enemies + '/' + pg.enemyTotal + '</span><span>이벤트 ' + pg.events + '/' + pg.eventTotal + '</span><span>업적 ' + pg.ach + '/' + pg.achTotal + '</span></div>' +
-      '<h4>' + icon('dice') + ' 주사위</h4><div class="cx-dice-grid">' + dice + '</div>' +
+      '<div class="cx-progress">' +
+        cxMeter('주사위', pg.dice, pg.diceTotal, '#e8b45a') +
+        cxMeter('유물', pg.relics, pg.relicTotal, '#9fb4cc') +
+        cxMeter('적', pg.enemies, pg.enemyTotal, '#e07a6a') +
+        cxMeter('이벤트', pg.events, pg.eventTotal, '#b79bff') +
+        cxMeter('업적', pg.ach, pg.achTotal, '#7fd6a8') +
+      '</div>' +
+      '<p class="cx-legend">' + icon('eye') + ' 잠긴 항목은 실루엣으로 표시됩니다 — 등급과 만나는 곳만 미리 알려 줍니다.</p>' +
+      '<h4>' + icon('dice') + ' 주사위 <em>등급: 기본 · 고급 · 전설</em></h4><div class="cx-dice-grid">' + dice + '</div>' +
       '<h4>' + icon('star') + ' 유물</h4><div class="cx-relics">' + relics + '</div>' +
       '<h4>' + icon('spark') + ' 유물 시너지</h4><div class="syn-list">' +
         (DC.SYNERGIES || []).map(function (sy) {
-          return '<div class="syn-row on" style="--c:' + sy.c + '">' +
+          const allSeen = sy.relics.every(function (id) { return seenRelic.indexOf(id) >= 0; });
+          return '<div class="syn-row ' + (allSeen ? 'on' : 'off') + '" style="--c:' + sy.c + '">' +
             '<span class="syn-ic">' + icon('spark') + '</span>' +
             '<div><b>' + esc(sy.name) + '</b><span>' + esc(sy.desc) + '</span>' +
-            '<i>' + sy.relics.map(function (id) { return esc((DC.RELICS[id] || {}).name || id); }).join(' + ') + '</i></div>' +
+            '<i>' + sy.relics.map(function (id) { return esc(allSeen ? ((DC.RELICS[id] || {}).name || id) : '???'); }).join(' + ') + '</i></div>' +
+            (allSeen ? '' : '<span class="cx-lock sm">' + icon('lock') + '</span>') +
           '</div>';
         }).join('') + '</div>' +
-      '<h4>' + icon('skull') + ' 적</h4><div class="cx-enemies">' + enemies + '</div>' +
-      evSection +
+      '<h4>' + icon('skull') + ' 적</h4>' + enemyHtml +
+      '<h4>' + icon('mystery') + ' 이벤트</h4><div class="cx-events">' + events + '</div>' +
       '<h4>' + icon('crown') + ' 업적</h4><div class="cx-achs">' + achs + '</div>' +
       '</div></div>';
   }
@@ -1789,6 +1884,8 @@
       const state = DC.Game.state;
       const app = document.getElementById('app');
       if (!app) return;
+      /* 화면이 바뀌면 이전 화면의 툴팁이 남지 않게 한다 */
+      UI.hideTip();
       let html = '';
       switch (state.screen) {
         case 'title': html = renderTitle(state); break;
