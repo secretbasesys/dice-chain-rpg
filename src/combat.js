@@ -123,6 +123,14 @@
       const heal = Math.round(real * 0.08);
       if (heal > 0) { c.hp = Math.min(c.maxHp, c.hp + heal); ev.push({ t: 'heal', amount: heal }); }
     }
+    /* v7.9 — boss phase: 체력 절반에서 격노 (자체 기믹이 없는 보스) */
+    const _halfUsedElsewhere = e.gimmick && (e.gimmick.kind === 'split' || e.gimmick.kind === 'revive');
+    if (e.lines && e.lines.half && !e.gPhase && !_halfUsedElsewhere && e.hp > 0 && e.hp <= e.maxHp * 0.5) {
+      e.gPhase = true;
+      e.st.str += 2;
+      ev.push({ t: 'bossline', text: e.lines.half });
+      ev.push({ t: 'phase', eid: e.id, name: e.name });
+    }
     /* boss: revive once */
     const g = e.gimmick;
     if (e.hp <= 0 && g && g.kind === 'revive' && !e.gRevived) {

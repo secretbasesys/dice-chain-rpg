@@ -1755,6 +1755,15 @@
             DC.FX.banner(ev.text, ev.soft ? 'boss soft' : 'boss');
             delay = 260;
             break;
+          case 'phase': {
+            const el = targetEl(ev.eid);
+            if (el) { el.classList.remove('enraged'); void el.offsetWidth; el.classList.add('enraged'); }
+            DC.FX.flash('rgba(220, 60, 50, .18)');
+            DC.FX.shake(13);
+            DC.Audio.play('boss');
+            delay = 240;
+            break;
+          }
           case 'gimmick':
             DC.FX.flash('rgba(255,80,80,.20)'); DC.FX.shake(12);
             break;

@@ -4938,3 +4938,12 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
 /* v7.8 — 이벤트 장면을 조금 더 크게(고유 삽화 비율 900:520) */
 .ev-scene { aspect-ratio: 900 / 520; max-height: 36vh; }
 @media (min-width: 900px) { .ev-scene { max-height: 42vh; } }
+/* v7.9 — 보스 격노 페이즈 */
+.enemy.enraged { animation: bossRage .9s ease-out; }
+.enemy.enraged .e-art { filter: drop-shadow(0 0 20px rgba(255, 90, 60, .55)) saturate(1.15) brightness(1.05); }
+@keyframes bossRage {
+  0% { transform: translateY(0) scale(1); }
+  18% { transform: translateY(-4px) scale(1.03); }
+  38% { transform: translateY(1px) scale(.99); }
+  100% { transform: none; }
+}
