@@ -4998,3 +4998,12 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
   border-radius: 4px; padding: 1px 5px;
 }
 .dc-result b { color: #f4dcab; font-weight: 900; }
+/* v7.23 — 도감 유물: 어느 시너지에 속하는지 */
+.cx-syn {
+  display: inline-flex; align-items: center; gap: 3px; margin-top: 3px;
+  font-style: normal; font-size: 8.5px; font-weight: 800; color: #cbb2f2;
+  background: rgba(167, 139, 250, .12); border: 1px solid rgba(167, 139, 250, .3);
+  border-radius: 999px; padding: 0 6px;
+}
+.cx-syn .ic { width: 9px; height: 9px; color: #b79bff; }
+.cx-relic.locked .cx-syn { opacity: .45; color: #9d94a8; border-color: rgba(150, 140, 160, .25); background: rgba(0, 0, 0, .3); }

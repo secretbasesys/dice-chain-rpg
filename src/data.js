@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.22.0';
+  DC.VERSION = '7.23.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -146,6 +146,11 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.23', t: '유물이 가리키는 시너지', items: [
+      '도감의 유물 타일마다 어느 시너지에 속하는지 칩으로 표시됩니다 — 빌드를 미리 그려 볼 수 있습니다.',
+      '잠긴 유물에도 시너지 이름만 흐리게 보여 주어, 무엇을 노려야 하는지 알 수 있습니다.',
+      '툴팁으로 시너지 효과를 바로 확인할 수 있습니다.',
+    ] },
     { v: '7.22', t: '키보드로 한 판', items: [
       '포커스된 주사위·스킬·버튼에서 Enter 또는 Space로 바로 실행됩니다(주사위 → 스킬 순서로 누르면 한 수가 나갑니다).',
       'Enter가 카드 위에서 턴 종료로 새어 나가던 충돌을 없앴습니다.',

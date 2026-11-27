@@ -1299,10 +1299,13 @@
     const relicCard = function (id) {
       const R = DC.RELICS[id];
       const got = seenRelic.indexOf(id) >= 0;
+      const syn = (DC.SYNERGIES || []).filter(function (sy) { return sy.relics.indexOf(id) >= 0; })[0];
       return '<div class="cx-relic' + (got ? '' : ' locked') + (R.boss ? ' boss' : '') + '" style="--c:' + R.c + '">' +
         relicIcon(id, 'relic-art cx-art') +
         '<div><b>' + esc(got ? R.name : '???') + (R.boss ? ' <i class="cx-boss">보스</i>' : '') + '</b>' +
-        '<span>' + (got ? esc(R.desc) + (R.trade ? ' <em class="cx-trade">' + esc(R.trade) + '</em>' : '') : '<i class="cx-dim">' + (R.boss ? '보스 유물' : '상점 · 보상') + '</i>') + '</span></div>' +
+        '<span>' + (got ? esc(R.desc) + (R.trade ? ' <em class="cx-trade">' + esc(R.trade) + '</em>' : '') : '<i class="cx-dim">' + (R.boss ? '보스 유물' : '상점 · 보상') + '</i>') + '</span>' +
+        (syn ? '<em class="cx-syn" data-tip="' + esc(syn.desc) + '" data-tip-title="시너지 · ' + esc(syn.name) + '">' + icon('spark') + esc(syn.name) + '</em>' : '') +
+        '</div>' +
         (got ? '' : '<span class="cx-lock">' + icon('lock') + '</span>') +
         '</div>';
     };
