@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.18.0';
+  DC.VERSION = '7.19.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -146,6 +146,11 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.19', t: '승천을 읽히게', items: [
+      '타이틀의 승천 설명이 그 단계의 누적 효과를 한 줄로 보여 줍니다 — 무엇이 얼마나 어려워지는지 바로 읽힙니다.',
+      '승천 4·5단계의 시작 골드 -20이 중복 적용되던 것을 정리하고, 7~10단계 상승폭을 완만하게 조정했습니다.',
+      '봇 측정: 승천 0 75% · 3 62% · 6 40% · 10 12%.',
+    ] },
     { v: '7.18', t: '종소리와 독', items: [
       '새 적 「심연의 종」(3막): 매 턴 방어도 6을 얻는 단단한 적. 방어도를 깎는 화상·중독이 유효합니다.',
       '중독 상호작용: 중독된 적이 쓰러지면 독이 번져 다른 적 하나가 중독 +2가 됩니다.',
@@ -965,14 +970,26 @@
     { n: 1, name: '승천 1', desc: '적 체력 +6%', hp: .06, atk: 0, gold: 0, bossHp: 0, price: 0 },
     { n: 2, name: '승천 2', desc: '적 공격 +5%', hp: .06, atk: .05, gold: 0, bossHp: 0, price: 0 },
     { n: 3, name: '승천 3', desc: '시작 골드 -20', hp: .06, atk: .05, gold: -20, bossHp: 0, price: 0 },
-    { n: 4, name: '승천 4', desc: '정예·보스 체력 +15%', hp: .06, atk: .05, gold: -20, bossHp: .15, price: 0 },
-    { n: 5, name: '승천 5', desc: '상점 가격 +20%', hp: .06, atk: .05, gold: -20, bossHp: .15, price: .20 },
-    { n: 6, name: '승천 6', desc: '적 체력 +3% · 공격 +3% · 정예 체력 +10%', hp: .03, atk: .03, gold: -10, bossHp: .10, price: 0 },
-    { n: 7, name: '승천 7', desc: '적 공격 +3% · 상점 가격 +5%', hp: .03, atk: .03, gold: 0, bossHp: 0, price: .05 },
-    { n: 8, name: '승천 8', desc: '적 체력 +4% · 보스 체력 +10%', hp: .04, atk: .02, gold: 0, bossHp: .10, price: 0 },
-    { n: 9, name: '승천 9', desc: '적 체력 +4% · 공격 +4%', hp: .04, atk: .04, gold: 0, bossHp: 0, price: 0 },
-    { n: 10, name: '승천 10', desc: '적 체력 +4% · 공격 +4% (최종)', hp: .04, atk: .04, gold: 0, bossHp: .05, price: .05 },
+    { n: 4, name: '승천 4', desc: '정예·보스 체력 +15%', hp: .06, atk: .05, gold: 0, bossHp: .15, price: 0 },
+    { n: 5, name: '승천 5', desc: '상점 가격 +20%', hp: .06, atk: .05, gold: 0, bossHp: .15, price: .20 },
+    { n: 6, name: '승천 6', desc: '적 체력 +3% · 공격 +3% · 정예 체력 +10%', hp: .03, atk: .03, gold: 0, bossHp: .10, price: 0 },
+    { n: 7, name: '승천 7', desc: '적 체력 +2% · 공격 +2% · 상점 가격 +5%', hp: .02, atk: .02, gold: 0, bossHp: 0, price: .05 },
+    { n: 8, name: '승천 8', desc: '적 체력 +2% · 보스 체력 +6%', hp: .02, atk: .01, gold: 0, bossHp: .06, price: 0 },
+    { n: 9, name: '승천 9', desc: '적 체력 +2% · 공격 +2%', hp: .02, atk: .02, gold: 0, bossHp: 0, price: 0 },
+    { n: 10, name: '승천 10', desc: '적 체력 +2% · 공격 +2% · 보스 +3% (최종)', hp: .02, atk: .02, gold: 0, bossHp: .03, price: .03 },
   ];
+  /* v7.19 — 선택한 승천 단계의 누적 효과를 한 줄로 */
+  DC.ascSummary = function (n) {
+    const m = DC.ascMod(n);
+    if (!n) return '기본 난이도';
+    const parts = [];
+    if (m.hp) parts.push('적 체력 +' + Math.round(m.hp * 100) + '%');
+    if (m.atk) parts.push('적 공격 +' + Math.round(m.atk * 100) + '%');
+    if (m.bossHp) parts.push('정예·보스 체력 +' + Math.round(m.bossHp * 100) + '%');
+    if (m.gold) parts.push('시작 골드 ' + m.gold);
+    if (m.price) parts.push('상점 +' + Math.round(m.price * 100) + '%');
+    return parts.join(' · ');
+  };
   DC.ascMod = function (n) {
     const out = { hp: 0, atk: 0, gold: 0, bossHp: 0, price: 0 };
     for (let i = 1; i <= Math.min(10, n || 0); i++) {

@@ -752,7 +752,7 @@
               '<button class="asc-btn" data-act="asc" data-dir="-1" ' + (asc <= 0 ? 'disabled' : '') + ' aria-label="승천 낮추기">' + icon('minus') + '</button>' +
               '<div class="asc-label' + (asc ? ' on' : '') + ' ' + (maxAsc ? '' : 'locked') + '">' +
                 '<b>' + (maxAsc ? (asc ? '승천 ' + asc + '단계' : '승천 없음') : '아직 잠김') + '</b>' +
-                '<span>' + (maxAsc ? esc(step.desc) : '한 번 승리하면 열립니다') + '</span>' +
+                '<span>' + (maxAsc ? esc(DC.ascSummary(asc) || step.desc) : '한 번 승리하면 열립니다') + '</span>' +
               '</div>' +
               '<button class="asc-btn" data-act="asc" data-dir="1" ' + (asc >= maxAsc ? 'disabled' : '') + ' aria-label="승천 높이기">' + icon('plus') + '</button>' +
             '</div>' +
