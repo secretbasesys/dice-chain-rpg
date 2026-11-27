@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.26.0';
+  DC.VERSION = '7.27.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -146,6 +146,10 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.27', t: '드래프트가 넓어진다', items: [
+      '보편 스킬 4종 추가 — 맹독 칼날(중독 3), 재의 대가(고위력·자해), 전술(배율+0.4), 저주의 손길(취약 2). 드래프트 풀이 14종.',
+      '어떤 클래스든 보상에서 이 스킬들로 한 칸을 바꿀 수 있어 빌드 방향이 넓어집니다.',
+    ] },
     { v: '7.26', t: '적의 규칙이 보인다', items: [
       '적 기믹 문구가 실제 수치로 표시됩니다 — 「받은 피해의 12%를 되돌려줌」, 「매 턴 방어도 6」, 「3턴마다 주사위 1개 봉인」처럼.',
       '상태이상(화상·중독·취약·약화·힘) 표시를 키우고 테두리·그림자로 또렷하게 했습니다.',
@@ -997,6 +1001,11 @@
     { id: 'd_flurry', name: '연타', req: 'any', ic: 'sword', fx: { type: 'multi', ratio: 1.2 }, desc: '눈 × 1.2 피해를 콤보 수만큼' },
     { id: 'd_execute', name: '처형', req: 'six', ic: 'skull', fx: { type: 'attack', ratio: 5.0, selfDmg: 2 }, desc: '눈 × 5.0 피해 · 자신 2 피해' },
     { id: 'd_prayer', name: '기원', req: 'odd', ic: 'star', fx: { type: 'block', ratio: 2.2, heal: 2 }, desc: '눈 × 2.2 방어도 · 2 회복' },
+    /* v7.27 — 드래프트 4종 추가 */
+    { id: 'd_venom', name: '맹독 칼날', req: 'odd', ic: 'venom', fx: { type: 'attack', ratio: 1.7, status: { poison: 3 } }, desc: '눈 × 1.7 피해 · 중독 3' },
+    { id: 'd_sacrifice', name: '재의 대가', req: 'gte4', ic: 'blood', fx: { type: 'attack', ratio: 3.4, selfDmg: 4 }, desc: '눈 × 3.4 피해 · 자신 4 피해' },
+    { id: 'd_tactic', name: '전술', req: 'prime', ic: 'mult', fx: { type: 'mult', add: 0.4, dmgRatio: 0.5 }, desc: '연쇄 배율 +0.4 · 눈 × 0.5 피해' },
+    { id: 'd_hex', name: '저주의 손길', req: 'lte2', ic: 'skull', fx: { type: 'attack', ratio: 2.2, status: { vuln: 2 } }, desc: '눈 × 2.2 피해 · 취약 2' },
   ];
   DC.DRAFT_BY_ID = {};
   DC.DRAFT_SKILLS.forEach(function (s) { DC.DRAFT_BY_ID[s.id] = s; });
