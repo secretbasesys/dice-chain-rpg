@@ -1069,7 +1069,7 @@
     const r = state.run;
     if (!d) return '';
     const step = d.step || 'pick';
-    const REQP = { any: '아무 눈', even: '짝수', odd: '홀수', gte4: '4 이상', lte2: '2 이하', six: '6', prime: '소수' };
+    const REQP = { any: '조건 없음', even: '짝수', odd: '홀수', gte4: '4 이상', lte2: '2 이하', six: '6만', prime: '소수' };
     if (step === 'pick') {
       const cards = d.options.map(function (sk, i) {
         return '<button class="dr-card" data-act="draftskill" data-i="' + i + '" style="--c:#c084fc">' +
@@ -1081,7 +1081,7 @@
       }).join('');
       return '<div class="overlay" data-act="closedraft"><div class="panel draft-panel" data-stop="1">' +
         '<div class="panel-head"><h3>' + icon('book') + ' 스킬 드래프트</h3><button class="iconbtn" data-act="closedraft">' + icon('close') + '</button></div>' +
-        '<p class="sub">새 스킬 3장 중 하나를 골라 슬롯 하나와 바꿉니다. 바꿔도 잃는 것은 없습니다.</p>' +
+        '<p class="sub">새 스킬 3장 중 하나를 골라 내 스킬 하나와 교체합니다. 잃는 것은 없습니다.</p>' +
         '<div class="dr-list">' + cards + '</div>' +
         '<button class="bigbtn ghost skipbtn" data-act="skipdraft">건너뛰기</button>' +
         '</div></div>';
@@ -1098,7 +1098,7 @@
     }).join('');
     return '<div class="overlay" data-act="closedraft"><div class="panel draft-panel" data-stop="1">' +
       '<div class="panel-head"><h3>' + icon('book') + ' 어느 슬롯을 바꿀까요</h3><button class="iconbtn" data-act="closedraft">' + icon('close') + '</button></div>' +
-      '<p class="sub"><b style="color:#e9d5ff">' + esc(d.pick.name) + '</b> — ' + esc(d.pick.desc) + '</p>' +
+      '<p class="sub"><b class="dr-pick">' + esc(d.pick.name) + '</b> — ' + esc(d.pick.desc) + '</p>' +
       '<div class="ds-list">' + cur + '</div>' +
       '</div></div>';
   }
@@ -1188,8 +1188,14 @@
       return '<span class="hs-cls"><b>' + esc((DC.classesShort || {})[id] || id) + '</b> ' + w + '/' + t + '</span>';
     }).join('');
     const summary = '<div class="hist-sum">' +
-      '<div class="hs-row"><span>런</span><b>' + total + '</b><span>승리</span><b>' + wins + '</b><span>승률</span><b>' + rate + '%</b></div>' +
-      '<div class="hs-row"><span>최고 깊이</span><b>' + bestDepth + '</b><span>최고 콤보</span><b>' + bestCombo + '</b><span>연속 승리</span><b>' + streak + '</b></div>' +
+      '<div class="hs-grid">' +
+        '<div><span>런</span><b>' + total + '</b></div>' +
+        '<div><span>승리</span><b>' + wins + '</b></div>' +
+        '<div><span>승률</span><b>' + rate + '<i>%</i></b></div>' +
+        '<div><span>최고 깊이</span><b>' + bestDepth + '</b></div>' +
+        '<div><span>최고 콤보</span><b>' + bestCombo + '</b></div>' +
+        '<div><span>연속 승리</span><b>' + streak + '</b></div>' +
+      '</div>' +
       '<div class="hs-classes">' + byCls + '</div></div>';
     return '<div class="overlay" data-act="closehistory"><div class="panel hist-panel" data-stop="1">' +
       '<div class="panel-head"><h3>' + icon('clock') + ' 런 기록</h3><button class="iconbtn" data-act="closehistory">' + icon('close') + '</button></div>' +
@@ -1429,7 +1435,7 @@
         ['2', '주사위 → 스킬', '주사위를 탭해 고르면 낼 수 있는 스킬이 초록으로 켜지고 예상 수치가 보입니다. 그 스킬을 탭하면 바로 나갑니다. 스킬을 먼저 탭하면 그 스킬에 맞는 주사위만 밝아집니다. 끌어다 놓아도 됩니다.'],
         ['3', '슬롯 조건', '짝수·홀수·4 이상·소수·6 등 조건이 맞아야 올릴 수 있습니다. 조건이 안 맞는 스킬은 잠금 표시와 이유가 뜨고, 조건은 주사위 조작으로 맞춥니다.'],
         ['4', '기세로 조작', '재굴림·+1/-1·뒤집기(7-x)·복제로 눈을 바꿉니다. 기세는 매 턴 최대치까지 회복됩니다.'],
-        ['5', '연쇄 콤보', '한 턴에 스킬을 이어 쓸수록 배율이 오릅니다(기본 최대 ×3.5). 3·5·7연쇄에서 연출이 터집니다.'],
+        ['5', '연쇄 콤보', '한 턴에 스킬을 이어 쓸수록 배율이 오릅니다(기본 최대 ×3.5). 3·5·7 연쇄에서 연출이 터집니다.'],
         ['6', '단조', '단조 노드에서 주사위의 개별 면을 영구히 교체합니다. 면이 곧 빌드입니다.'],
       ],
       combat: [
