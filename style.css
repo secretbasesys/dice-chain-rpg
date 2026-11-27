@@ -4916,3 +4916,15 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
     radial-gradient(130% 90% at 50% 0%, rgba(255, 253, 244, .6), rgba(255, 255, 255, 0) 62%),
     linear-gradient(168deg, #f6edd9 0%, #e0cfae 44%, #c0ad8a 76%, #94805c 100%);
 }
+/* v7.7.1 — 도감 스크롤바와 데스크톱 폭 */
+.codex-panel { scrollbar-width: thin; scrollbar-color: rgba(199, 154, 82, .38) rgba(0, 0, 0, .25); }
+.codex-panel::-webkit-scrollbar { width: 9px; }
+.codex-panel::-webkit-scrollbar-track { background: rgba(0, 0, 0, .28); border-radius: 9px; }
+.codex-panel::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(199, 154, 82, .5), rgba(122, 86, 38, .55)); border-radius: 9px; border: 2px solid rgba(0, 0, 0, .3); }
+@media (min-width: 900px) {
+  .codex-panel { max-width: 760px; }
+  .codex-panel .cx-dice-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .codex-panel .cx-events { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .codex-panel .cx-relics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .codex-panel .cx-enemies { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
