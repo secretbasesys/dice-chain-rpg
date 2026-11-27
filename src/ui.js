@@ -299,10 +299,10 @@
     if (info) foot = previewText(sk, info);
     else if (filled) foot = '사용 완료';
     else if (armed) foot = '주사위를 고르세요';
-    else if (bp) { const pv = previewText(sk, bp.info); foot = (pv.length <= 6 ? '탭 ' : '') + pv; }
-    else foot = '낼 주사위 없음';
+    else if (bp) foot = previewText(sk, bp.info);
+    else foot = '주사위 없음';
     const tip = sk.desc + (sk.up ? ' (각성)' : '') + ' · 조건: ' + DC.REQ[sk.req].n +
-      (filled ? ' · 이번 턴 사용 완료' : (bp ? ' · 탭하면 주사위 ' + bp.h.v + '로 사용합니다' : ''));
+      (filled ? ' · 이번 턴 사용 완료' : (bp ? ' · 한 번 누르면 맞는 주사위가 켜지고, 다시 누르면 주사위 ' + bp.h.v + '로 나갑니다' : ''));
     return '' +
       '<button class="slot type-' + hd.k + ' st-' + state + (justPlaced ? ' landed' : '') + (info && info.lethal ? ' lethal' : '') + '"' +
         ' data-act="slot" data-idx="' + idx + '"' +
@@ -416,7 +416,7 @@
       hint = ask.name + ' — 넣을 주사위를 고르세요';
       hintState = 'arm';
     } else if (unused === 0) { hint = '주사위를 모두 썼습니다 — 턴을 종료하세요'; hintState = 'done'; }
-    else { hint = '주사위를 고르거나 스킬을 눌러 바로 냅니다'; }
+    else { hint = '주사위를 고르거나, 스킬을 눌러 쓸 주사위를 확인하세요'; }
     const hintHtml = '<div class="hintbar ' + hintState + '">' + (hint ? '<span>' + esc(hint) + '</span>' : '') + '</div>';
 
     return '' +

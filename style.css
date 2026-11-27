@@ -4532,3 +4532,4 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
 .dr-card .dr-req { grid-column: 3; grid-row: 1; justify-self: end; }
 .dr-card .dr-desc { grid-column: 2 / 4; grid-row: 2; margin-top: 1px; }
 .dr-card b { grid-column: 2; grid-row: 1; }
+.slot.st-ready .sk-foot::before { content: '▸ '; opacity: .8; }
