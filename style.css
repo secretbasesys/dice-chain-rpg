@@ -5012,3 +5012,4 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
 .end-stats b { font-size: 15px; line-height: 1.15; }
 .end-stats span { font-size: 9px; }
 @media (max-width: 380px) { .end-stats b { font-size: 13.5px; } .end-stats span { font-size: 8.5px; } }
+.br-trade b { font-weight: 900; letter-spacing: .04em; margin-right: 3px; color: #ffc0c0; }

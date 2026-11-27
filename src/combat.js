@@ -279,6 +279,7 @@
       /* v7.12 — 잿빛 수도승: 잃은 체력에 비례해 최대 +60% */
       if (c.cls === 'monk') d *= 1 + Math.min(0.6, (1 - c.hp / c.maxHp) * 0.6);
       if (has(c, 'hexChalice') && k === 'curse') d *= 1.1;
+      if (has(c, 'pawnLedger')) d += Math.floor((c.gold || 0) / 50);
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
       if (synOn(c, 'storm') && (k === 'fire' || k === 'bolt' || (opts && opts.fire))) d *= 1.15;
       if (c.prevV != null && c.prevV === v) d *= 1.25;
@@ -484,6 +485,7 @@
         act: run.act,
         relics: (run.relics || []).slice(),
         cls: run.cls,
+        gold: run.gold || 0,
         cmod: run.cmod || null,
         abyss: run.abyss || null,
         hp: run.hp,
@@ -593,6 +595,7 @@
       c.hand = hand;
       c.block = 0;
       if (synOn(c, 'ironWall')) c.block += 3;
+      if (has(c, 'duelingOath') && alive(c).length === 1) c.block += 3;
       if (has(c, 'clockwork')) c.block += 2;
       /* v7.13 — 낮은 체력 빌드: 잿빛 묵주 · 재의 서약 */
       if (c.hp <= c.maxHp * 0.5) {

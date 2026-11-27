@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.24.0';
+  DC.VERSION = '7.25.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -146,6 +146,12 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.25', t: '금화와 결투', items: [
+      '새 유물 「전당포의 눈금」: 골드 50당 주는 피해 +1 — 모으는 빌드에 보상.',
+      '새 유물 「결투의 서약」: 적이 하나뿐이면 매 턴 방어도 3 — 보스전에서 든든한 방어.',
+      '업적 「삼중 서약」: 시너지 3쌍을 동시에 발동한 채로 승리(업적 25종).',
+      '보스 유물 카드의 대가를 「대가 —」로 앞세워 한눈에 읽히게 했습니다.',
+    ] },
     { v: '7.24', t: '한 판의 요약', items: [
       '엔딩 화면에 클래스 표시와 「최고 연쇄」 지표를 더했습니다 — ACT·처치·턴·누적 피해·최고 연쇄가 한 줄에 들어옵니다.',
       '이벤트 선택지의 효과 표기를 전수 점검했습니다(25종, 중첩 선택지 포함).',
@@ -494,6 +500,8 @@
     ashRosary: { name: '잿빛 묵주', ic: 'flame', c: '#e08c6a', desc: '체력이 절반 이하일 때 매 턴 시작에 기세 +1.', price: 90 },
     emberBrand: { name: '불씨 낙인', ic: 'blood', c: '#f97316', desc: '체력이 절반 이하일 때 받는 피해가 20% 줄어든다.', price: 95 },
     hexChalice: { name: '저주받은 성배', ic: 'skull', c: '#a78bfa', desc: '저주 면으로 스킬을 쓰면 기세 +1, 그 피해가 10% 증가한다.', price: 90 },
+    pawnLedger: { name: '전당포의 눈금', ic: 'coin', c: '#fbbf24', desc: '골드 50당 주는 피해 +1 (전투 시작 시 보유 골드 기준).', price: 95 },
+    duelingOath: { name: '결투의 서약', ic: 'shield', c: '#93c5fd', desc: '살아 있는 적이 하나뿐이면 매 턴 시작에 방어도 3을 얻는다.', price: 85 },
 
     /* -------- boss relics (v4.4): 1·2막 보스 보상 전용, 굵직한 대가 -------- */
     eyeOfFate: { boss: true, name: '운명의 눈', ic: 'eye', c: '#67e8f9',
@@ -1071,6 +1079,7 @@
     { id: 'chain8', name: '완전 연쇄', desc: '한 턴에 콤보 8 달성', test: function (c) { return (c.maxCombo || 0) >= 8; } },
     { id: 'chain10', name: '완전한 굴림', desc: '한 턴에 콤보 10 달성', test: function (c) { return (c.maxCombo || 0) >= 10; } },
     { id: 'syn2', name: '겹겹의 맹세', desc: '시너지 2쌍을 동시에 발동한 채로 승리한다', test: function (c) { return c.win && (c.syn || 0) >= 2; } },
+    { id: 'syn3', name: '삼중 서약', desc: '시너지 3쌍을 동시에 발동한 채로 승리한다', test: function (c) { return c.win && (c.syn || 0) >= 3; } },
     { id: 'noRelic', name: '맨손의 승리', desc: '유물 없이 승리한다', test: function (c) { return c.win && (c.relics || 0) === 0; } },
     { id: 'asc10', name: '운명을 초월한 자', desc: '승천 10에서 승리한다', test: function (c) { return c.win && (c.asc || 0) >= 10; } },
     { id: 'daily', name: '오늘의 주사위', desc: '일일 시드로 승리한다', test: function (c) { return c.win && String(c.seed || '').indexOf('DAILY-') === 0; } },

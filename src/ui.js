@@ -854,7 +854,7 @@
           '<div class="br-art">' + relicIcon(id, 'relic-art br-art-svg') + '</div>' +
           '<div class="br-name">' + esc(R.name) + '</div>' +
           '<div class="br-desc">' + esc(R.desc) + '</div>' +
-          '<div class="br-trade">' + icon('down') + '<span>' + esc(R.trade || '') + '</span></div>' +
+          '<div class="br-trade">' + icon('down') + '<span><b>대가</b> ' + esc(R.trade || '') + '</span></div>' +
         '</div>';
     }).join('');
     return hud(state) + '' +
