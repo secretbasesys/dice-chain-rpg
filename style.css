@@ -3968,7 +3968,7 @@ body[data-screen="map"] #toast { bottom: 56px; }
 .end-ic .ic { width: 38px; height: 38px; }
 .end-screen h1 { font-family: var(--serif); font-size: 30px; letter-spacing: .08em; color: #f7ecd8; }
 .end-screen .sub { font-size: 12px; color: #a89a86; }
-.end-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: min(400px, 100%); margin: 10px 0 4px; }
+.end-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; width: min(440px, 100%); margin: 10px 0 4px; }
 .end-stats > div {
   padding: 7px 4px 6px; border-radius: 7px; text-align: center;
   background-image: var(--grain), linear-gradient(180deg, rgba(36, 28, 32, .8), rgba(9, 7, 11, .9));
@@ -5007,3 +5007,8 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
 }
 .cx-syn .ic { width: 9px; height: 9px; color: #b79bff; }
 .cx-relic.locked .cx-syn { opacity: .45; color: #9d94a8; border-color: rgba(150, 140, 160, .25); background: rgba(0, 0, 0, .3); }
+/* v7.24 — 엔딩 지표 5칸 */
+.end-stats > div { padding: 6px 4px; align-items: center; text-align: center; border-radius: 9px; }
+.end-stats b { font-size: 15px; line-height: 1.15; }
+.end-stats span { font-size: 9px; }
+@media (max-width: 380px) { .end-stats b { font-size: 13.5px; } .end-stats span { font-size: 8.5px; } }

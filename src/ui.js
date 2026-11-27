@@ -1443,10 +1443,12 @@
           '<div><b>' + (r.stats.kills || 0) + '</b><span>처치</span></div>' +
           '<div><b>' + (r.stats.turns || 0) + '</b><span>턴</span></div>' +
           '<div><b>' + (r.stats.dmg || 0) + '</b><span>누적 피해</span></div>' +
+          '<div><b>×' + (r.maxCombo || 1) + '</b><span>최고 연쇄</span></div>' +
         '</div>' +
         (kind === 'win' && r.asc ? '<p class="asc-clear">승천 ' + r.asc + ' 클리어</p>' : '') +
         (kind === 'win' && r.act > 3 ? '<p class="asc-clear">심연 깊이 ' + r.act + ' 도달</p>' : '') +
         '<div class="end-tags">' +
+          '<span class="end-tag cls">' + icon(DC.CLASSES[r.cls] && DC.CLASSES[r.cls].ic ? DC.CLASSES[r.cls].ic : 'dice') + esc(DC.CLASSES[r.cls] ? DC.CLASSES[r.cls].short : r.cls) + '</span>' +
           (r.seed ? '<span class="end-tag">' + icon('copy') + esc(DC.seedDisplay(r.seed)) + '</span>' : '') +
           (r.challenge && r.challenge !== 'none' ? '<span class="end-tag ch">' + icon('crown') + esc(DC.challengeById(r.challenge).short) + '</span>' : '') +
           (r.asc ? '<span class="end-tag">' + icon('up') + '승천 ' + r.asc + '</span>' : '') +
