@@ -178,9 +178,26 @@
       '</div>';
   }
 
-  function enemyCard(c, e, idx) {
+  /* 선택한 주사위로 지금 낼 수 있는 최대 피해 — 적 체력바에 예상 구간으로 보여준다 */
+  function outgoingDamage(c, sel) {
+    if (sel == null) return { any: 0, all: 0 };
+    let single = 0, aoe = 0;
+    c.slots.forEach(function (_, i) {
+      if (!DC.Combat.canPlay(c, sel, i).ok) return;
+      const sk = DC.Combat.skill(c, i);
+      const info = DC.Combat.previewInfo(c, sel, i);
+      if (!info || !info.dmg) return;
+      const t = (sk.fx || {}).type;
+      if (t === 'aoe') aoe = Math.max(aoe, info.dmg);
+      else if (t === 'attack' || t === 'chain' || t === 'multi' || t === 'mix') single = Math.max(single, info.dmg);
+    });
+    return { any: single, all: aoe };
+  }
+
+  function enemyCard(c, e, idx, pred) {
     const dead = e.hp <= 0;
     const boss = !!e.title;
+    const kill = !dead && pred > 0 && pred >= e.hp + (e.block || 0);
     return '' +
       '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + (boss ? ' is-boss' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '">' +
         intentBadge(c, e) +
@@ -194,10 +211,11 @@
             (c.enemies.length > 1 && c.target === idx ? '<span class="e-target-tag">' + icon('target') + '<span>표적</span></span>' : '') +
             '<span class="e-name">' + esc(e.name) + '</span>' +
             (e.block > 0 ? '<span class="e-block" data-tip="' + esc(DC.KEYWORDS.block.t) + '" data-tip-title="방어도">' + icon('shield') + e.block + '</span>' : '') +
-            '<span class="e-hp-num">' + Math.max(0, e.hp) + '<i>/' + e.maxHp + '</i></span>' +
+            (kill ? '<span class="e-kill">' + icon('skull') + '처치</span>' : '') +
+            '<span class="e-hp-num" data-tip="체력 ' + Math.max(0, e.hp) + ' / ' + e.maxHp + '" data-tip-title="' + esc(e.name) + '">' + Math.max(0, e.hp) + '<i>/' + e.maxHp + '</i></span>' +
           '</div>' +
           '<div class="e-hp">' +
-            '<div class="hpbar"><i class="hp-fill" style="width:' + pct(e.hp, e.maxHp) + '%"></i></div>' +
+            hpBar(e.hp, e.maxHp, 0, pred || 0) +
           '</div>' +
           (boss ? '<div class="e-title">' + esc(e.title) + '</div>' : '') +
         '</div>' +
@@ -407,7 +425,11 @@
         '<section class="stage act-' + c.act + (c.kind === 'boss' ? ' boss-stage' : '') + '">' +
           '<div class="stage-bg" style="background-image:url(&quot;' + DC.bgUrl(c.act) + '&quot;)"></div>' +
           '<div class="stage-veil"></div>' +
-          '<div class="enemy-row" data-n="' + c.enemies.length + '">' + c.enemies.map(function (e, i) { return enemyCard(c, e, i); }).join('') + '</div>' +
+          '<div class="enemy-row" data-n="' + c.enemies.length + '">' + c.enemies.map(function (e, i) {
+            const out = (canAct && sel != null) ? outgoingDamage(c, sel) : { any: 0, all: 0 };
+            const pred = out.all + (c.target === i ? out.any : 0);
+            return enemyCard(c, e, i, pred);
+          }).join('') + '</div>' +
           '<div class="stage-floor"></div>' +
           '<div class="phase-banner ' + (c.phase === 'enemy' ? 'foe' : 'own') + '">' +
             (c.phase === 'enemy' ? '<span>적의 턴</span>' : '<span>내 턴 ' + c.turn + '</span>') +

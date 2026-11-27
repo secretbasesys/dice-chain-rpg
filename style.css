@@ -4401,3 +4401,31 @@ body[data-screen="map"] #toast { bottom: auto; top: 56px; }
 .upmark.swap { background: #b394ea; color: #1a1030; }
 .ff-pick { top: 3px; right: 3px; bottom: auto; left: auto; padding: 0 3px; font-size: 7px; border-radius: 3px; }
 .ff.on { box-shadow: 0 0 0 1px rgba(244, 220, 171, .35), 0 0 16px color-mix(in srgb, var(--c) 35%, transparent); }
+
+/* 지도: 토스트는 범례 위로, 보스 예고 글씨는 읽히게 */
+body[data-screen="map"] #toast { top: auto; bottom: 46px; }
+.bp-txt span { font-size: 9px; letter-spacing: .08em; color: #b3a390; }
+.bp-txt b { font-size: 13px; font-family: var(--serif); color: #f4e7d0; }
+.bp-txt i { font-style: normal; font-size: 9.5px; color: #b3a390; margin-top: 1px; }
+.bp-hp b { font-size: 15px; color: #ffd98a; }
+.bp-hp i { font-size: 8px; letter-spacing: .1em; color: #9c8e7b; }
+.map-legend { font-size: 9.5px; color: #a2947f; }
+
+/* 내가 넣을 피해는 놋쇠 빗금으로, 죽는 적은 처치 표시로 */
+.enemy .hpbar > i.hp-pred {
+  background: repeating-linear-gradient(-45deg, rgba(255, 214, 130, .8) 0 3px, rgba(255, 214, 130, .18) 3px 6px);
+  animation: none;
+}
+.enemy .e-kill {
+  display: inline-flex; align-items: center; gap: 1px; flex: none;
+  font-size: 8.5px; font-weight: 900; letter-spacing: .04em;
+  color: #1d1206; background: linear-gradient(180deg, #ffd98a, #d8a45a);
+  border-radius: 3px; padding: 1px 4px; margin-left: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+}
+.enemy .e-kill .ic { width: 8px; height: 8px; stroke-width: 2.6; }
+.enemy .e-hp-num:has(+ .e-kill) { color: #ffd0a8; }
+.enemy-row[data-n="3"] .e-kill { display: none; }
+.enemy-row[data-n="3"] .e-name { font-size: 10px; }
+.enemy-row[data-n="3"] .e-hp-num i { display: none; }
+.enemy-row[data-n="3"] .e-hp-num { font-size: 10.5px; }
