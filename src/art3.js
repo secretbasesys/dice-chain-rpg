@@ -43,12 +43,17 @@
   DC.titleArt = function () { return url('title_portrait'); };
   DC.titleArtWide = function () { return url('title'); };
 
-  /* 이벤트 삽화 — 사건의 성격(tag)마다 한 장 */
+  /* 이벤트 삽화 — 성격(tag) 삽화를 기본으로, 주요 사건은 고유 삽화(v7.8) */
   const EVENT_ART = {
     '도박': 'gamble', '저주': 'curse', '성소': 'shrine', '거래': 'trade',
     '탐색': 'explore', '단조': 'forge', '위험': 'danger'
   };
-  DC.eventArt = function (tag) {
+  const EVENT_ID_ART = {
+    altar: 'altar', mirror: 'mirror', spring: 'spring',
+    forgeSpirit: 'forgespirit', cursedSword: 'cursedsword', starfall: 'starfall'
+  };
+  DC.eventArt = function (tag, id) {
+    if (id && EVENT_ID_ART[id]) return url('ev2_' + EVENT_ID_ART[id]);
     return url('ev_' + (EVENT_ART[tag] || 'explore'));
   };
   DC.restArt = function () { return url('ev_rest'); };

@@ -349,8 +349,9 @@
     guard: function (el) {
       if (reduced || !ensure()) return;
       const c = centerOf(el);
-      ring(c.x, c.y, '#7fc9ff', { r0: 80, r1: 40, w: 3, life: 0.5 });
-      addDots(c.x, c.y, '#7fc9ff', 10, { speed: 90, lift: -40, r: 3, life: 0.7 });
+      /* v7.8 — 방어도 링은 체력 칩 주변에서 작게. 화면을 가로지르던 큰 호 수정 */
+      ring(c.x, c.y, '#7fc9ff', { r0: 34, r1: 14, w: 2, life: 0.34 });
+      addDots(c.x, c.y, '#7fc9ff', 7, { speed: 70, lift: -34, r: 2.4, life: 0.5 });
       start();
     },
 

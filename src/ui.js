@@ -968,7 +968,7 @@
     const TAG_C = { '도박': '#fbbf24', '저주': '#a78bfa', '탐색': '#67e8f9', '성소': '#34d399', '거래': '#34d399', '단조': '#fb923c', '위험': '#ff7b72' };
     const tagC = TAG_C[def.tag] || '#67e8f9';
     const head = '<div class="ev-scene" style="--c:' + tagC + '">' +
-        '<img class="ev-img" src="' + DC.eventArt(def.tag) + '" alt="" draggable="false" />' +
+        '<img class="ev-img" src="' + DC.eventArt(def.tag, def.id) + '" alt="" draggable="false" />' +
         '<span class="ev-scene-veil"></span>' +
         '<div class="ev-scene-cap">' +
           '<span class="ev-tag" style="--c:' + tagC + '">' + esc(def.tag || '') + '</span>' +
@@ -1331,7 +1331,7 @@
     const events = DC.EVENTS.map(function (ev) {
       const got = seenEv.indexOf(ev.id) >= 0;
       return '<div class="cx-event' + (got ? '' : ' locked') + '">' +
-        '<img class="cx-ev-art' + (got ? '' : ' sil') + '" src="' + DC.eventArt(ev.tag) + '" alt="" draggable="false">' +
+        '<img class="cx-ev-art' + (got ? '' : ' sil') + '" src="' + DC.eventArt(ev.tag, ev.id) + '" alt="" draggable="false">' +
         '<b>' + esc(got ? ev.name : '???') + '</b>' +
         '<span>' + (got ? esc(ev.tag || '') : '<i class="cx-dim">미발견</i>') + '</span>' +
         '</div>';
@@ -1595,6 +1595,20 @@
         switch (ev.t) {
           case 'combo':
             DC.Audio.play('combo', ev.n);
+            /* 어떤 카드가 이 타격을 냈는지 — 카드 자체가 응답한다 */
+            (function () {
+              if (!ev.skill) return;
+              const cards = document.querySelectorAll('.slots .slot');
+              for (let ci = 0; ci < cards.length; ci++) {
+                const nm = cards[ci].querySelector('.sk-name');
+                if (nm && nm.textContent === ev.skill) {
+                  const card = cards[ci];
+                  card.classList.remove('fired'); void card.offsetWidth; card.classList.add('fired');
+                  setTimeout(function () { card.classList.remove('fired'); }, 460);
+                  break;
+                }
+              }
+            })();
             if (ev.n === 3) { DC.FX.banner('연쇄 3!', 'small'); }
             else if (ev.n === 5) { DC.FX.banner('연쇄 5!', 'good'); DC.FX.shake(9); }
             else if (ev.n === 7) { DC.FX.banner('MAX CHAIN!', 'good'); DC.FX.shake(13); DC.FX.flash('rgba(255,190,80,.18)'); }
@@ -1619,7 +1633,9 @@
           case 'edmg': {
             const el = targetEl(ev.eid);
             if (el) {
-              DC.FX.floatAt(el, '-' + ev.amount, ev.heavy ? 'dmg heavy' : 'dmg');
+              const mag = Math.min(15, Math.round(ev.amount / 4));
+              DC.FX.floatAt(el, '-' + ev.amount, ev.heavy ? 'dmg heavy' : 'dmg', { size: (ev.heavy ? 24 : 17) + mag });
+              if (ev.amount >= 25 && DC.FX.ring) DC.FX.ring(el, 'rgba(255, 176, 110, .8)');
               if (DC.VFX) { DC.VFX.hit(el, ev.kind || 'slash', !!ev.heavy); DC.VFX.cast(q('#tray') || q('.hp'), el, ev.kind || 'slash'); }
               else DC.FX.burst(el, DC.Combat.faceColor(ev.kind || 'slash'), ev.heavy ? 16 : 8);
               DC.FX.shake(ev.heavy ? 10 : 3 + ev.amount / 6);

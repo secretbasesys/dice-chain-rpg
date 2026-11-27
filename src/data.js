@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.7.1';
+  DC.VERSION = '7.8.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -141,6 +141,14 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.8', t: '사건마다 다른 장면', items: [
+      '주요 이벤트 6종에 고유 삽화를 넣었습니다 — 도박의 제단, 거울의 방, 빛나는 샘, 단조의 정령, 저주받은 검, 별똥별.',
+      '새 유물 2종: 거울 조각(같은 눈이 손에 남아 있으면 피해 +15%), 맹세의 인장(방어도 10 이상이면 피해 +20%).',
+      '새 시너지 「수호의 맹세」: 맹세의 인장 + 여섯 수호 — 방어도 10 이상일 때 피해가 15% 더 증가합니다.',
+      '새 주사위 2종: 거울 주사위(고급 · 흡혈/증폭), 가시 주사위(기본 · 수비/저주).',
+      '타격의 출처가 보입니다 — 스킬을 쓰면 그 카드가 스스로 빛나고, 피해 숫자는 크기에 따라 커집니다.',
+      '업적 2종 추가: 완전한 굴림(콤보 10), 겹겹의 맹세(시너지 2쌍과 함께 승리).',
+    ] },
     { v: '7.7.1', t: '도감 다듬기', items: [
       '도감 스크롤바를 검은 철·놋쇠 재료로 바꿨습니다(밝은 기본 스크롤바 제거).',
       '데스크톱 도감 폭을 넓히고 주사위·이벤트 5열, 유물 3열, 적 6열로 배치해 스크롤을 줄였습니다.',
@@ -260,6 +268,8 @@
     cinder: { name: '잿불 주사위', tier: 2, price: 85, c: '#fb7185', faces: [f('fire', 5), f('curse', 1), f('fire', 6), f('slash', 4), f('bolt', 4), f('curse', 2)], tag: '잿불' },
     oracle: { name: '예언 주사위', tier: 3, price: 120, c: '#e9d5ff', faces: [f('mult', 2), f('holy', 5), f('mult', 2), f('bolt', 5), f('guard', 5), f('leech', 4)], tag: '전설' },
     sanctum: { name: '성소 주사위', tier: 2, price: 85, c: '#fef3c7', faces: [f('holy', 4), f('guard', 5), f('holy', 5), f('guard', 6), f('mult', 1), f('leech', 3)], tag: '성소' },
+    mirrorDie: { name: '거울 주사위', tier: 2, price: 90, c: '#a5b4fc', faces: [f('leech', 4), f('mult', 2), f('slash', 4), f('holy', 4), f('guard', 4), f('leech', 3)], tag: '거울' },
+    thornDie: { name: '가시 주사위', tier: 1, price: 60, c: '#94a3b8', faces: [f('guard', 4), f('slash', 3), f('guard', 5), f('curse', 1), f('slash', 4), f('guard', 6)], tag: '가시' },
   };
   DC.DICE_IDS = Object.keys(DC.DICE);
 
@@ -376,6 +386,8 @@
     duelist: { name: '결투가의 장갑', ic: 'sword', c: '#fbbf24', desc: '살아 있는 적이 하나뿐이면 피해가 25% 증가한다.', price: 90 },
     miser: { name: '수전노의 지갑', ic: 'coin', c: '#fde68a', desc: '골드 획득이 25% 증가한다.', price: 80 },
     karma: { name: '업보의 사슬', ic: 'mult', c: '#f472b6', desc: '콤보 4 이상에서 모든 공격이 2번 적중한다.', price: 130 },
+    mirrorShard: { name: '거울 조각', ic: 'eye', c: '#a5b4fc', desc: '같은 눈의 주사위가 손에 남아 있으면 주는 피해가 15% 증가한다.', price: 95 },
+    oathkeeper: { name: '맹세의 인장', ic: 'shield', c: '#93c5fd', desc: '방어도가 10 이상이면 주는 피해가 20% 증가한다.', price: 100 },
 
     /* -------- boss relics (v4.4): 1·2막 보스 보상 전용, 굵직한 대가 -------- */
     eyeOfFate: { boss: true, name: '운명의 눈', ic: 'eye', c: '#67e8f9',
@@ -419,6 +431,8 @@
       desc: '6이 나오면 방어도 3을 얻는다' },
     { id: 'gambit', name: '도박의 성좌', relics: ['luckyCoin', 'gamblersHand'], c: '#fde68a',
       desc: '매 턴 시작에 기세 +1' },
+    { id: 'oathWall', name: '수호의 맹세', relics: ['oathkeeper', 'sixGuard'], c: '#a5b4fc',
+      desc: '방어도 10 이상일 때 주는 피해가 15% 더 증가한다' },
   ];
   DC.synergiesFor = function (relics) {
     const owned = relics || [];
@@ -896,6 +910,8 @@
     { id: 'challenger', name: '다른 길', desc: '도전 모드로 승리한다', test: function (c) { return c.win && c.challenge && c.challenge !== 'none'; } },
     { id: 'chain6', name: '끊이지 않는 사슬', desc: '한 턴에 콤보 6 달성', test: function (c) { return (c.maxCombo || 0) >= 6; } },
     { id: 'chain8', name: '완전 연쇄', desc: '한 턴에 콤보 8 달성', test: function (c) { return (c.maxCombo || 0) >= 8; } },
+    { id: 'chain10', name: '완전한 굴림', desc: '한 턴에 콤보 10 달성', test: function (c) { return (c.maxCombo || 0) >= 10; } },
+    { id: 'syn2', name: '겹겹의 맹세', desc: '시너지 2쌍을 동시에 발동한 채로 승리한다', test: function (c) { return c.win && (c.syn || 0) >= 2; } },
     { id: 'noRelic', name: '맨손의 승리', desc: '유물 없이 승리한다', test: function (c) { return c.win && (c.relics || 0) === 0; } },
     { id: 'asc10', name: '운명을 초월한 자', desc: '승천 10에서 승리한다', test: function (c) { return c.win && (c.asc || 0) >= 10; } },
     { id: 'daily', name: '오늘의 주사위', desc: '일일 시드로 승리한다', test: function (c) { return c.win && String(c.seed || '').indexOf('DAILY-') === 0; } },

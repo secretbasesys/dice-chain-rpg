@@ -261,6 +261,9 @@
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
       if (synOn(c, 'storm') && (k === 'fire' || k === 'bolt' || (opts && opts.fire))) d *= 1.15;
       if (c.prevV != null && c.prevV === v) d *= 1.25;
+      if (has(c, 'mirrorShard') && c.hand && c.hand.some(function (x) { return !x.used && x.uid !== hand.uid && x.v === v; })) d *= 1.15;
+      if (has(c, 'oathkeeper') && c.block >= 10) d *= 1.2;
+      if (synOn(c, 'oathWall') && c.block >= 10) d *= 1.15;
       if ((c.sameVal || 1) >= 3) d *= 1.15;
       if ((c.sameVal || 1) >= 4) d *= 1.15;
       if (c.cmod && c.cmod.dmg) d *= c.cmod.dmg;

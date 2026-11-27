@@ -4928,3 +4928,13 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
   .codex-panel .cx-relics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .codex-panel .cx-enemies { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
+/* v7.8 — 타격의 출처가 카드에서 보인다 */
+.slot.fired { animation: slotFire .46s cubic-bezier(.2, .9, .3, 1); }
+@keyframes slotFire {
+  0% { transform: scale(1); }
+  22% { transform: scale(1.055) translateY(-2px); border-color: rgba(255, 236, 190, .85); box-shadow: 0 0 0 1px rgba(255, 220, 160, .5), 0 0 26px color-mix(in srgb, var(--ac) 55%, transparent); }
+  100% { transform: scale(1); }
+}
+/* v7.8 — 이벤트 장면을 조금 더 크게(고유 삽화 비율 900:520) */
+.ev-scene { aspect-ratio: 900 / 520; max-height: 36vh; }
+@media (min-width: 900px) { .ev-scene { max-height: 42vh; } }
