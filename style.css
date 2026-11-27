@@ -2477,11 +2477,13 @@ body {
 /* status marks over art */
 .smarks { position: absolute; left: 2px; bottom: 4px; display: flex; flex-wrap: wrap; gap: 2px; max-width: 100%; }
 .smark {
-  display: inline-flex; align-items: center; gap: 1px; padding: 0 4px 0 3px; height: 15px;
-  border-radius: 999px; background: rgba(8, 6, 10, .8); border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
-  color: var(--c); font-size: 9px; font-weight: 800;
+  display: inline-flex; align-items: center; gap: 2px; padding: 0 5px 0 3px; height: 17px;
+  border-radius: 999px; background: rgba(8, 6, 10, .86); border: 1px solid color-mix(in srgb, var(--c) 62%, transparent);
+  color: var(--c); font-size: 10px; font-weight: 900;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .6), 0 0 8px color-mix(in srgb, var(--c) 22%, transparent);
 }
-.smark .ic { width: 9px; height: 9px; }
+.smark .ic { width: 10px; height: 10px; }
+.smark.more { color: #cbbfae; }
 
 /* reticle for the current target */
 .e-reticle {

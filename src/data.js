@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.25.0';
+  DC.VERSION = '7.26.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -146,6 +146,11 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.26', t: '적의 규칙이 보인다', items: [
+      '적 기믹 문구가 실제 수치로 표시됩니다 — 「받은 피해의 12%를 되돌려줌」, 「매 턴 방어도 6」, 「3턴마다 주사위 1개 봉인」처럼.',
+      '상태이상(화상·중독·취약·약화·힘) 표시를 키우고 테두리·그림자로 또렷하게 했습니다.',
+      '6클래스 회귀 점검과 3해상도 실제 클릭 E2E를 다시 통과했습니다.',
+    ] },
     { v: '7.25', t: '금화와 결투', items: [
       '새 유물 「전당포의 눈금」: 골드 50당 주는 피해 +1 — 모으는 빌드에 보상.',
       '새 유물 「결투의 서약」: 적이 하나뿐이면 매 턴 방어도 3 — 보스전에서 든든한 방어.',
@@ -1055,6 +1060,22 @@
     };
   };
 
+  /* v7.26 — 기믹의 실제 수치를 문장으로 */
+  DC.gimmickText = function (g) {
+    if (!g) return '';
+    switch (g.kind) {
+      case 'mirror': return '받은 피해의 ' + Math.round((g.pct || 0.22) * 100) + '%를 되돌려줌';
+      case 'fortify': return '매 턴 방어도 ' + (g.block || 6);
+      case 'seal': return (g.every || 3) + '턴마다 주사위 ' + (g.n || 1) + '개 봉인';
+      case 'devour': return (g.every || 4) + '턴마다 주사위 ' + (g.n || 2) + '개 삼킴';
+      case 'enrage': return '체력 ' + Math.round((g.at || 0.5) * 100) + '%에서 격노 (힘 +' + (g.str || 3) + ')';
+      case 'split': return '체력 ' + Math.round((g.at || 0.5) * 100) + '%에서 분열';
+      case 'revive': return '한 번 부활 (체력 ' + Math.round((g.hpPct || 0.22) * 100) + '%)';
+      case 'gaze': return (g.every || 3) + '턴마다 약화·취약 2';
+      case 'dive': return (g.every || 3) + '턴마다 급강하';
+      default: return DC.GIMMICK_TXT[g.kind] || '';
+    }
+  };
   DC.GIMMICK_TXT = {
     split: '체력 50%에서 분열', revive: '한 번 부활', seal: '3턴마다 주사위 봉인',
     enrage: '체력 50%에서 격노', fortify: '매 턴 방어도 7', dive: '3턴마다 급강하',

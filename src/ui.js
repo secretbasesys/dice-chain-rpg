@@ -207,7 +207,7 @@
     const dead = e.hp <= 0;
     const boss = !!e.title;
     const kill = !dead && pred > 0 && pred >= e.hp + (e.block || 0);
-    const gtxt = boss && e.gimmick && DC.GIMMICK_TXT[e.gimmick.kind] ? DC.GIMMICK_TXT[e.gimmick.kind] : '';
+    const gtxt = boss && e.gimmick ? (DC.gimmickText ? DC.gimmickText(e.gimmick) : '') : '';
     return '' +
       '<div class="enemy ' + (dead ? 'dead' : '') + ' ' + (c.target === idx ? 'targeted' : '') + (boss ? ' is-boss' : '') + '" data-eid="' + e.id + '" data-act="target" data-i="' + idx + '" style="--c:' + e.c + '" role="button" tabindex="0" aria-label="' + esc(e.name) + '"' +
       (gtxt ? ' data-tip="' + esc(gtxt) + '" data-tip-title="' + esc(e.name) + ' · 기믹"' : '') + '>' +
@@ -1316,7 +1316,7 @@
 
     const enemyCard = function (e) {
       const got = seenEnemy.indexOf(e.id) >= 0;
-      const gtxt = e.gimmick && DC.GIMMICK_TXT[e.gimmick.kind];
+      const gtxt = e.gimmick && (DC.gimmickText ? DC.gimmickText(e.gimmick) : DC.GIMMICK_TXT[e.gimmick.kind]);
       const intents = got && e.intents ? e.intents.map(function (it) {
         return '<i title="' + esc(DC.Combat.intentText(it)) + '">' + icon(DC.Combat.intentIcon(it)) + '</i>';
       }).join('') : '';
