@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.13.0';
+  DC.VERSION = '7.14.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -137,10 +137,20 @@
       desc: '매 턴 무료 재굴림 1회 · 적이 매 턴 방어도 5를 얻음', mod: { freeReroll: 1, eblock: 5 } },
     { id: 'famine', name: '굶주린 심연', ic: 'skull', c: '#f87171',
       desc: '주는 피해 +20% · 받는 피해 +10%', mod: { dmg: 0.20, taken: 0.10 } },
+    /* v7.14 — 심연 변칙 2종 추가 */
+    { id: 'greedDeep', name: '황금의 심연', ic: 'coin', c: '#fde68a',
+      desc: '전투 골드 +60% · 적 체력 +20%', mod: { gold: 1.6, hp: 0.20 } },
+    { id: 'hollow', name: '공허의 심연', ic: 'void', c: '#a78bfa',
+      desc: '주는 피해 +25% · 매 턴 기세 -1', mod: { dmg: 0.25, spark: -1 } },
   ];
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.14', t: '더 깊은 심연', items: [
+      '심연 변칙 2종 추가: 황금의 심연(골드 +60% · 적 체력 +20%), 공허의 심연(주는 피해 +25% · 매 턴 기세 -1).',
+      '업적 「끝없는 굴림」 추가 — 심연 깊이 9에 도달하면 열립니다.',
+      '심연에 들어갈 때마다 직전 변칙이 연달아 나오지 않도록 계속 제외합니다.',
+    ] },
     { v: '7.13', t: '재의 서약', items: [
       '낮은 체력 빌드용 유물 2종: 잿빛 묵주(체력 절반 이하일 때 매 턴 기세 +1), 불씨 낙인(그때 받는 피해 -20%).',
       '새 시너지 「재의 서약」(잿빛 묵주 + 불씨 낙인): 체력 절반 이하일 때 매 턴 방어도 6.',
@@ -987,6 +997,7 @@
     { id: 'synergy', name: '맞물린 톱니', desc: '유물 시너지를 발동한 채로 런을 마친다', test: function (c) { return (c.syn || 0) >= 1; } },
     { id: 'bossRelic', name: '보스의 유산', desc: '보스 유물을 획득한다', test: function (c) { return (c.bossRelics || 0) >= 1; } },
     { id: 'depth6', name: '심연의 끝', desc: '심연 깊이 6에 도달한다', test: function (c, m) { return (m.bestDepth || 3) >= 6; } },
+    { id: 'depth9', name: '끝없는 굴림', desc: '심연 깊이 9에 도달한다', test: function (c, m) { return (m.bestDepth || 3) >= 9; } },
     { id: 'daily3', name: '삼일의 굴림', desc: '일일 도전 3일 연속 클리어', test: function (c, m) { return (m.dailyStreak || 0) >= 3; } },
   ];
 
