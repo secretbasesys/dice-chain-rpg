@@ -475,6 +475,8 @@
             '<span class="combo-badge' + (c.combo > 1 ? ' hot' : '') + '" id="combo-badge" data-tip="' + esc(DC.KEYWORDS.combo.t) + '" data-tip-title="연쇄 배율 x' + m.toFixed(1) + ' · 다음 +' + (DC.Combat.nextMult(c) - m).toFixed(1) + '">' +
               '<span class="cb-x">×</span><span class="cb-n">' + m.toFixed(1) + '</span></span>' +
             (chain ? '<span class="chain">' + chain + '</span>' : '') +
+            ((c.turnDmg || 0) > 0 ? '<span class="tally" data-tip="이번 턴에 넣은 피해와 쌓은 방어도" data-tip-title="이번 턴"><b>' + c.turnDmg + '</b><i>피해</i>' +
+              ((c.turnBlock || 0) > 0 ? '<b class="tb">' + c.turnBlock + '</b><i>방어</i>' : '') + '</span>' : '') +
           '</div>' +
           '<div class="th-right">' + resourceChips(c) +
             '<button class="logbtn' + (state.ui.logOpen ? ' on' : '') + '" data-act="log" aria-label="전투 기록" data-tip="최근 턴의 스킬·적 행동·피해 내역" data-tip-title="전투 기록">' + icon('book') + '</button>' +
@@ -1618,7 +1620,7 @@
             else if (ev.n === 5) { DC.FX.banner('연쇄 5!', 'good'); DC.FX.shake(9); }
             else if (ev.n === 7) { DC.FX.banner('MAX CHAIN!', 'good'); DC.FX.shake(13); DC.FX.flash('rgba(255,190,80,.18)'); }
             const comb = q('.combat');
-            if (comb) comb.classList.toggle('heat', ev.n >= 4);
+            if (comb) { comb.classList.toggle('heat', ev.n >= 4); comb.classList.toggle('blaze', ev.n >= 6); }
             const badge = q('#combo-badge');
             if (badge) {
               badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop');
@@ -1732,7 +1734,7 @@
           case 'kill': {
             const el = targetEl(ev.eid);
             if (el) {
-              el.classList.add('dying'); DC.Audio.play('big'); DC.FX.shake(9);
+              el.classList.add('dying'); DC.Audio.play('big'); DC.Audio.play('shatter'); DC.FX.shake(9);
               if (DC.VFX) DC.VFX.death(el, 'slash'); else DC.FX.burst(el, DC.Combat.faceColor('slash'), 18);
               DC.FX.banner('격파!', 'small');
             }

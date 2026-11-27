@@ -4965,3 +4965,18 @@ body[data-screen="map"] #toast { top: auto; bottom: 46px; }
 .monk-chip .ic { color: #ff9f6a; }
 .monk-chip.hot { color: #ffd0a8; border-color: rgba(255, 150, 90, .6); box-shadow: 0 0 10px rgba(255, 120, 60, .25); }
 .rchip b { font-size: 12px; }
+/* v7.15 — 이번 턴 누적 표시 · 고연쇄 연출 */
+.tally {
+  display: inline-flex; align-items: baseline; gap: 3px; padding: 1px 7px 1px 6px;
+  border-radius: 999px; background: rgba(255, 120, 70, .12);
+  border: 1px solid rgba(255, 140, 90, .32); color: #ffc9a8;
+}
+.tally b { font-size: 12.5px; font-weight: 900; color: #ffd9bd; }
+.tally b.tb { color: #b9dcff; margin-left: 4px; }
+.tally i { font-style: normal; font-size: 8.5px; font-weight: 700; color: #c79a7a; }
+.combat.blaze::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 3;
+  background: radial-gradient(120% 90% at 50% 100%, rgba(255, 110, 40, .18), transparent 62%);
+  animation: blazePulse 1.4s ease-in-out infinite;
+}
+@keyframes blazePulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }

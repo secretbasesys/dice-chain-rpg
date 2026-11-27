@@ -538,6 +538,9 @@
       c.multBonus = 0;
       c.prevV = null;
       c.sameVal = 1;
+      c.turnDmg = 0;
+      c.turnBlock = 0;
+      c.turnHits = 0;
       c.rerollsThisTurn = 0;
       c.luckyCoinUsed = 0;
       c.engineUsed = false;
@@ -630,6 +633,10 @@
       else if (c.sameVal >= 4) { ev.push({ t: 'triple', n: c.sameVal }); }
       const after = alive(c).reduce(function (a, e) { return a + e.hp; }, 0);
       c.totalDamage += Math.max(0, before - after);
+      /* v7.15 — 이번 턴 누적(연출용) */
+      c.turnHits = (c.turnHits || 0) + 1;
+      c.turnDmg = (c.turnDmg || 0) + ev.filter(function (e) { return e.t === 'edmg'; }).reduce(function (a, e) { return a + e.amount; }, 0);
+      c.turnBlock = (c.turnBlock || 0) + ev.filter(function (e) { return e.t === 'pblock'; }).reduce(function (a, e) { return a + e.amount; }, 0);
       (function () {
         const dmg = ev.filter(function (e) { return e.t === 'edmg'; }).reduce(function (a, e) { return a + e.amount; }, 0);
         const blk = ev.filter(function (e) { return e.t === 'pblock'; }).reduce(function (a, e) { return a + e.amount; }, 0);
