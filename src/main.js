@@ -782,8 +782,8 @@
           out.push({ kind: 'skill', name: '각성의 서', desc: '스킬 하나를 각성시킵니다', ic: 'book', c: '#fbbf24', kindLabel: '각성' });
         } else if (kind === 'draft') {
           const cand = this.draftCandidates(3);
-          out.push({ kind: 'draft', name: '스킬 교체', desc: '새 스킬 ' + (cand[0] ? cand[0].name : '...') + ' 등 3장 중 하나로 내 스킬 하나를 바꿉니다',
-            ic: 'book', c: '#c084fc', kindLabel: '드래프트', cand: cand.map(function (s) { return s.id; }) });
+          out.push({ kind: 'draft', name: '스킬 교체', desc: '새 스킬 3장 중 하나를 골라 내 스킬 하나와 교체합니다',
+            ic: 'book', c: '#c084fc', kindLabel: '스킬', cand: cand.map(function (s) { return s.id; }) });
         } else {
           out.push({ kind: 'forge', name: '단조 도구', desc: '주사위 면을 1회 바꿉니다 (무료)', ic: 'anvil', c: '#fb923c', kindLabel: '단조' });
         }

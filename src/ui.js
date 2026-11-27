@@ -126,10 +126,10 @@
   function intentTip(it, e) {
     if (!it) return '의도 없음';
     switch (it.k) {
-      case 'attack': return '다음 내 턴에 ' + (it.hits > 1 ? it.v + ' 피해 × ' + it.hits + '회' : it.v + ' 피해') + '를 줍니다. 방어도로 막으세요.';
-      case 'defend': return '방어도를 ' + it.v + ' 얻습니다. 이번 턴 공격이 흡수됩니다.';
-      case 'buff': return '힘이 ' + it.v + ' 증가해 이후 공격이 강해집니다.';
-      case 'debuff': return (DC.STATUS[it.s] ? DC.STATUS[it.s].n : '약화') + ' ' + it.v + '을 나에게 겁니다.';
+      case 'attack': return '적의 차례에 ' + (it.hits > 1 ? it.v + ' 피해를 ' + it.hits + '회' : it.v + ' 피해를') + ' 줍니다. 방어도로 막으세요.';
+      case 'defend': return '적이 방어도 ' + it.v + '을 얻습니다. 내 공격을 먼저 흡수합니다.';
+      case 'buff': return '적의 힘이 ' + it.v + ' 오릅니다. 이후 공격이 강해집니다.';
+      case 'debuff': return '나에게 ' + (DC.STATUS[it.s] ? DC.STATUS[it.s].n : '약화') + ' ' + it.v + '을 겁니다.';
       case 'curse': return '내 주사위 ' + it.n + '개를 봉인합니다. 이번 턴 사용할 수 없습니다.';
       case 'drain': return it.v + ' 피해를 주고 그 절반을 회복합니다.';
       default: return '알 수 없는 의도';
@@ -567,7 +567,7 @@
           '<div class="bp-art">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + DC.monsterArt(boss.art, boss) + '</svg>' + '</div>' +
           '<div class="bp-txt"><span>' + icon('crown') + '다가오는 보스</span><b>' + esc(boss.name) + '</b>' +
             (boss.gimmick && DC.GIMMICK_TXT[boss.gimmick.kind] ? '<i>' + esc(DC.GIMMICK_TXT[boss.gimmick.kind]) + '</i>' : '') + '</div>' +
-          '<div class="bp-hp"><b>' + boss.hp + '</b><i>HP</i></div>' +
+          '<div class="bp-hp"><b>' + boss.hp + '</b><i>체력</i></div>' +
         '</div>' : '') +
         '<div class="map-wrap" id="map-wrap"><div class="map-canvas" id="map-canvas" style="--rows:' + rows + '">' +
           '<svg class="map-edges" id="map-edges"></svg>' + html +
@@ -661,6 +661,7 @@
     const clsnow = (state.ui.challenge && state.ui.challenge !== 'none') ? ' · ' + DC.challengeById(state.ui.challenge).short : '';
     return '' +
       '<main class="title-screen" style="--title-art:url(&quot;' + DC.titleArt() + '&quot;);--title-art-wide:url(&quot;' + DC.titleArtWide() + '&quot;)">' +
+        '<span class="title-frame" aria-hidden="true"></span>' +
         '<button class="title-gear" data-act="settings" aria-label="설정">' + icon('gear') + '</button>' +
         '<div class="t-logo">' +
           '<h1 class="logo">다이스 <em>체인</em></h1>' +
@@ -673,10 +674,10 @@
             const CLS = (DC.classesShort || {})[inf.cls] || inf.cls;
             return '<button class="bigbtn primary resume-card" data-act="resume">' +
               '<span class="rc-main">이어하기 · ' + esc(CLS) + '</span>' +
-              '<span class="rc-sub">ACT ' + inf.act + (inf.depth > 3 ? ' · 깊이 ' + inf.depth : '') + ' · HP ' + inf.hp + '/' + inf.maxHp +
+              '<span class="rc-sub">ACT ' + inf.act + (inf.depth > 3 ? ' · 깊이 ' + inf.depth : '') + ' · 체력 ' + inf.hp + '/' + inf.maxHp +
               ' · 주사위 ' + inf.dice + ' · 유물 ' + inf.relics + '</span></button>';
           })() : (hasSave ? '<button class="bigbtn primary" data-act="resume">이어하기</button>' : '')) +
-          '<button class="bigbtn ' + (hasSave ? '' : 'primary') + '" data-act="newrun">새 게임' + (maxAsc ? ' · 승천 ' + asc : '') + clsnow + '</button>' +
+          '<button class="bigbtn ' + (hasSave ? '' : 'primary') + '" data-act="newrun">' + icon('dice') + '새 게임' + (maxAsc ? ' · 승천 ' + asc : '') + clsnow + '</button>' +
         '</div>' +
         '<div class="title-sub">' +
           '<button class="bigbtn ghost" data-act="codex">도감 <i class="badge-num">' + (prog.dice + prog.relics + prog.enemies) + '</i></button>' +
@@ -808,7 +809,7 @@
         '<span class="' + (f.faceIdx != null ? 'on' : '') + '">2 면 선택</span>' +
         '<span class="' + (f.options.length ? 'on' : '') + '">3 새 면</span>' +
       '</div>' +
-      '<p class="sub">면은 영구히 바뀝니다 · 남은 골드 ' + r.gold + 'G</p>' +
+      '<p class="sub">면은 영구히 바뀝니다 · 남은 골드 ' + r.gold + '</p>' +
       '</div>';
 
     let strip = '<div class="forge-strip">';
@@ -843,7 +844,7 @@
           const cost = f.free > 0 ? 0 : o.cost;
           const afford = r.gold >= cost;
           return '<button class="forge-opt" data-act="fopt" data-i="' + oi + '" style="--c:' + k.c + '" ' + (afford ? '' : 'disabled') + '>' +
-            icon(k.ic) + '<b>' + k.n + ' ' + o.v + '</b><span>' + (cost === 0 ? '무료' : cost + 'G') + '</span></button>';
+            icon(k.ic) + '<b>' + k.n + ' ' + o.v + '</b><span>' + (cost === 0 ? '무료' : icon('coin') + cost) + '</span></button>';
         }).join('') + '</div>';
       } else {
         body += '<div class="forge-hint small">' + icon('eye') + '<div><b>바꿀 면을 탭하세요</b><span>새 면 5개가 나타납니다</span></div></div>';
@@ -927,11 +928,27 @@
         '</main>';
     }
     const leaveIdx = def.choices.findIndex(function (ch) { return !ch.eff && !ch.chance; });
+    function effIcon(ch) {
+      const e = (ch.chance ? ch.chance[0].eff : ch.eff) || {};
+      if (e.relic) return 'star';
+      if (e.curseFace || e.maxHp < 0) return 'skull';
+      if (e.healPct) return 'heart';
+      if (e.gold && e.gold > 0) return 'coin';
+      if (e.gold && e.gold < 0) return 'coin';
+      if (e.copyDie || e.dice) return 'copy';
+      if (e.upgradeFace) return 'anvil';
+      if (e.sparkMax) return 'spark';
+      if (e.selfDmgFlat) return 'blood';
+      if (ch.chance) return 'mystery';
+      return 'right';
+    }
     const choices = def.choices.map(function (ch, i) {
       const block = ch.need && ch.need.gold && state.run.gold < ch.need.gold;
       const risk = /피해|상실|감소|잃/.test((ch.desc || '') + (ch.label || ''));
-      return '<button class="ev-choice' + (risk ? ' risky' : '') + (i === leaveIdx ? ' quiet' : '') + '" data-act="choice" data-i="' + i + '" ' + (block ? 'disabled' : '') + '>' +
-        '<b>' + esc(ch.label) + '</b><span>' + esc(ch.desc || '') + (block ? ' — 골드가 부족합니다' : '') + '</span></button>';
+      const quiet = i === leaveIdx;
+      return '<button class="ev-choice' + (risk ? ' risky' : '') + (quiet ? ' quiet' : '') + '" data-act="choice" data-i="' + i + '" ' + (block ? 'disabled' : '') + '>' +
+        '<span class="ev-ic">' + icon(quiet ? 'right' : effIcon(ch)) + '</span>' +
+        '<b>' + esc(ch.label) + '</b><span class="ev-desc">' + esc(ch.desc || '') + (block ? ' — 골드가 부족합니다' : '') + '</span></button>';
     }).join('');
     return hud(state) + '' +
       '<main class="event-screen">' + head +
@@ -1190,7 +1207,7 @@
       return '<div class="cx-enemy' + (got ? '' : ' locked') + '" style="--c:' + e.c + '">' +
         (got ? '<img class="cx-enemy-art" src="' + DC.enemyArt({ key: e.id }) + '" alt="" draggable="false">' : '<span class="cx-q">?</span>') +
         '<b>' + esc(got ? e.name : '???') + '</b>' +
-        '<span>' + (got ? e.hp + ' HP' : '미발견') + '</span>' +
+        '<span>' + (got ? '체력 ' + e.hp : '미발견') + '</span>' +
         (got && intents ? '<div class="cx-intents">' + intents + '</div>' : '') +
         (got && gtxt ? '<div class="cx-gimmick">' + esc(gtxt) + '</div>' : '') +
       '</div>';
@@ -1199,7 +1216,7 @@
     const events = DC.EVENTS.map(function (ev) {
       const got = seenEv.indexOf(ev.id) >= 0;
       return '<div class="cx-event' + (got ? '' : ' locked') + '">' +
-        (got ? DC.eventArt(ev.id, 'cx-ev-art') : '<span class="cx-ev-q">?</span>') +
+        (got ? '<img class="cx-ev-art" src="' + DC.eventArt(ev.tag) + '" alt="" draggable="false">' : '<span class="cx-ev-q">?</span>') +
         '<b>' + esc(got ? ev.name : '???') + '</b>' +
         '<span>' + esc(got ? (ev.tag || '') : '미발견') + '</span>' +
       '</div>';
@@ -1385,8 +1402,8 @@
     const SECTIONS = {
       basic: [
         ['1', '주사위를 굴린다', '매 턴 가방의 주사위가 모두 굴려집니다. 남은 주사위는 턴이 끝나면 사라집니다.'],
-        ['2', '주사위 → 스킬 슬롯', '주사위를 탭하고 슬롯을 탭하거나, 슬롯만 탭하면 조건에 맞는 눈이 자동 배치됩니다. 끌어다 놓아도 됩니다.'],
-        ['3', '슬롯 조건', '짝수·홀수·4 이상·소수·6 등 조건이 맞아야 올릴 수 있습니다. 조건은 주사위 조작으로 맞춥니다.'],
+        ['2', '주사위 → 스킬', '주사위를 탭해 고르면 낼 수 있는 스킬이 초록으로 켜지고 예상 수치가 보입니다. 그 스킬을 탭하면 바로 나갑니다. 스킬을 먼저 탭하면 그 스킬에 맞는 주사위만 밝아집니다. 끌어다 놓아도 됩니다.'],
+        ['3', '슬롯 조건', '짝수·홀수·4 이상·소수·6 등 조건이 맞아야 올릴 수 있습니다. 조건이 안 맞는 스킬은 잠금 표시와 이유가 뜨고, 조건은 주사위 조작으로 맞춥니다.'],
         ['4', '기세로 조작', '재굴림·+1/-1·뒤집기(7-x)·복제로 눈을 바꿉니다. 기세는 매 턴 최대치까지 회복됩니다.'],
         ['5', '연쇄 콤보', '한 턴에 스킬을 이어 쓸수록 배율이 오릅니다(기본 최대 x3.5). 3·5·7연쇄에서 연출이 터집니다.'],
         ['6', '단조', '단조 노드에서 주사위의 개별 면을 영구히 교체합니다. 면이 곧 빌드입니다.'],
@@ -1808,8 +1825,10 @@
             tr.classList.add('roll-in');
             const dice = tr.querySelectorAll('.die');
             dice.forEach(function (d, i) {
+              const hnd = state.combat && state.combat.hand[i];
+              const col = '#' + ((DC.KINDS[hnd ? hnd.k : ''] || DC.KINDS.blank).c || 'ffffff').replace('#', '');
               setTimeout(function () {
-                if (DC.VFX) DC.VFX.diceLand(d, '#' + ((DC.KINDS[(state.combat.hand[i] || {}).k] || DC.KINDS.blank).c || 'ffffff').replace('#', ''));
+                if (DC.VFX && d.isConnected) DC.VFX.diceLand(d, col);
               }, 380 + i * 42);
             });
             setTimeout(function () { tr.classList.remove('roll-in'); }, 1100);
