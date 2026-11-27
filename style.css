@@ -1403,7 +1403,8 @@ body[data-screen="combat"] #toast { top: 52px; bottom: auto; font-size: 12px; pa
 .challenge-chip b { color: #e9e2ff; }
 .challenge-chip.on { background: rgba(167, 139, 250, .18); border-color: rgba(167, 139, 250, .55); }
 .challenge-chip:active { transform: scale(.97); }
-.ch-panel { max-width: 420px; }
+.ch-panel { max-width: 420px; padding-bottom: 20px; }
+.ch-list { padding-bottom: 2px; }
 .ch-list { display: flex; flex-direction: column; gap: 7px; }
 .ch-card {
   position: relative; text-align: left; display: block; width: 100%; cursor: pointer;

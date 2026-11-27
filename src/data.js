@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.12.0';
+  DC.VERSION = '7.13.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -141,6 +141,12 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.13', t: '재의 서약', items: [
+      '낮은 체력 빌드용 유물 2종: 잿빛 묵주(체력 절반 이하일 때 매 턴 기세 +1), 불씨 낙인(그때 받는 피해 -20%).',
+      '새 시너지 「재의 서약」(잿빛 묵주 + 불씨 낙인): 체력 절반 이하일 때 매 턴 방어도 6.',
+      '새 도전 모드 「쌍둥이」: 주사위 2개로 시작하고 최대 기세 +2 — 적은 주사위로 기세를 굴리는 판.',
+      '도전 모드 목록의 마지막 항목이 패널 테두리에 붙던 여백을 정리했습니다.',
+    ] },
     { v: '7.12', t: '잿빛 수도승', items: [
       '여섯 번째 클래스 「잿빛 수도승」 — 스스로를 태워 힘을 냅니다. 잃은 체력 10%마다 주는 피해 +6%(최대 +60%).',
       '수도승 스킬 5종: 잿불 주먹 · 재의 장막 · 참회 · 불씨 부르기 · 마지막 기도. 각성 수치도 함께 준비했습니다.',
@@ -425,6 +431,8 @@
     karma: { name: '업보의 사슬', ic: 'mult', c: '#f472b6', desc: '콤보 4 이상에서 모든 공격이 2번 적중한다.', price: 130 },
     mirrorShard: { name: '거울 조각', ic: 'eye', c: '#a5b4fc', desc: '같은 눈의 주사위가 손에 남아 있으면 주는 피해가 15% 증가한다.', price: 95 },
     oathkeeper: { name: '맹세의 인장', ic: 'shield', c: '#93c5fd', desc: '방어도가 10 이상이면 주는 피해가 20% 증가한다.', price: 100 },
+    ashRosary: { name: '잿빛 묵주', ic: 'flame', c: '#e08c6a', desc: '체력이 절반 이하일 때 매 턴 시작에 기세 +1.', price: 90 },
+    emberBrand: { name: '불씨 낙인', ic: 'blood', c: '#f97316', desc: '체력이 절반 이하일 때 받는 피해가 20% 줄어든다.', price: 95 },
 
     /* -------- boss relics (v4.4): 1·2막 보스 보상 전용, 굵직한 대가 -------- */
     eyeOfFate: { boss: true, name: '운명의 눈', ic: 'eye', c: '#67e8f9',
@@ -470,6 +478,8 @@
       desc: '매 턴 시작에 기세 +1' },
     { id: 'oathWall', name: '수호의 맹세', relics: ['oathkeeper', 'sixGuard'], c: '#a5b4fc',
       desc: '방어도 10 이상일 때 주는 피해가 15% 더 증가한다' },
+    { id: 'ashOath', name: '재의 서약', relics: ['ashRosary', 'emberBrand'], c: '#f0a07a',
+      desc: '체력이 절반 이하일 때 매 턴 시작에 방어도 6을 얻는다' },
   ];
   DC.synergiesFor = function (relics) {
     const owned = relics || [];
@@ -926,6 +936,7 @@
     { id: 'glass', name: '유리 몸', short: '유리 몸', desc: '최대 체력 -30% · 내 공격 피해 +30%', c: '#f472b6', mod: { hpMul: -0.30, dmg: 1.30 } },
     { id: 'greed', name: '탐욕', short: '탐욕', desc: '상점 가격 +50% · 골드 획득 +50%', c: '#fbbf24', mod: { price: 0.5, gold: 1.5 } },
     { id: 'frenzy', name: '광란', short: '광란', desc: '적 체력 -15% · 적 공격 +25%', c: '#f87171', mod: { ehp: -0.15, eatk: 0.25 } },
+    { id: 'duo', name: '쌍둥이', short: '쌍둥이', desc: '주사위 2개로 시작 · 최대 기세 +2', c: '#67e8f9', mod: { diceCut: -1, spark: 2 } },
   ];
   DC.dailyConfig = function () {
     const t = DC.todaySeed();               // DAILY-YYYYMMDD

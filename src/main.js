@@ -327,6 +327,8 @@
         cmod: cmod,
         daily: !!this.state.ui.daily,
       };
+      if (cmod.diceCut) run.dice = run.dice.slice(0, Math.max(2, run.dice.length + cmod.diceCut));
+      if (cmod.spark) run.extraSpark = (run.extraSpark || 0) + cmod.spark;
       run.map = DC.MapGen.gen(DC.rng, 1);
       DC.Meta.noteRunStart(asc);
       run.dice.forEach(function (d) { DC.Meta.noteDie(d.id); });

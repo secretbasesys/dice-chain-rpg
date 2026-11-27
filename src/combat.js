@@ -178,6 +178,7 @@
     let dmg = Math.round(amount);
     if (opts && opts.raw !== true && has(c, 'glassCannon')) dmg = Math.round(dmg * 1.5);
     if (opts && opts.raw !== true && abyss(c) && abyss(c).taken) dmg = Math.round(dmg * (1 + abyss(c).taken));
+    if (has(c, 'emberBrand') && c.hp <= c.maxHp * 0.5) dmg = Math.round(dmg * 0.8);
     if (c.statuses.vuln > 0) dmg = Math.round(dmg * DC.BAL.vulnMult);
     const absorbed = Math.min(c.block, dmg);
     c.block -= absorbed;
@@ -580,6 +581,11 @@
       c.block = 0;
       if (synOn(c, 'ironWall')) c.block += 3;
       if (has(c, 'clockwork')) c.block += 2;
+      /* v7.13 — 낮은 체력 빌드: 잿빛 묵주 · 재의 서약 */
+      if (c.hp <= c.maxHp * 0.5) {
+        if (has(c, 'ashRosary')) c.sparks += 1;
+        if (synOn(c, 'ashOath')) c.block += 6;
+      }
       if (c.statuses.weak > 0) c.statuses.weak -= 1;
       if (c.statuses.vuln > 0) c.statuses.vuln -= 1;
     },
