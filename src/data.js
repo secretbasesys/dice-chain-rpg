@@ -7,7 +7,7 @@
   'use strict';
   const DC = (window.DC = window.DC || {});
 
-  DC.VERSION = '7.11.0';
+  DC.VERSION = '7.12.0';
   DC.BAL = {
     comboStep: 0.2,     // +20% per chain link
     comboCap: 3.0,
@@ -141,6 +141,14 @@
 
   /* in-game patch notes (v6.8) — newest first */
   DC.CHANGELOG = [
+    { v: '7.12', t: '잿빛 수도승', items: [
+      '여섯 번째 클래스 「잿빛 수도승」 — 스스로를 태워 힘을 냅니다. 잃은 체력 10%마다 주는 피해 +6%(최대 +60%).',
+      '수도승 스킬 5종: 잿불 주먹 · 재의 장막 · 참회 · 불씨 부르기 · 마지막 기도. 각성 수치도 함께 준비했습니다.',
+      '전투 중 「재의 가호 +N%」 칩으로 지금의 피해 보너스를 확인할 수 있습니다.',
+      '카드의 예상 피해가 수도승 보너스·도박사 콤보·페어 보정까지 반영해 실제 피해와 맞아떨어집니다.',
+      '수정: 성기사의 스킬 각성이 표시만 되고 실제 수치가 오르지 않던 문제 — 각성 수치 5종을 추가했습니다.',
+      'NEW 표시가 클래스 이름을 가리지 않게 카드 오른쪽 위로 옮겼습니다.',
+    ] },
     { v: '7.11', t: '마지막 장면들', items: [
       '이벤트 고유 삽화 3종 추가 — 떠돌이 행상, 주사위 도둑, 갈라진 길. 고유 삽화 13종이 되었습니다.',
       '새 주사위·유물을 처음 얻으면 「도감 등록 · ○○」 한 줄로 알려 줍니다.',
@@ -374,8 +382,22 @@
         { id: 'wrath', name: '천벌', req: 'gte4', ic: 'flame', fx: { type: 'aoe', ratio: 1.6, verdictSpend: 3 }, desc: '모든 적에게 눈 × 1.6 + 심판×3 (소모)' },
       ],
     },
+    monk: {
+      id: 'monk', name: '잿빛 수도승', short: '수도승', en: 'ASH MONK',
+      hp: 76, sparks: 2, c: '#e08c6a', ic: 'flame', fresh: true,
+      desc: '스스로를 태워 힘을 낸다. 체력이 줄수록 타격이 무거워지고, 회복으로 버틴다.',
+      startDice: ['cinder', 'iron', 'iron'],
+      passive: { n: '재의 가호', tip: '잃은 체력 10%마다 주는 피해 +6% (최대 +60%). 회복으로 버티며 낮은 체력을 무기로 씁니다.' },
+      skills: [
+        { id: 'emberFist', name: '잿불 주먹', req: 'any', ic: 'flame', fx: { type: 'attack', ratio: 1.9, burn: true }, desc: '눈 × 1.9 피해 · 화상' },
+        { id: 'ashVeil', name: '재의 장막', req: 'even', ic: 'shield', fx: { type: 'block', ratio: 2.6, heal: 1 }, desc: '눈 × 2.6 방어도 · 1 회복' },
+        { id: 'penance', name: '참회', req: 'odd', ic: 'blood', fx: { type: 'attack', ratio: 3.0, selfDmg: 3 }, desc: '눈 × 3 피해 · 자신 3 피해' },
+        { id: 'cinderCall', name: '불씨 부르기', req: 'any', ic: 'spark', fx: { type: 'spark', amount: 2, block: 4 }, desc: '기세 +2 · 방어도 4' },
+        { id: 'lastPrayer', name: '마지막 기도', req: 'gte4', ic: 'star', fx: { type: 'aoe', ratio: 1.8, burn: 2 }, desc: '모든 적에게 눈 × 1.8 · 화상 2' },
+      ],
+    },
   };
-  DC.CLASS_IDS = ['warrior', 'mage', 'gambler', 'alchemist', 'paladin'];
+  DC.CLASS_IDS = ['warrior', 'mage', 'gambler', 'alchemist', 'paladin', 'monk'];
 
   /* ---------------- relics ---------------- */
   DC.RELICS = {
@@ -833,6 +855,20 @@
       { fx: { ratio: 1.3, block: 3 }, desc: '정수 1개당 눈 × 1.3 피해 · 방어 +3' },
       { fx: { ratio: 1.9, burn: 3 }, desc: '모든 적에게 눈 × 1.9 · 화상 3' },
     ],
+    paladin: [
+      { fx: { ratio: 2.0, verdict: 2.5 }, desc: '눈 × 2.0 · 심판 1당 +2.5 피해' },
+      { fx: { ratio: 3.2, verdictGain: 1, heal: 2 }, desc: '눈 × 3.2 방어도 · 심판 +1 · 2 회복' },
+      { fx: { ratio: 1.3, reflect: true }, desc: '눈 × 1.3 피해 + 현재 방어도 절반' },
+      { fx: { gain: 3, block: 9 }, desc: '심판 +3 · 방어도 9' },
+      { fx: { ratio: 1.9, verdictSpend: 3.5 }, desc: '모든 적에게 눈 × 1.9 + 심판×3.5 (소모)' },
+    ],
+    monk: [
+      { fx: { ratio: 2.2, burn: true }, desc: '눈 × 2.2 피해 · 화상' },
+      { fx: { ratio: 3.0, heal: 2 }, desc: '눈 × 3.0 방어도 · 2 회복' },
+      { fx: { ratio: 3.5, selfDmg: 3 }, desc: '눈 × 3.5 피해 · 자신 3 피해' },
+      { fx: { amount: 3, block: 7 }, desc: '기세 +3 · 방어도 7' },
+      { fx: { ratio: 2.1, burn: 3 }, desc: '모든 적에게 눈 × 2.1 · 화상 3' },
+    ],
   };
   DC.getSkill = function (cls, idx, lv) {
     const base = DC.CLASSES[cls].skills[idx];
@@ -924,6 +960,7 @@
     { id: 'winGambler', name: '운명을 걸다', desc: '도박사로 승리한다', test: function (c) { return c.win && c.cls === 'gambler'; } },
     { id: 'winAlchemist', name: '비약의 대가', desc: '연금술사로 승리한다', test: function (c) { return c.win && c.cls === 'alchemist'; } },
     { id: 'winPaladin', name: '심판의 손', desc: '성기사로 승리한다', test: function (c) { return c.win && c.cls === 'paladin'; } },
+    { id: 'winMonk', name: '재의 길', desc: '수도승으로 승리한다', test: function (c) { return c.win && c.cls === 'monk'; } },
     { id: 'challenger', name: '다른 길', desc: '도전 모드로 승리한다', test: function (c) { return c.win && c.challenge && c.challenge !== 'none'; } },
     { id: 'chain6', name: '끊이지 않는 사슬', desc: '한 턴에 콤보 6 달성', test: function (c) { return (c.maxCombo || 0) >= 6; } },
     { id: 'chain8', name: '완전 연쇄', desc: '한 턴에 콤보 8 달성', test: function (c) { return (c.maxCombo || 0) >= 8; } },

@@ -345,6 +345,11 @@
       out.push('<span class="rchip flask-chip' + (n >= 3 ? ' full' : '') + '" data-tip="' + esc(DC.KEYWORDS.flask.t) + '" data-tip-title="플라스크">' + icon('flask') + '<span class="flask-pips">' + pips + '</span><b>' + n + '</b><i>/3</i></span>');
     }
     if (c.cls === 'paladin') out.push(verdictUi(c));
+    if (c.cls === 'monk') {
+      const p = Math.round(Math.min(0.6, (1 - c.hp / c.maxHp) * 0.6) * 100);
+      out.push('<span class="rchip monk-chip' + (p >= 25 ? ' hot' : '') + '" data-tip="잃은 체력에 비례해 주는 피해가 늘어납니다 — 지금 +' + p + '%" data-tip-title="재의 가호">' +
+        icon('flame') + '<b>+' + p + '%</b></span>');
+    }
     return out.join('');
   }
 

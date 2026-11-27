@@ -16,7 +16,7 @@
 
   DC.assetVer = '7.7';
 
-  const CLASS_ART = { warrior: 1, mage: 1, gambler: 1, alchemist: 1, paladin: 1 };
+  const CLASS_ART = { warrior: 1, mage: 1, gambler: 1, alchemist: 1, paladin: 1, monk: 1 };
   const BG_BY_ACT = { 1: 'bg_act1', 2: 'bg_act2', 3: 'bg_act3' };
   const _loaded = {};
   const _waiting = [];

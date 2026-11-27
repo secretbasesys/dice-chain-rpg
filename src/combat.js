@@ -266,6 +266,8 @@
       if (has(c, 'scale') && v % 2 === 1) d *= 1.4;
       if (has(c, 'pledge') && v % 2 === 0) d *= 1.4;
       if (c.cls === 'gambler' && c.combo >= 3 && !(opts && opts.noDouble)) d += 3;
+      /* v7.12 — 잿빛 수도승: 잃은 체력에 비례해 최대 +60% */
+      if (c.cls === 'monk') d *= 1 + Math.min(0.6, (1 - c.hp / c.maxHp) * 0.6);
       if (has(c, 'flameHeart') && (k === 'fire' || (opts && opts.fire))) d *= 1.6;
       if (synOn(c, 'storm') && (k === 'fire' || k === 'bolt' || (opts && opts.fire))) d *= 1.15;
       if (c.prevV != null && c.prevV === v) d *= 1.25;
@@ -827,6 +829,10 @@
         if (has(c, 'scale') && h.v % 2 === 1) d *= 1.4;
         if (has(c, 'pledge') && h.v % 2 === 0) d *= 1.4;
         if (has(c, 'flameHeart') && (h.k === 'fire' || fx.burn)) d *= 1.6;
+        /* v7.12 — 미리보기 정확도: 수도승·도박사·페어 보정도 반영 */
+        if (c.cls === 'monk') d *= 1 + Math.min(0.6, (1 - c.hp / c.maxHp) * 0.6);
+        if (c.cls === 'gambler' && c.combo + 1 >= 3) d += 3;
+        if (c.prevV != null && c.prevV === h.v) d *= 1.25;
         return Math.max(1, Math.round(d));
       }
       const tg = target(c);
